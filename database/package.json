@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "generate": "prisma generate",
     "migrate": "prisma migrate dev --name init",
     "studio": "prisma studio",
-    "seed": "ts-node seed.ts"
+    "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
