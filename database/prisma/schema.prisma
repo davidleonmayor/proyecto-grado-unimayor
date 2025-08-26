@@ -13,19 +13,203 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
+model DL_ESTUDIANTE {
+  id_estudiante         String  @id
+  id_programa_academico Int
+  nombres               String
+  apellidos             String
+  tipo_doc_identidad    String
+  num_doc_identidad     String
+  email_institucional   String
+  telefono              String?
+  porc_creditos_aprob   Int
+  estado_academico      String
+
+  programa_academico DL_PROGRAMA_ACADEMICO @relation(fields: [id_programa_academico], references: [id_programa_academico])
+  trabajos           DL_EST_EST_TG[]
 }
 
-model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  price       Float
-  stock       Int
-  createdAt   DateTime @default(now())
+model DL_PROGRAMA_ACADEMICO {
+  id_programa_academico Int     @id @default(autoincrement())
+  nombre_programa       String
+  nivel_formacion       String
+  id_facultad           Int
+  codigo_snies          String?
+
+  facultad    DL_FACULTAD       @relation(fields: [id_facultad], references: [id_facultad])
+  estudiantes DL_ESTUDIANTE[]
+  opciones    DL_OPCION_GRADO[]
+}
+
+model DL_FACULTAD {
+  id_facultad     Int                     @id @default(autoincrement())
+  nombre_facultad String
+  programas       DL_PROGRAMA_ACADEMICO[]
+}
+
+model DL_OPCION_GRADO {
+  id_opcion_grado         Int     @id @default(autoincrement())
+  nombre_opcion_grado     String
+  descripcion_opcion      String?
+  tipo_programa_academico String
+  id_programa_academico   Int
+
+  programa_academico DL_PROGRAMA_ACADEMICO @relation(fields: [id_programa_academico], references: [id_programa_academico])
+  trabajos           DL_TRABAJO_GRADO[]
+}
+
+model DL_TRABAJO_GRADO {
+  id_trabajo_grado        Int     @id @default(autoincrement())
+  titulo_trabajo          String
+  id_estudiante_principal String
+  id_opcion_grado         Int
+  id_estado_actual        Int
+  observaciones           String? @db.Text
+
+  opcion_grado        DL_OPCION_GRADO        @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
+  estado_actual       DL_ESTADO_TG           @relation(fields: [id_estado_actual], references: [id_estado_tg])
+  estudiantes         DL_EST_EST_TG[]
+  asignaciones_asesor DL_ASIGNACION_ASESOR[]
+  asignaciones_jurado DL_ASIGNACION_JURADO[]
+  historial           DL_HIST_ESTADO_TG[]
+  practica            DL_DET_PRACT_PROF?
+  sustentaciones      DL_SUSTENTACION[]
+}
+
+model DL_EST_EST_TG {
+  id_estudiante    String
+  id_trabajo_grado Int
+
+  estudiante DL_ESTUDIANTE    @relation(fields: [id_estudiante], references: [id_estudiante])
+  trabajo    DL_TRABAJO_GRADO @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+
+  @@id([id_estudiante, id_trabajo_grado])
+}
+
+model DL_ASIGNACION_ASESOR {
+  id_asignacion_asesor Int      @id @default(autoincrement())
+  id_trabajo_grado     Int
+  id_docente_asesor    String
+  fecha_asignacion     DateTime @db.Date
+  estado_asesoria      String?
+
+  trabajo DL_TRABAJO_GRADO @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  docente DL_DOCENTE       @relation(fields: [id_docente_asesor], references: [id_docente])
+}
+
+model DL_ASIGNACION_JURADO {
+  id_asignacion_jurado Int       @id @default(autoincrement())
+  id_trabajo_grado     Int
+  id_docente_jurado    String
+  fecha_asignacion     DateTime  @db.Date
+  fecha_concepto       DateTime? @db.Date
+  concepto_emitido     String?
+
+  trabajo DL_TRABAJO_GRADO @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  docente DL_DOCENTE       @relation(fields: [id_docente_jurado], references: [id_docente])
+}
+
+model DL_DOCENTE {
+  id_docente           String @id
+  nombres              String
+  apellidos            String
+  email                String
+  tipo_vinculacion     String
+  area_especializacion String
+  tipo_docente         String
+
+  asesoria DL_ASIGNACION_ASESOR[]
+  jurado   DL_ASIGNACION_JURADO[]
+}
+
+model DL_HIST_ESTADO_TG {
+  id_historial        Int       @id @default(autoincrement())
+  id_trabajo_grado    Int
+  id_estado_tg        Int
+  id_consejo_facultad Int
+  fecha_cambio_estado DateTime  @db.Timestamp
+  observacion         String?
+  numero_oficio       String?
+  fecha_oficio        DateTime? @db.Date
+
+  trabajo    DL_TRABAJO_GRADO    @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  estado     DL_ESTADO_TG        @relation(fields: [id_estado_tg], references: [id_estado_tg])
+  consejo    DL_CONSEJO_FACULTAD @relation(fields: [id_consejo_facultad], references: [id_consejo])
+  documentos DL_DOC_ADJ_TRG[]
+  oficios    DL_OFICIO[]
+}
+
+model DL_ESTADO_TG {
+  id_estado_tg  Int                 @id @default(autoincrement())
+  nombre_estado String
+  trabajos      DL_TRABAJO_GRADO[]
+  historial     DL_HIST_ESTADO_TG[]
+}
+
+model DL_CONSEJO_FACULTAD {
+  id_consejo     Int      @id @default(autoincrement())
+  nombre_consejo String
+  fecha_acta     DateTime @db.Date
+  numero_acta    String
+
+  historiales DL_HIST_ESTADO_TG[]
+}
+
+model DL_EMPRESA {
+  id_empresa     Int     @id @default(autoincrement())
+  nit_empresa    String
+  nombre_empresa String
+  direccion      String
+  telefono       String?
+  email_contacto String?
+
+  practicas DL_DET_PRACT_PROF[]
+}
+
+model DL_DET_PRACT_PROF {
+  id_trabajo_grado Int      @id
+  id_empresa       Int
+  nombre_jefe      String
+  cargo_jefe       String
+  constancia_arl   Bytes
+  fecha_inicio     DateTime @db.Date
+  fecha_fin        DateTime @db.Date
+
+  trabajo DL_TRABAJO_GRADO @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  empresa DL_EMPRESA       @relation(fields: [id_empresa], references: [id_empresa])
+}
+
+model DL_SUSTENTACION {
+  id_sustentacion      Int      @id @default(autoincrement())
+  id_trabajo_grado     Int
+  fecha_sustentacion   DateTime @db.Date
+  calificacion_final   Int
+  observaciones        String?  @db.Text
+  resolucion_meritorio String?
+  resolucion_laureado  String?
+
+  trabajo DL_TRABAJO_GRADO @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+}
+
+model DL_DOC_ADJ_TRG {
+  id_documento_adjunto Int      @id @default(autoincrement())
+  id_historial         Int
+  nombre_doc           String
+  tipo_doc             String
+  archivo_adjunto      Bytes
+  fecha_carga          DateTime @db.Timestamp
+  descripcion_doc      String?
+
+  historial DL_HIST_ESTADO_TG @relation(fields: [id_historial], references: [id_historial])
+}
+
+model DL_OFICIO {
+  id_oficio     Int      @id @default(autoincrement())
+  id_historial  Int
+  numero_oficio String
+  fecha_oficio  DateTime @db.Date
+  tipo_oficio   String
+  texto_oficio  String   @db.Text
+
+  historial DL_HIST_ESTADO_TG @relation(fields: [id_historial], references: [id_historial])
 }
