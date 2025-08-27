@@ -1,18 +1,19 @@
-version: "3.8"
-services:
-  mysql:
+services: # services like the DB, front, back, ETC
+  # mysql:
+  db: #
     image: mysql:8.0
+    # container_name: proyecto_mysql
     container_name: proyecto_mysql
     restart: always
-    environment:
+    environment: # MySQL environment variables
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: proyecto_grado
       MYSQL_USER: david
       MYSQL_PASSWORD: secret
     ports:
-      - "3306:3306"
+      - "3306:3306" # [host:container]
     volumes:
       - mysql_data:/var/lib/mysql
 
-volumes:
+volumes: # MySQL data volume
   mysql_data:
