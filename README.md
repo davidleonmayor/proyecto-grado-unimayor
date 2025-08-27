@@ -24,7 +24,7 @@ Generación de reportes de avance y panel de control para coordinadores.
 <div align="center">
 🌐 Frontend
 
-<img alt="Angular" src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white"/> <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/> <img alt="HTML5" src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white"/> <img alt="CSS3" src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white"/>
+<img alt="React" src="https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white"/> <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"/> <img alt="HTML5" src="https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white"/> <img alt="CSS3" src="https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white"/>
 <hr />
 ⚙️ Backend
 <img alt="Laravel" src="https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white"/> <img alt="PHP" src="https://img.shields.io/badge/PHP-777BB4?style=for-the-badge&logo=php&logoColor=white"/>
@@ -45,7 +45,7 @@ Generación de reportes de avance y panel de control para coordinadores.
 ## 📂 Estructura del proyecto
 ```bash
 proyecto-grado/
-│── frontend/       # Código Angular
+│── frontend/       # Código React
 │── backend/        # Código Laravel
 │── database/       # Scripts y backups de MySQL
 │── docs/           # Documentación y diagramas
@@ -69,11 +69,11 @@ proyecto-grado/
     php artisan migrate --seed
     php artisan serve
 ```
-3. 🌐 Frontend (Angular)
+3. 🌐 Frontend (React)
 ```bash
     cd frontend
     npm install
-    ng serve -o
+    npm run dev
 
 ```
 
@@ -92,7 +92,7 @@ proyecto-grado/
 
 - David Leon – Backend & Database
 - Gabriela Bazques
-- Santiago Torres
+- Santiago Torres 
 - Sebastián Astudillo
 - Juan Chaves
 - 
