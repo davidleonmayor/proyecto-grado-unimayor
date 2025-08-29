@@ -1,0 +1,10 @@
+*node_modules/
+.env
+package-lock.json
+
+.DS_Store
+dist/
+
+# database
+database/generated/prisma
+/generated/prisma
