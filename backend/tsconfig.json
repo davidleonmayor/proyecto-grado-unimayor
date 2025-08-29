@@ -6,6 +6,9 @@
       "ESNext"
     ],
     "target": "ESNext",
+    "types": [
+      "node"
+    ],
     "moduleResolution": "nodenext",
     "module": "NodeNext",
     "strict": false,
