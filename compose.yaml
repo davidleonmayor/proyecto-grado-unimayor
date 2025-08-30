@@ -1,4 +1,19 @@
 services: # services like the DB, front, back, ETC
+  backend:
+    image: backend
+    container_name: backend
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: backend.dockerfile
+
+    environment:
+      # - DATABASE_URL=mysql://david:secret@localhost:3306/proyecto_grado
+      - DATABASE_URL=mysql://david:secret@db:3306/proyecto_grado # mysql://<user>:<password>@<host>:<port>/<database-name>
+
+    ports:
+      - "4000:4000"
+
   # mysql:
   db: #
     image: mysql:8.0
