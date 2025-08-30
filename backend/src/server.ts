@@ -1,13 +1,26 @@
 import express, { Express } from "express";
+import cors from "cors";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+// TODO: make cors config EX: https://github.com/davidleonmayor/course-Full-Stack-Node.js-React-TS-NestJS-Next.js-cashtrackr-backend/blob/main/src/server.ts
 const server: Express = express();
 
+// request config
+server.use(cors());
+
 server.get("/", async (req: express.Request, res: express.Response) => {
-  const facIng = await prisma.pROGRAMA_ACADEMICO.findMany();
-  return res.json(facIng);
+  return res.json({ msg: "hello" });
+});
+
+server.get("/test", async (req: express.Request, res: express.Response) => {
+  try {
+    const personas = await prisma.pERSONA.findMany();
+    return res.json(personas);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 export default server;
