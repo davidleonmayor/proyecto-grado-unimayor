@@ -1,12 +1,11 @@
-services: # services like the DB, front, back, ETC
+services:
   frontend:
     container_name: frontend
-    image: frontend
     build:
       context: ./frontend
       dockerfile: frontend.dockerfile
     ports:
-      - 3000:3000
+      - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:4000
     restart: always
@@ -14,35 +13,37 @@ services: # services like the DB, front, back, ETC
       - backend
 
   backend:
-    image: backend
     container_name: backend
-    restart: always
     build:
       context: ./backend
       dockerfile: backend.dockerfile
-
-    environment:
-      # - DATABASE_URL=mysql://david:secret@localhost:3306/proyecto_grado
-      - DATABASE_URL=mysql://david:secret@db:3306/proyecto_grado # mysql://<user>:<password>@<host>:<port>/<database-name>
-
     ports:
       - "4000:4000"
-
-  # mysql:
-  db: #
-    image: mysql:8.0
-    # container_name: proyecto_mysql
-    container_name: proyecto_mysql
+    environment:
+      - DATABASE_URL=mysql://david:secret@db:3306/proyecto_grado
     restart: always
-    environment: # MySQL environment variables
+    depends_on:
+      db:
+        condition: service_healthy # 👈 aquí la magia
+
+  db:
+    container_name: proyecto_mysql
+    image: mysql:8.0
+    restart: always
+    environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: proyecto_grado
       MYSQL_USER: david
       MYSQL_PASSWORD: secret
     ports:
-      - "3306:3306" # [host:container]
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck: # 👈 MySQL avisa cuando está listo
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-volumes: # MySQL data volume
+volumes:
   mysql_data:
