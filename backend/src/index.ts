@@ -1,12 +1,10 @@
 import colors from "colors";
 import server from "./server";
+import { envs } from './config/envs';
 
-const port = process.env.PORT || 4000;
-
-server.listen(port, () => {
-  console.log(
-    colors.bgBlack.italic(
-      `[server]: Server is running at http://localhost:${port}`
-    )
+server.listen(envs.PORT, () => {
+  console.log(colors.bgBlack.italic(
+    `[server]: Server is running at http://localhost:${envs.PORT}`
+  )
   );
 });

@@ -38,15 +38,15 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
-      prisma:
-        specifier: ^6.14.0
-        version: 6.15.0(typescript@5.9.2)
       slug:
         specifier: ^8.2.3
         version: 8.2.3
       uuid:
         specifier: ^11.0.3
         version: 11.1.0
+      zod:
+        specifier: ^4.1.5
+        version: 4.1.5
     devDependencies:
       '@types/bcrypt':
         specifier: ^5.0.2
@@ -72,6 +72,9 @@ importers:
       nodemon:
         specifier: ^3.1.7
         version: 3.1.10
+      prisma:
+        specifier: ^6.14.0
+        version: 6.15.0(typescript@5.9.2)
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@22.18.0)(typescript@5.9.2)
@@ -1007,6 +1010,9 @@ packages:
   yn@3.1.1:
     resolution: {integrity: sha512-Ux4ygGWsu2c7isFWe8Yu1YluJmqVhxqK2cLXNQA5AcC3QfbGNpM7fu0Y8b/z16pXLnFxZYvWhd3fhBY9DLmC6Q==}
     engines: {node: '>=6'}
+
+  zod@4.1.5:
+    resolution: {integrity: sha512-rcUUZqlLJgBC33IT3PNMgsCq6TzLQEG/Ei/KTCU0PedSWRMAXoOUN+4t/0H+Q8bdnLPdqUYnvboJT0bn/229qg==}
 
 snapshots:
 
@@ -1969,3 +1975,5 @@ snapshots:
   yallist@4.0.0: {}
 
   yn@3.1.1: {}
+
+  zod@4.1.5: {}
