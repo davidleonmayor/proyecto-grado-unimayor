@@ -1,6 +1,7 @@
 import express, { Express } from "express";
 import cors from "cors";
 import { PrismaClient } from "@prisma/client";
+import { authRouter } from './auth'
 
 const prisma = new PrismaClient();
 
@@ -9,6 +10,10 @@ const server: Express = express();
 
 // request config
 server.use(cors());
+server.use(express.json());
+
+//Rutas
+server.use("/auth", authRouter);
 
 server.get("/", async (req: express.Request, res: express.Response) => {
   return res.json({ msg: "hello" });
