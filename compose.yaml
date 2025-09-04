@@ -25,6 +25,7 @@ services:
     depends_on:
       db:
         condition: service_healthy # 👈 aquí la magia
+    command: sh -c "pnpm prisma migrate deploy && pnpm run dev"
 
   db:
     container_name: proyecto_mysql
