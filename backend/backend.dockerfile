@@ -11,10 +11,12 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install
 
 COPY prisma ./prisma
+# RUN pnpx prisma migrate dev # this create a new migration file with the current schema
 RUN pnpx prisma generate
 
 COPY . .
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "pnpx prisma generate && pnpm run dev"]
+CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm run dev"]
+
