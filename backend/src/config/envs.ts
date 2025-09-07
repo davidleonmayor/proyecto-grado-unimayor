@@ -16,6 +16,8 @@ const envSchema = z.object({
   NODEMAILER_PASS: z.string()
 });
 
+
+//Maten a san
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success)
