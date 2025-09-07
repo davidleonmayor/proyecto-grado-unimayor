@@ -1,31 +1,44 @@
-import express, { Express } from "express";
-import cors from "cors";
-import { PrismaClient } from "@prisma/client";
-import { authRouter } from './auth'
+import { PrismaClient } from '@prisma/client'
+import express, { Application } from 'express';
+import { envs } from './config';
+import cors from 'cors';
+import colors from 'colors';
+import { Routes } from './routes/routes';
 
-const prisma = new PrismaClient();
 
-// TODO: make cors config EX: https://github.com/davidleonmayor/course-Full-Stack-Node.js-React-TS-NestJS-Next.js-cashtrackr-backend/blob/main/src/server.ts
-const server: Express = express();
+class Server {
 
-// request config
-server.use(cors());
-server.use(express.json());
+  private prisma: PrismaClient
+  private app: Application;
+  private port = envs.PORT;
 
-//Rutas
-server.use("/auth", authRouter);
-
-server.get("/", async (req: express.Request, res: express.Response) => {
-  return res.json({ msg: "hello" });
-});
-
-server.get("/test", async (req: express.Request, res: express.Response) => {
-  try {
-    const personas = await prisma.pERSONA.findMany();
-    return res.json(personas);
-  } catch (error) {
-    console.error(error);
+  constructor() {
+    this.prisma = new PrismaClient();
+    this.app = express();
+    this.middlewares();
+    this.routes();
   }
-});
 
-export default server;
+  private middlewares() {
+    this.app.use(express.json());
+    this.app.use(cors())
+  }
+
+  private routes() {
+    Routes.init(this.app);
+  }
+
+  start() {
+    this.app.listen(this.port, () => {
+      console.log(
+        colors.green.bold("[index]🎓 Graduation project ") +
+        colors.cyan("running on port ") +
+        colors.yellow(envs.PORT.toString())
+      );
+    })
+  }
+
+
+}
+
+export default Server;

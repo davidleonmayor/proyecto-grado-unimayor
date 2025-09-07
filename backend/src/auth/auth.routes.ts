@@ -1,38 +1,31 @@
-import { Router } from "express";
-import { register, login } from './auth.controller';
-import { body } from 'express-validator';
-import { validateRequest } from "../common";
+import { Router } from 'express';
+import { AuthController } from './auth.controller';
+import { body, } from 'express-validator';
+import { validateRequest } from '../common'
+
+export class AuthRoutes {
+
+    public router: Router;
+    private authController: AuthController;
 
 
-const router: Router = Router();
+    constructor() {
+        this.router = Router();
+        this.authController = new AuthController();
+        this.initRoutes();
+    }
 
+    private initRoutes() {
 
-// Crear Usuario
-router.post('/register', [
-    body('email', 'El email es obligatorio')
-        .isEmail(),
+        this.router.post(
+            '/register',
+            [
+                body('name', 'El nombre es obligatorio').notEmpty(),
+                body('email').isEmail().withMessage('Correo invalido'),
+                validateRequest,
+                this.authController.register
+            ]
+        );
 
-    body('password', 'La contraseña es obligatoria')
-        .notEmpty(),
-
-    body('password', 'La contraseña debe tener al menos 6 caracteres')
-        .isLength({ min: 6 }),
-    validateRequest
-
-], register);
-
-
-//Iniciar Sesión
-router.post('/login', [
-    body('email', 'El email es obligatorio')
-        .isEmail(),
-
-    body('password', 'La contraseña es obligatoria')
-        .notEmpty(),
-
-    validateRequest
-
-], login);
-
-
-export default router;
+    }
+}

@@ -19,13 +19,13 @@ services:
       dockerfile: backend.dockerfile
     ports:
       - "4000:4000"
-    environment:
-      - DATABASE_URL=mysql://david:secret@db:3306/proyecto_grado
+    env_file:
+      - ./backend/.env
     restart: always
     depends_on:
       db:
-        condition: service_healthy # 👈 aquí la magia
-    # command: sh -c "pnpm prisma migrate deploy && pnpm run seed && pnpm run dev"
+        condition: service_healthy
+
 
   db:
     container_name: proyecto_mysql
