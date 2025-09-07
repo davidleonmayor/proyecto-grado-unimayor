@@ -1,7 +1,7 @@
 # backend
 *node_modules/
 .env
-.env.local
+.env.local  
 package-lock.json
 
 .DS_Store
