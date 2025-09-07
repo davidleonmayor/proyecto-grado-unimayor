@@ -14,22 +14,21 @@ datasource db {
 }
 
 model PERSONA {
-  CARNET               String   @id
-  NOMBRES              String
-  APELLIDOS            String
-  TIPO_DOC_IDENTIDAD   String
-  NUM_DOC_IDENTIDAD    String   @unique
-  EMAIL_INSTITUCIONAL  String   @unique
-  TELEFONO             String?
-  TIPO_VINCULACION     String // Estudiante / Docente / Externo
-  AREA_ESPECIALIZACION String?
-  FECHA_REGISTRO       DateTime @default(now())
+  IdPersona           String   @id
+  CARNET              String?
+  NOMBRES             String
+  APELLIDOS           String
+  TIPO_DOC_IDENTIDAD  String
+  NUM_DOC_IDENTIDAD   String   @unique
+  EMAIL_INSTITUCIONAL String   @unique
+  TELEFONO            String?
+  TIPO_VINCULACION    String // Estudiante/Docente/Externo
+  FECHA_REGISTRO      DateTime @default(now())
 
   // Relaciones
   estudianteProgramas ESTUDIANTE_PROGRAMA[]
-  rolesTG             ROL_PERSONA_TG[]
+  actores             ACTORES[]
   seguimientos        SEGUIMIENTO_TG[]
-  evaluaciones        EVALUACION_TG[]
 }
 
 model FACULTAD {
@@ -54,7 +53,7 @@ model PROGRAMA_ACADEMICO {
 
 model NIVEL_FORMACION {
   ID_NIVEL_FORMACION Int     @id @default(autoincrement())
-  NOMBRE_NIVEL       String
+  NOMBRE_NIVEL       String // Tecnológica/Pregrado/Especialización/Maestría/Doctorado
   DESCRIPCION        String?
 
   programas PROGRAMA_NIVEL[]
@@ -64,7 +63,7 @@ model PROGRAMA_NIVEL {
   ID_PROGRAMA_NIVEL     Int    @id @default(autoincrement())
   ID_PROGRAMA_ACADEMICO Int
   ID_NIVEL_FORMACION    Int
-  ESTADO                String
+  ESTADO                String // Activo/Inactivo
 
   programa PROGRAMA_ACADEMICO @relation(fields: [ID_PROGRAMA_ACADEMICO], references: [ID_PROGRAMA_ACADEMICO])
   nivel    NIVEL_FORMACION    @relation(fields: [ID_NIVEL_FORMACION], references: [ID_NIVEL_FORMACION])
@@ -75,7 +74,7 @@ model OPCION_GRADO {
   ID_OPCION_GRADO     Int     @id @default(autoincrement())
   NOMBRE_OPCION_GRADO String
   DESCRIPCION_OPCION  String?
-  ESTADO              String
+  ESTADO              String // Activo/Inactivo
   ID_PROGRAMA_NIVEL   Int
 
   programaNivel PROGRAMA_NIVEL  @relation(fields: [ID_PROGRAMA_NIVEL], references: [ID_PROGRAMA_NIVEL])
@@ -83,14 +82,13 @@ model OPCION_GRADO {
 }
 
 model ESTUDIANTE_PROGRAMA {
-  CARNET                  String
-  ID_PROGRAMA_ACADEMICO   Int
-  PORC_CREDITOS_APROBADOS Int
-  ESTADO_ACADEMICO        String
-  FECHA_INGRESO           DateTime
-  FECHA_EGRESO            DateTime?
+  CARNET                String
+  ID_PROGRAMA_ACADEMICO Int
+  ESTADO_ACADEMICO      String // Activo/Graduado/Retirado
+  FECHA_INGRESO         DateTime
+  FECHA_EGRESO          DateTime?
 
-  persona  PERSONA            @relation(fields: [CARNET], references: [CARNET])
+  persona  PERSONA            @relation(fields: [CARNET], references: [IdPersona])
   programa PROGRAMA_ACADEMICO @relation(fields: [ID_PROGRAMA_ACADEMICO], references: [ID_PROGRAMA_ACADEMICO])
 
   @@id([CARNET, ID_PROGRAMA_ACADEMICO])
@@ -99,41 +97,38 @@ model ESTUDIANTE_PROGRAMA {
 model TRABAJO_GRADO {
   ID_TRABAJO_GRADO   Int       @id @default(autoincrement())
   TITULO_TRABAJO     String
-  FECHA_INICIO       DateTime
-  FECHA_FIN_ESTIMADA DateTime?
-  RESUMEN            String?
-  ESTADO             String
   ID_OPCION_GRADO    Int
   ID_ESTADO_ACTUAL   Int
+  FECHA_REGISTRO     DateTime  @default(now())
+  FECHA_FIN_ESTIMADA DateTime?
+  RESUMEN            String?   @db.Text
 
-  opcion       OPCION_GRADO          @relation(fields: [ID_OPCION_GRADO], references: [ID_OPCION_GRADO])
-  estado       ESTADO_TG             @relation(fields: [ID_ESTADO_ACTUAL], references: [ID_ESTADO_TG])
-  roles        ROL_PERSONA_TG[]
-  seguimientos SEGUIMIENTO_TG[]
-  evaluaciones EVALUACION_TG[]
-  sustentacion SUSTENTACION?
-  practica     PRACTICA_PROFESIONAL?
+  opcion               OPCION_GRADO           @relation(fields: [ID_OPCION_GRADO], references: [ID_OPCION_GRADO])
+  estado               ESTADO_TG              @relation(fields: [ID_ESTADO_ACTUAL], references: [ID_ESTADO_TG])
+  actores              ACTORES[]
+  seguimientos         SEGUIMIENTO_TG[]
+  PRACTICA_PROFESIONAL PRACTICA_PROFESIONAL[]
 }
 
 model TIPO_ROL {
   ID_TIPO_ROL Int     @id @default(autoincrement())
-  NOMBRE_ROL  String
+  NOMBRE_ROL  String // Estudiante/Asesor/Jurado/Asesor Externo
   DESCRIPCION String?
 
-  roles ROL_PERSONA_TG[]
+  actores ACTORES[]
 }
 
-model ROL_PERSONA_TG {
-  ID_ROL_PERSONA   Int       @id @default(autoincrement())
-  CARNET           String
-  ID_TRABAJO_GRADO Int
-  ID_TIPO_ROL      Int
-  FECHA_ASIGNACION DateTime
-  FECHA_RETIRO     DateTime?
-  ESTADO           String
-  OBSERVACIONES    String?
+model ACTORES {
+  ID_ACTORES           Int       @id @default(autoincrement())
+  IdEstudiantePrograma String
+  ID_TRABAJO_GRADO     Int
+  ID_TIPO_ROL          Int
+  FECHA_ASIGNACION     DateTime
+  FECHA_RETIRO         DateTime?
+  ESTADO               String // Activo/Inactivo
+  OBSERVACIONES        String?
 
-  persona PERSONA       @relation(fields: [CARNET], references: [CARNET])
+  persona PERSONA       @relation(fields: [IdEstudiantePrograma], references: [IdPersona])
   trabajo TRABAJO_GRADO @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO])
   rol     TIPO_ROL      @relation(fields: [ID_TIPO_ROL], references: [ID_TIPO_ROL])
 }
@@ -142,7 +137,7 @@ model ESTADO_TG {
   ID_ESTADO_TG  Int     @id @default(autoincrement())
   NOMBRE_ESTADO String
   DESCRIPCION   String?
-  ORDEN         Int
+  ORDEN         Int // Para flujo de proceso
 
   trabajos        TRABAJO_GRADO[]
   seguimientosAnt SEGUIMIENTO_TG[] @relation("EstadoAnterior")
@@ -152,13 +147,19 @@ model ESTADO_TG {
 model SEGUIMIENTO_TG {
   ID_SEGUIMIENTO     Int       @id @default(autoincrement())
   ID_TRABAJO_GRADO   Int
-  CARNET_ACTOR       String
-  FECHA_REGISTRO     DateTime  @default(now())
-  TIPO_ACCION        String
-  DESCRIPCION        String?
-  DETALLE            String?
+  CARNET_ACTOR       String // Quien realiza la acción
   ID_ESTADO_ANTERIOR Int?
+  FECHA_REGISTRO     DateTime  @default(now())
+  TIPO_ACCION        String // Cambio estado/Asignación rol/Evaluación/Sustentación
+  DESCRIPCION        String?
   ID_ESTADO_NUEVO    Int?
+  CONCEPTO           String?
+  FECHA_SUSTENTACION DateTime?
+  LUGAR              String?
+  CALIFICACION_FINAL Int?
+  DISTINCION         String?
+  NUMERO_RESOLUCION  String?
+  FECHA_RESOLUCION   DateTime?
   NUMERO_OFICIO      String?
   FECHA_OFICIO       DateTime?
   NOMBRE_DOCUMENTO   String?
@@ -167,7 +168,7 @@ model SEGUIMIENTO_TG {
   RUTA_ARCHIVO       String?
 
   trabajo        TRABAJO_GRADO @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO])
-  actor          PERSONA       @relation(fields: [CARNET_ACTOR], references: [CARNET])
+  actor          PERSONA       @relation(fields: [CARNET_ACTOR], references: [IdPersona])
   estadoAnterior ESTADO_TG?    @relation("EstadoAnterior", fields: [ID_ESTADO_ANTERIOR], references: [ID_ESTADO_TG])
   estadoNuevo    ESTADO_TG?    @relation("EstadoNuevo", fields: [ID_ESTADO_NUEVO], references: [ID_ESTADO_TG])
 }
@@ -179,48 +180,16 @@ model EMPRESA {
   DIRECCION      String
   TELEFONO       String
   EMAIL_CONTACTO String
-  ESTADO         String
+  ESTADO         String // Activa/Inactiva
 
   practicas PRACTICA_PROFESIONAL[]
 }
 
 model PRACTICA_PROFESIONAL {
-  ID_TRABAJO_GRADO      Int       @id
-  ID_EMPRESA            Int
-  NOMBRE_SUPERVISOR     String
-  CARGO_SUPERVISOR      String
-  FECHA_INICIO          DateTime
-  FECHA_FIN             DateTime?
-  NUMERO_CONSTANCIA_ARL String?
-  ESTADO_PRACTICA       String
+  ID_PRACTICA_PROFESIONAL Int  @id @default(autoincrement())
+  ID_EMPRESA              Int
+  ID_TRABAJO_GRADO        Int? // Opcional si no todos los trabajos son prácticas
 
-  trabajo TRABAJO_GRADO @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO])
-  empresa EMPRESA       @relation(fields: [ID_EMPRESA], references: [ID_EMPRESA])
-}
-
-model EVALUACION_TG {
-  ID_EVALUACION    Int      @id @default(autoincrement())
-  ID_TRABAJO_GRADO Int
-  CARNET_EVALUADOR String
-  TIPO_EVALUACION  String
-  FECHA_EVALUACION DateTime
-  CALIFICACION     Int
-  OBSERVACIONES    String?
-  CONCEPTO         String?
-
-  trabajo   TRABAJO_GRADO @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO])
-  evaluador PERSONA       @relation(fields: [CARNET_EVALUADOR], references: [CARNET])
-}
-
-model SUSTENTACION {
-  ID_SUSTENTACION    Int       @id @default(autoincrement())
-  ID_TRABAJO_GRADO   Int       @unique
-  FECHA_SUSTENTACION DateTime
-  LUGAR              String
-  CALIFICACION_FINAL Int
-  DISTINCION         String
-  NUMERO_RESOLUCION  String?
-  FECHA_RESOLUCION   DateTime?
-
-  trabajo TRABAJO_GRADO @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO])
+  empresa EMPRESA        @relation(fields: [ID_EMPRESA], references: [ID_EMPRESA])
+  trabajo TRABAJO_GRADO? @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO])
 }
