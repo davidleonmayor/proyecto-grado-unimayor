@@ -1,10 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 import express, { Application } from 'express';
-import { envs } from './config';
 import cors from 'cors';
 import colors from 'colors';
-import { Routes } from './routes/routes';
-
+import { limiter, corsConfig, envs } from './config'
+import { Routes } from './routes';
 
 class Server {
 
@@ -21,7 +20,8 @@ class Server {
 
   private middlewares() {
     this.app.use(express.json());
-    this.app.use(cors())
+    this.app.use(cors(corsConfig));
+    this.app.use(limiter);
   }
 
   private routes() {

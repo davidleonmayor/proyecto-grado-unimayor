@@ -7,23 +7,26 @@
     ],
     "target": "ESNext",
     "types": [
-      "node"
+      "node",
+      "jest"
     ],
     "moduleResolution": "nodenext",
+    "isolatedModules": true,
     "module": "NodeNext",
     "strict": false,
     "sourceMap": true,
     "esModuleInterop": true,
     "declaration": true,
     "baseUrl": ".",
-    // "paths": {
-    //   "@/*": [
-    //     "src/*"
-    //   ]
-    // }
+    "paths": {
+      "@/*": [
+        "src/*"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts",
-    "routes/**/*.ts"
+    "routes/**/*.ts",
+    "**/*.test.ts"
   ]
 }

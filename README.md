@@ -106,6 +106,22 @@ show tables;
 select * from <table>;
 ```
 
+<!-- 5. ⚙️ Get the latest DB version
+
+```bash
+docker exec -it backend pnpx prisma migrate
+
+``` -->
+
+6. ⚙️ Run devs
+
+```bash
+# backend
+cd backend && pnpm dev
+#frontend
+cd frontend && pnpm dev
+```
+
 ## 📊 Roadmap
 
 - User authentication

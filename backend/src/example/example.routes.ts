@@ -1,7 +1,5 @@
-import { Router } from 'express';
-import { body, } from 'express-validator';
-import { validateRequest } from '../common'
 import { ExampleController } from './example.controller';
+import { Router } from 'express';
 
 
 /**
@@ -17,9 +15,6 @@ import { ExampleController } from './example.controller';
  * 
  * Nota: Las rutas no deben contener lógica de negocio ni acceso directo a la base de datos.
  */
-
-
-
 
 
 

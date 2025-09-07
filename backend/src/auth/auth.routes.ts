@@ -8,7 +8,6 @@ export class AuthRoutes {
     public router: Router;
     private authController: AuthController;
 
-
     constructor() {
         this.router = Router();
         this.authController = new AuthController();

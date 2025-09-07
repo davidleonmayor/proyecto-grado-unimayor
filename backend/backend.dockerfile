@@ -18,6 +18,6 @@ COPY . .
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm run dev"]
+CMD ["sh", "-c", "pnpm prisma migrate deploy"]
 # CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm run seed && pnpm run dev"]
 
