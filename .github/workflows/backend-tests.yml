@@ -1,0 +1,36 @@
+name: Backend Tests
+
+on:
+  pull_request: # se ejecuta en PRs
+    branches: ["main"]
+  push: # y en pushes directos
+    branches: ["main"]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clonar repo
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Instalar Node + pnpm
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      # 3. Instalar dependencias del backend
+      - name: Install dependencies
+        working-directory: ./backend
+        run: pnpm install
+
+      # 4. Correr tests del backend
+      - name: Run backend tests
+        working-directory: ./backend
+        run: pnpm test
