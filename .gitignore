@@ -11,6 +11,7 @@ dist/
 # database
 database/generated/prisma
 /generated/prisma
+dump.sql
 
 # frontend
 **/.next

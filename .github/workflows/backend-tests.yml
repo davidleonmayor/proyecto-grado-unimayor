@@ -1,10 +1,14 @@
 name: Backend Tests
 
 on:
-  pull_request: # se ejecuta en PRs
-    branches: ["main"]
-  push: # y en pushes directos
-    branches: ["main"]
+  pull_request:
+    branches: [main] # se ejecuta cuando alguien abre PR hacia main
+    paths:
+      - "backend/**"
+  push:
+    branches:
+      - "feature/*"
+      - "fix/*"
 
 jobs:
   test-backend:
@@ -15,22 +19,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Instalar Node + pnpm
+      # 2. Instalar Node
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 22
-          cache: "pnpm"
 
-      - name: Install pnpm
-        run: npm install -g pnpm
+      # 3. Instalar pnpm (acción oficial)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9 # usa la misma versión que tengas en tu proyecto
+          run_install: false
 
-      # 3. Instalar dependencias del backend
+      # 4. Instalar dependencias del backend
       - name: Install dependencies
         working-directory: ./backend
         run: pnpm install
 
-      # 4. Correr tests del backend
+      # 5. Correr tests del backend
       - name: Run backend tests
         working-directory: ./backend
         run: pnpm test
