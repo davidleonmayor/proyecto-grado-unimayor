@@ -3,6 +3,7 @@
 .env
 .env.local  
 package-lock.json
+.pnpm-store
 
 .DS_Store
 dist/
@@ -10,6 +11,7 @@ dist/
 # database
 database/generated/prisma
 /generated/prisma
+dump.sql
 
 # frontend
 **/.next
