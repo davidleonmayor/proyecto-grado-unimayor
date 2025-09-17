@@ -36,7 +36,7 @@ const menuItems = [
         visible: ["student", "teacher", "dean", "admin"],
       },
       {
-        icon: "/document.png",
+        icon: "/documents.png",
         label: "Documentos",
         href: "/list/documents",
         visible: ["student", "teacher", "dean", "admin"],
@@ -77,7 +77,7 @@ const menuItems = [
         visible: ["admin", "teacher", "dean", "student"],
       },
       {
-        icon: "/settings.png",
+        icon: "/setting.png",
         label: "Ajustes",
         href: "/settings",
         visible: ["admin"],
