@@ -3,39 +3,38 @@
 import Image from 'next/image';
 import checkImage from "@/public/check.png";
 
-{/*Chatgpt helps me with this fck sht*/}
+{/*Chatgpt helps me with this fck sht*/ }
 import {
   RadialBarChart as RechartsRadialBarChart,
   RadialBar as RechartsRadialBar,
   Legend as RechartsLegend,
   ResponsiveContainer,
 } from 'recharts';
-import type { RadialBarProps, LegendProps } from 'recharts'; 
+import type { RadialBarProps, LegendProps } from 'recharts';
 import moreDarkImage from "@/public/moreDark.png";
 
-{/*Chatgpt helps me with this fck sht too*/}
+{/*Chatgpt helps me with this fck sht too*/ }
 const RadialBarChart = RechartsRadialBarChart as unknown as React.FC<any>;
 const RadialBar = RechartsRadialBar as unknown as React.FC<RadialBarProps>;
 const Legend = RechartsLegend as unknown as React.FC<any>;
 
 
 const data = [
-    {
-        name: 'Total',
-        count: 100,
-        fill: 'white',
-    },
-    {
-        name: 'Entregado',
-        count: 55,
-        fill: '#CFCEFF',
-    },
-    {
-        name: 'Sin entregar',
-        count: 45,
-        fill: '#FAE27C',
-    },
-
+  {
+    name: 'Total',
+    count: 100,
+    fill: 'white',
+  },
+  {
+    name: 'Sin entregar',
+    count: 45,
+    fill: '#CFCEFF',
+  },
+  {
+    name: 'Entregado',
+    count: 55,
+    fill: '#FAE27C',
+  },
 ];
 
 
@@ -65,24 +64,24 @@ export default function CountCharts() {
             />
           </RadialBarChart>
         </ResponsiveContainer>
-        <Image 
-         src={checkImage} 
-         alt='image' 
-         width={100} 
-         height={100}
-         className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
+        <Image
+          src={checkImage}
+          alt='image'
+          width={100}
+          height={100}
+          className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2'
         />
       </div>
 
       {/* BOTTOM */}
       <div className="flex justify-center gap-16">
         <div className="flex flex-col gap-1">
-          <div className="w-5 h-5 bg-[#CFCEFF] rounded-full" />
+          <div className="w-5 h-5 bg-[#FAE27C] rounded-full" />
           <h1 className="font-bold">1,234</h1>
           <h2 className="text-xs text-gray-300">Entregado (55%)</h2>
         </div>
         <div className="flex flex-col gap-1">
-          <div className="w-5 h-5 bg-[#FAE27C] rounded-full" />
+          <div className="w-5 h-5 bg-[#CFCEFF] rounded-full" />
           <h1 className="font-bold">1,234</h1>
           <h2 className="text-xs text-gray-300">Sin entregar (45%)</h2>
         </div>
