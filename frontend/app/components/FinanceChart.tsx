@@ -94,8 +94,8 @@ export default function FinanceChart() {
                     <YAxis axisLine={false}  tickLine={false}/>
                     <Tooltip />
                     <Legend align="center" verticalAlign="top" wrapperStyle={{ paddingTop: '20px', paddingBottom: '40px' }} />
-                    <Line type="monotone" dataKey="aprobados" stroke="#C3EBFA" strokeWidth={5} />
-                    <Line type="monotone" dataKey="rechazados" stroke="#CFCEFF" strokeWidth={5}/>
+                    <Line type="monotone" dataKey="aprobados" stroke="#0EA5E9" strokeWidth={5} />
+                    <Line type="monotone" dataKey="rechazados" stroke="#F44336" strokeWidth={5}/>
                 </LineChart>
             </ResponsiveContainer>
         </div>
