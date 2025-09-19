@@ -1,6 +1,7 @@
 import CountCharts from "@/app/components/CountCharts";
 import UserCard from "@/app/components/UserCard";
 import ProjectStatusChart from "@/app/components/ProjectStatusChart";
+import FinanceChart from "@/app/components/FinanceChart";
 
 export default function AdminPage() {
   return (
@@ -20,13 +21,15 @@ export default function AdminPage() {
           <div className="w-full lg:w-1/3 h-[450px]">
             <CountCharts />
           </div>
-          {/* ATTENDANCE CHART */}
+          {/* PROJECT STATUS CHART */}
           <div className="w-full lg:w-2/3 h-[450px]">
             <ProjectStatusChart />
           </div>
         </div>
         {/* BOTTOM CHARTS */}
-        <div className=""></div>
+        <div className="w-full h-[500px]">
+          <FinanceChart />
+        </div>
       </div>
       {/* RIGHT */}
       <div className="w-full lg:w-1/3">r</div>

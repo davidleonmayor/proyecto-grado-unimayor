@@ -19,7 +19,7 @@ export default function DashboardLayout({
           
           <Image src={Logo} alt="logo" width={32} height={32}/>
           
-          <span className="hidden lg:block">Gestion de proyectos de grado</span>
+          <span className="hidden lg:block font-semibold">Gestion de proyectos de grado</span>
         
         </Link>
 

@@ -62,14 +62,14 @@ export default function ProjectStatusChart() {
           <Legend align="left" verticalAlign="top" wrapperStyle={{ paddingTop: '20px', paddingBottom: '40px' }} />
           <Bar 
             dataKey="aprobado" 
-            fill="#FAE27C" 
+            fill="#0EA5E9" 
             activeBar={<Rectangle fill="pink" stroke="blue" />} 
             legendType="circle"
             radius={[10,10,0,0]}
             />
           <Bar 
             dataKey="rechazado" 
-            fill="#CFCEFF" 
+            fill="#F44336" 
             activeBar={<Rectangle fill="gold" stroke="purple" />} 
             legendType="circle"
             radius={[10,10,0,0]}
