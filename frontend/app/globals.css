@@ -1,6 +1,14 @@
 @import "tailwindcss";
 @tailwind utilities;
 
+@theme {
+  --color-principal: #fcdf5d; 
+  --color-secondary: #0EA5E9; 
+  --color-tertiary: #a2a1f0; 
+  --color-approved: #0EA5E9; 
+  --color-rejected: #F44336; 
+}
+
 .react-calendar {
     width: 100% !important;
     border: none !important;

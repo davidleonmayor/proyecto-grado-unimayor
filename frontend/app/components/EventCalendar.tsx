@@ -45,7 +45,7 @@ export const EventCalendar = () => {
             </div>
             <div className="flex flex-col gap-4">
                 {events.map((event) => (
-                    <div key={event.id} className="p-5 rounded-md border-2 border-gray-100 border-t-4 odd:border-t-[#0EA5E9] even:border-t-[#fcdf5d]">
+                    <div key={event.id} className="p-5 rounded-md border-2 border-gray-100 border-t-4 odd:border-t-approved even:border-t-primary">
                         <h3 className="font-semibold">{event.title}</h3>
                         <p className="text-gray-300 text-xs">{event.time}</p>
                         <p className="mt-2 text-gray-400 text-sm">{event.description}</p>

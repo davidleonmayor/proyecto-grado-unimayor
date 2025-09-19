@@ -76,12 +76,12 @@ export default function CountCharts() {
       {/* BOTTOM */}
       <div className="flex justify-center gap-16">
         <div className="flex flex-col gap-1">
-          <div className="w-5 h-5 bg-[#fcdf5d] rounded-full" />
+          <div className="w-5 h-5 bg-principal rounded-full" />
           <h1 className="font-bold">1,234</h1>
           <h2 className="text-xs text-gray-500">Entregado (55%)</h2>
         </div>
         <div className="flex flex-col gap-1">
-          <div className="w-5 h-5 bg-[#a2a1f0] rounded-full" />
+          <div className="w-5 h-5 bg-tertiary rounded-full" />
           <h1 className="font-bold">1,234</h1>
           <h2 className="text-xs text-gray-500">Sin entregar (45%)</h2>
         </div>
