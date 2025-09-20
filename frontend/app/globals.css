@@ -4,6 +4,7 @@
 @theme {
   --color-principal: #fcdf5d; 
   --color-secondary: #0EA5E9; 
+  --color-hoverColor: #94D6F5; 
   --color-tertiary: #a2a1f0; 
   --color-approved: #0EA5E9; 
   --color-rejected: #F44336; 
