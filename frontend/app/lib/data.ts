@@ -86,3 +86,55 @@ export const studentsData = [
     estado: "En revisión",
   },
 ];
+
+export const calendarEvents = [
+  {
+    title: "Propuesta de grado - Revisión inicial",
+    allDay: false,
+    start: new Date(2025, 8, 15, 8, 0),
+    end: new Date(2025, 8, 15, 9, 0),
+  },
+  {
+    title: "Reunión con tutor asignado",
+    allDay: false,
+    start: new Date(2025, 8, 16, 9, 0),
+    end: new Date(2025, 8, 16, 10, 0),
+  },
+  {
+    title: "Entrega avances parciales",
+    allDay: false,
+    start: new Date(2025, 8, 15, 10, 0),
+    end: new Date(2025, 8, 15, 11, 0),
+  },
+  {
+    title: "Sesión comité académico",
+    allDay: false,
+    start: new Date(2025, 8, 17, 11, 0),
+    end: new Date(2025, 8, 17, 12, 0),
+  },
+  {
+    title: "Almuerzo",
+    allDay: false,
+    start: new Date(2025, 8, 18, 12, 0),
+    end: new Date(2025, 8, 18, 13, 0),
+  },
+  {
+    title: "Taller de redacción académica",
+    allDay: false,
+    start: new Date(2025, 8, 16, 13, 0),
+    end: new Date(2025, 8, 16, 14, 0),
+  },
+  {
+    title: "Revisión de sustentaciones",
+    allDay: false,
+    start: new Date(2025, 8, 15, 14, 0),
+    end: new Date(2025, 8, 15, 15, 0),
+  },
+  {
+    title: "Planificación de sustentaciones finales",
+    allDay: false,
+    start: new Date(2025, 8, 15, 15, 0),
+    end: new Date(2025, 8, 15, 16, 0),
+  },
+]
+

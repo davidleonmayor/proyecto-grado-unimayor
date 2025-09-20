@@ -1,5 +1,7 @@
 import Announcement from "@/app/components/Announcement";
+import BigCalendar from "@/app/components/BigCalendar";
 import { EventCalendar } from "@/app/components/EventCalendar";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 
 export default function StudentPage(){
   return (
@@ -8,6 +10,7 @@ export default function StudentPage(){
         <div className="w-full xl:w-2/3">
             <div className="h-full bg-white p-4 rounded-md">
                 <h1 className="text-xl font-semibold">Horarios</h1>
+                <BigCalendar />
             </div>
         </div>
         {/* RIGHT */}
