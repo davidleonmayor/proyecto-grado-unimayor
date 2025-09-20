@@ -79,6 +79,8 @@ export const studentsData = [
     id: 1,
     nombre: "María Torres",
     email: "maria.torres@unimayor.edu.co",
+    photo:
+      "https://images.pexels.com/photos/1102341/pexels-photo-1102341.jpeg?auto=compress&cs=tinysrgb&w=1200",
     carrera: "Ingeniería Informática",
     opcionGrado: "Trabajo de Aplicación",
     estado: "Aprobado",
@@ -87,6 +89,8 @@ export const studentsData = [
     id: 2,
     nombre: "David Castillo",
     email: "david.castillo@unimayor.edu.co",
+    photo:
+      "https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200",
     carrera: "Tecnología en Desarrollo de Software",
     opcionGrado: "Pasantía",
     estado: "En revisión",
