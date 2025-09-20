@@ -25,6 +25,8 @@ export const teachersData = [
     id: 1,
     nombre: "Carlos Pérez",
     email: "carlos.perez@unimayor.edu.co",
+    photo:
+      "https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200",
     telefono: "3157894561",
     rol: "Director de Proyecto",
     carrera: "Ingeniería Multimedia",
@@ -33,6 +35,8 @@ export const teachersData = [
     id: 2,
     nombre: "Laura Gómez",
     email: "laura.gomez@unimayor.edu.co",
+    photo:
+      "https://images.pexels.com/photos/1102341/pexels-photo-1102341.jpeg?auto=compress&cs=tinysrgb&w=1200",
     telefono: "3102589634",
     rol: "Tutor",
     carrera: "Tecnología en Desarrollo de Software",
@@ -41,6 +45,8 @@ export const teachersData = [
     id: 3,
     nombre: "Andrés Rodríguez",
     email: "andres.rodriguez@unimayor.edu.co",
+    photo:
+      "https://images.pexels.com/photos/428328/pexels-photo-428328.jpeg?auto=compress&cs=tinysrgb&w=1200",
     telefono: "3114569872",
     rol: "Docente",
     carrera: "Ingeniería Informática",
