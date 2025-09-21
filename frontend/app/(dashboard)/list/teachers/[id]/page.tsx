@@ -11,6 +11,7 @@ import BigCalendar from "@/app/components/BigCalendar";
 import Announcement from "@/app/components/Announcement";
 import Link from "next/link";
 import Performance from "@/app/components/Performance";
+import FormModal from "@/app/components/FormModal";
 
 const SingleTeacherPage = () => {
 
@@ -35,7 +36,19 @@ const SingleTeacherPage = () => {
                             />
                         </div>
                         <div className="w-2/3 flex flex-col justify-between gap-4">
-                            <h1 className="text-xl font-semibold">Maria</h1>
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-xl font-semibold">Maria</h1>
+                                <FormModal table="teacher" type="update" data={{
+                                    id: 2,
+                                    username: "Laura Gómez",
+                                    email: "laura.gomez@unimayor.edu.co",
+                                    img:
+                                        "https://images.pexels.com/photos/1102341/pexels-photo-1102341.jpeg?auto=compress&cs=tinysrgb&w=1200",
+                                    phone: "3102589634",
+                                    role: "Tutor",
+                                    carrera: "Tecnología en Desarrollo de Software",
+                                }} />
+                            </div>
                             <p className="text-sm text-gray-500">
                                 Profesora titular del programa de Ingeniería Informatica. Experta en inteligencia artificial y
                                 con 10 años de experiencia en investigación aplicada.
@@ -71,6 +84,7 @@ const SingleTeacherPage = () => {
                             </div>
                         </div>
                     </div>
+
 
                     {/* SMALL CARDS */}
                     <div className="flex-1 flex gap-4 justify-between flex-wrap">

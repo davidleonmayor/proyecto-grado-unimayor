@@ -15,7 +15,7 @@ type Student = {
   id: number;
   nombre: string;
   email: string;
-  photo: string;
+  img: string;
   carrera: string;
   opcionGrado: string;
   estado: string;
@@ -36,7 +36,7 @@ const StudentListPage = () => {
     >
       <td className="flex items-center gap-4 p-4">
         <Image
-          src={item.photo}
+          src={item.img}
           alt={item.nombre}
           width={40}
           height={40}

@@ -15,7 +15,7 @@ type Teacher = {
     id: number;
     nombre: string;
     email: string;
-    photo: string;
+    img: string;
     telefono: string;
     rol: string;
     carrera: string;
@@ -37,7 +37,7 @@ const TeacherListPage = () => {
         <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe]">
             <td className="flex items-center gap-4 p-4 ">
                 <Image
-                    src={item.photo}
+                    src={item.img}
                     alt={item.nombre}
                     width={40}
                     height={40}

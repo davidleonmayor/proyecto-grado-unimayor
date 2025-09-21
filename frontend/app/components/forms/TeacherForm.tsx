@@ -3,6 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import InputField from "../InputField";
+import Image from "next/image";
+import uploadImage from "@/public/upload.png";
 
 const schema = z.object({
     username: z
@@ -36,7 +39,8 @@ const schema = z.object({
         .enum(["Masculino", "Femenino"], {
             message: "Sexo inválido",
         }),
-
+    img: z
+        .instanceof(File, { message: "Debe ser un archivo" })
 });
 
 
@@ -57,25 +61,120 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
 
     return (
         <form className="flex flex-col gap-8" onSubmit={onSubmit}>
-            <h1 className="text-xl font-semibold">Crear nuevo profesor</h1>
+            <h1 className="text-xl font-semibold">
+                {type === "create" ? "Crear nuevo profesor" : "Actualizar profesor"}
+            </h1>
+
+            {/* AUTH INFO */}
             <span className="text-xs text-gray-400 font-medium">Informacion de Autentificacion</span>
 
-            <div className="flex flex-col gap-2 w-full md:w-1/4">
-                <label className="text-xs text-gray-500">Nombre de usuario</label>
-                <input type="text"
-                    {...register("username")}
-                    className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+            <div className="flex justify-between gap-4 flex-wrap">
+
+                <InputField
+                    label="Nombre de usuario"
+                    name="username"
+                    defaultValue={data?.username}
+                    register={register}
+                    error={errors.username}
+                />
+                <InputField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    defaultValue={data?.email}
+                    register={register}
+                    error={errors.email}
+                />
+                <InputField
+                    label="Contrasenia"
+                    name="password"
+                    type="password"
+                    defaultValue={data?.password}
+                    register={register}
+                    error={errors.password}
                 />
 
-                {errors.username?.message && <p className="text-xs text-red-400">{errors.username?.message.toString()}</p>}
             </div>
 
+            {/* PERSONAL INFO */}
             <span className="text-xs text-gray-400 font-medium">
                 Informacion Personal
             </span>
 
+            <div className="flex justify-between gap-4 flex-wrap">
+                <InputField
+                    label="Nombre"
+                    name="firstName"
+                    defaultValue={data?.firstName}
+                    register={register}
+                    error={errors.firstName}
+                />
+                <InputField
+                    label="Apellido"
+                    name="lastName"
+                    defaultValue={data?.lastName}
+                    register={register}
+                    error={errors.lastName}
+                />
+                <InputField
+                    label="Teléfono"
+                    name="phone"
+                    defaultValue={data?.phone}
+                    register={register}
+                    error={errors.phone}
+                />
+
+                {/* SELECT SEX */}
+                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
+                    <label className="text-xs text-gray-500">Sexo</label>
+                    <select
+                        {...register("sex")}
+                        defaultValue={data?.sex}
+                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full "
+                    >
+                        <option value="">Seleccionar</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Femenino">Femenino</option>
+                    </select>
+                    {errors.sex && <p className="text-red-500 text-xs">{errors.sex.message as string}</p>}
+                </div>
+
+                {/* SELECT ROLE */}
+                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
+                    <label className="text-xs text-gray-500">Rol</label>
+                    <select
+                        {...register("role")}
+                        defaultValue={data?.role}
+                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full "
+                    >
+                        <option value="">Seleccionar</option>
+                        <option value="Director de Proyecto">Director de Proyecto</option>
+                        <option value="Tutor">Tutor</option>
+                        <option value="Docente">Docente</option>
+                    </select>
+                    {errors.role && <p className="text-red-500 text-xs">{errors.role.message as string}</p>}
+                </div>
+
+                {/* UPLOAD IMAGE */}
+                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
+                    <label className="text-xs text-gray-500 flex items-center gap-2 cursos-pointer" htmlFor="img">
+                        <Image src={uploadImage} alt="subir imagen" width={28} height={28} />
+                        <span>Subir Foto</span>
+                    </label>
+                    <input
+                        type="file"
+                        id="img"
+                        accept="image/*"
+                        {...register("img")}
+                        className="hidden"
+                    />
+                    {errors.img && <p className="text-red-500 text-xs">{errors.img.message as string}</p>}
+                </div>
+            </div>
+
+            {/* BUTTON */}
             <button className="bg-blue-400 text-white p-2 rounded-md">
-                {type === "create" ? "Create" : "Update"}
+                {type === "create" ? "Crear" : "Actualizar"}
             </button>
         </form>
     );
