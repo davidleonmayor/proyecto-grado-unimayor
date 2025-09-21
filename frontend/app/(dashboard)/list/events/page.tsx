@@ -7,8 +7,8 @@ import Pagination from "@/app/components/Pagination";
 import Table from "@/app/components/Table";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
-import deleteImage from "@/public/delete.png";
 import { role, calendarEvents } from "@/app/lib/data";
+import FormModal from "@/app/components/FormModal";
 
 const columns = [
   { header: "Evento", accesor: "title" },
@@ -54,15 +54,11 @@ const EventListPage = () => {
         </td>
         <td>
           <div className="flex items-center gap-2">
-            <Link href={`/list/events/${item.title}`}>
-              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EAFBFD]">
-                <Image src={viewImage} alt="" width={16} height={16} />
-              </button>
-            </Link>
             {role === "admin" && (
-              <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-                <Image src={deleteImage} alt="" width={16} height={16} />
-              </button>
+              <>
+                <FormModal table="event" type="update" data={item} />
+                <FormModal table="event" type="delete" id={item.id} />
+              </>
             )}
           </div>
         </td>
@@ -85,9 +81,9 @@ const EventListPage = () => {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
               <Image src={sortImage} alt="" width={14} height={14} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
-              <Image src={plusImage} alt="" width={14} height={14} />
-            </button>
+            {role === "admin" && (
+              <FormModal table="event" type="create" />
+            )}
           </div>
         </div>
       </div>

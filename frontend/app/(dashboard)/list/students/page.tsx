@@ -52,11 +52,16 @@ const StudentListPage = () => {
       <td className="hidden md:table-cell">{item.estado}</td>
       <td>
         <div className="flex items-center gap-2">
+          <Link href={`/list/students/${item.id}`}>
+            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-pastelBlue">
+              <Image src={viewImage} alt="" width={16} height={16} />
+            </button>
+          </Link>
           {role === 'admin' && (
-            <>
-              <FormModal table="student" type="update" data={item} />
-              <FormModal table="student" type="delete" id={item.id} />
-            </>
+            // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
+            //     <Image src={deleteImage} alt="" width={16} height={16} />
+            // </button>
+            <FormModal table="student" type="delete" id={item.id} />
           )}
         </div>
       </td>
@@ -83,7 +88,7 @@ const StudentListPage = () => {
               // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
               //     <Image src={deleteImage} alt="" width={16} height={16} />
               // </button>
-              <FormModal table="teacher" type="create" />
+              <FormModal table="teacher" type="create"/>
             )}
           </div>
         </div>
