@@ -146,5 +146,113 @@ export const calendarEvents = [
     start: new Date(2025, 8, 15, 15, 0),
     end: new Date(2025, 8, 15, 16, 0),
   },
-]
+
+  {
+    title: "Reunión de inicio de semana",
+    allDay: false,
+    start: new Date(2025, 8, 22, 8, 0),
+    end: new Date(2025, 8, 22, 9, 0),
+  },
+  {
+    title: "Sesión de seguimiento con estudiantes",
+    allDay: false,
+    start: new Date(2025, 8, 22, 10, 0),
+    end: new Date(2025, 8, 22, 11, 30),
+  },
+  {
+    title: "Espacio libre / preparación documentos",
+    allDay: false,
+    start: new Date(2025, 8, 22, 12, 30),
+    end: new Date(2025, 8, 22, 13, 30),
+  },
+  {
+    title: "Charla motivacional invitados externos",
+    allDay: false,
+    start: new Date(2025, 8, 22, 15, 0),
+    end: new Date(2025, 8, 22, 16, 0),
+  },
+
+  {
+    title: "Entrega de documentos administrativos",
+    allDay: false,
+    start: new Date(2025, 8, 23, 8, 0),
+    end: new Date(2025, 8, 23, 9, 0),
+  },
+  {
+    title: "Revisión de proyectos atrasados",
+    allDay: false,
+    start: new Date(2025, 8, 23, 11, 0),
+    end: new Date(2025, 8, 23, 12, 0),
+  },
+  {
+    title: "Almuerzo de integración",
+    allDay: false,
+    start: new Date(2025, 8, 23, 12, 30),
+    end: new Date(2025, 8, 23, 13, 30),
+  },
+  {
+    title: "Sesión práctica de presentación oral",
+    allDay: false,
+    start: new Date(2025, 8, 23, 15, 0),
+    end: new Date(2025, 8, 23, 16, 30),
+  },
+
+  {
+    title: "Taller intensivo de metodología",
+    allDay: false,
+    start: new Date(2025, 8, 24, 9, 0),
+    end: new Date(2025, 8, 24, 11, 0),
+  },
+  {
+    title: "Espacio libre",
+    allDay: false,
+    start: new Date(2025, 8, 24, 11, 0),
+    end: new Date(2025, 8, 24, 12, 0),
+  },
+  {
+    title: "Reunión de coordinación general",
+    allDay: false,
+    start: new Date(2025, 8, 24, 14, 0),
+    end: new Date(2025, 8, 24, 15, 30),
+  },
+
+  {
+    title: "Entrega final de capítulos",
+    allDay: false,
+    start: new Date(2025, 8, 25, 8, 30),
+    end: new Date(2025, 8, 25, 10, 0),
+  },
+  {
+    title: "Retroalimentación con docentes",
+    allDay: false,
+    start: new Date(2025, 8, 25, 11, 0),
+    end: new Date(2025, 8, 25, 12, 30),
+  },
+  {
+    title: "Espacio de trabajo independiente",
+    allDay: false,
+    start: new Date(2025, 8, 25, 14, 0),
+    end: new Date(2025, 8, 25, 15, 0),
+  },
+
+  {
+    title: "Simulación de sustentación",
+    allDay: false,
+    start: new Date(2025, 8, 26, 9, 0),
+    end: new Date(2025, 8, 26, 11, 0),
+  },
+  {
+    title: "Almuerzo libre",
+    allDay: false,
+    start: new Date(2025, 8, 26, 12, 0),
+    end: new Date(2025, 8, 26, 13, 0),
+  },
+  {
+    title: "Cierre de semana - reunión general",
+    allDay: false,
+    start: new Date(2025, 8, 26, 15, 0),
+    end: new Date(2025, 8, 26, 16, 30),
+  },
+];
+
 
