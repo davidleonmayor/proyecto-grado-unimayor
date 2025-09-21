@@ -9,6 +9,7 @@ import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
 import { role, teachersData } from "@/app/lib/data";
+import FormModal from "@/app/components/FormModal";
 
 type Teacher = {
     id: number;
@@ -53,14 +54,12 @@ const TeacherListPage = () => {
             <td className="hidden md:table-cell">{item.rol}</td>
             <td>
                 <div className="flex items-center gap-2">
-                    <Link href={`/list/teachers/${item.id}`}>
-                        <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EAFBFD]">
-                            <Image src={viewImage} alt="" width={16} height={16} />
-                        </button>
-                    </Link>
-                    {role === 'admin' && (<button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-                        <Image src={deleteImage} alt="" width={16} height={16} />
-                    </button>)}
+                    {role === 'admin' && (
+                        <>
+                            <FormModal table="teacher" type="update" data={item} />
+                            <FormModal table="teacher" type="delete" id={item.id} />
+                        </>
+                    )}
                 </div>
             </td>
         </tr>
@@ -80,9 +79,12 @@ const TeacherListPage = () => {
                         <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
                             <Image src={sortImage} alt="" width={14} height={14} />
                         </button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
-                            <Image src={plusImage} alt="" width={14} height={14} />
-                        </button>
+                        {role === 'admin' && (
+                            // <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
+                            //     <Image src={plusImage} alt="" width={14} height={14} />
+                            // </button>
+                            <FormModal table="teacher" type="create" />
+                        )}
                     </div>
                 </div>
             </div>

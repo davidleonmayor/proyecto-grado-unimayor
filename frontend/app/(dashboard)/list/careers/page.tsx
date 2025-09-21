@@ -9,6 +9,7 @@ import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
 import { role, careersData } from "@/app/lib/data";
+import FormModal from "@/app/components/FormModal";
 
 type Career = {
   id: number;
@@ -31,15 +32,14 @@ const CareersListPage = () => {
       <td className="hidden md:table-cell">{item.codigo}</td>
       <td>
         <div className="flex items-center gap-2">
-          <Link href={`/list/careers/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EAFBFD]">
-              <Image src={viewImage} alt="" width={16} height={16} />
-            </button>
-          </Link>
-          {role === "admin" && (
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-              <Image src={deleteImage} alt="" width={16} height={16} />
-            </button>
+          {role === 'admin' && (
+            // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
+            //     <Image src={deleteImage} alt="" width={16} height={16} />
+            // </button>
+            <>
+              <FormModal table="career" type="update" data={item} />
+              <FormModal table="career" type="delete" id={item.id} />
+            </>
           )}
         </div>
       </td>
@@ -62,9 +62,12 @@ const CareersListPage = () => {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
               <Image src={sortImage} alt="" width={14} height={14} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
-              <Image src={plusImage} alt="" width={14} height={14} />
-            </button>
+            {role === 'admin' && (
+              // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
+              //     <Image src={deleteImage} alt="" width={16} height={16} />
+              // </button>
+              <FormModal table="teacher" type="create" />
+            )}
           </div>
         </div>
       </div>

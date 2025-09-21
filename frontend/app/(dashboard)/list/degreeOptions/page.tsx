@@ -9,6 +9,7 @@ import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
 import { role, degreeOptionsData } from "@/app/lib/data";
+import FormModal from "@/app/components/FormModal";
 
 type DegreeOption = {
   id: number;
@@ -40,15 +41,11 @@ const DegreeOptionsListPage = () => {
       </td>
       <td>
         <div className="flex items-center gap-2">
-          <Link href={`/list/degree-options/${item.id}`}>
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EAFBFD]">
-              <Image src={viewImage} alt="" width={16} height={16} />
-            </button>
-          </Link>
-          {role === "admin" && (
-            <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-              <Image src={deleteImage} alt="" width={16} height={16} />
-            </button>
+          {role === 'admin' && (
+            <>
+              <FormModal table="degreeOption" type="update" data={item} />
+              <FormModal table="degreeOption" type="delete" id={item.id} />
+            </>
           )}
         </div>
       </td>
@@ -71,9 +68,12 @@ const DegreeOptionsListPage = () => {
             <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
               <Image src={sortImage} alt="" width={14} height={14} />
             </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal">
-              <Image src={plusImage} alt="" width={14} height={14} />
-            </button>
+            {role === 'admin' && (
+              // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
+              //     <Image src={deleteImage} alt="" width={16} height={16} />
+              // </button>
+              <FormModal table="degreeOption" type="delete" />
+            )}
           </div>
         </div>
       </div>
