@@ -33,9 +33,6 @@ const CareersListPage = () => {
       <td>
         <div className="flex items-center gap-2">
           {role === 'admin' && (
-            // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-            //     <Image src={deleteImage} alt="" width={16} height={16} />
-            // </button>
             <>
               <FormModal table="career" type="update" data={item} />
               <FormModal table="career" type="delete" id={item.id} />
