@@ -10,7 +10,7 @@ const menuItems = [
         icon: "/home.png",
         label: "Inicio",
         href: "/",
-        visible: ["admin", "teacher", "dean"],
+        visible: ["admin", "teacher", "dean", "student"],
       },
       {
         icon: "/teacher.png",
@@ -27,7 +27,7 @@ const menuItems = [
       {
         icon: "/project.png",
         label: "Proyectos de Grado",
-        href: "/list/projects",
+        href: "/list/degreeOptions",
         visible: ["admin", "teacher", "dean"],
       },
       {

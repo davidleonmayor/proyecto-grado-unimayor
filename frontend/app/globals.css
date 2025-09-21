@@ -8,6 +8,11 @@
   --color-tertiary: #a2a1f0;
   --color-approved: #0ea5e9;
   --color-rejected: #f44336;
+  --color-pastelBlue: #90D7F9;
+  --color-pastelPurple: #DB90F9;
+  --color-pastelYellow: #F9F390;
+  --color-pastelGreen: #C1F990;
+  --color-pastelRed: #F99090;
 }
 
 .react-calendar {
