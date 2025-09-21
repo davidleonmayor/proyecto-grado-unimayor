@@ -8,6 +8,7 @@ import singleBranch from "@/public/singleBranch.png";
 import singleClass from "@/public/singleClass.png";
 import singleLesson from "@/public/singleLesson.png";
 import BigCalendar from "@/app/components/BigCalendar";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import Announcement from "@/app/components/Announcement";
 import Link from "next/link";
 import Performance from "@/app/components/Performance";

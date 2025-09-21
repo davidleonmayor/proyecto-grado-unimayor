@@ -8,7 +8,7 @@ import { JSX, useState } from "react";
 
 const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
     loading: () => <p>cargando...</p>,
-});   
+});
 
 const StudentForm = dynamic(() => import("./forms/StudentForm"), {
     loading: () => <p>cargando...</p>,
@@ -20,7 +20,7 @@ const forms:{[key: string]:(type:"create"|"update", data?:any)=> JSX.Element;
     teacher: (type, data) => <TeacherForm type={type} data={data} />,
     student: (type, data) => <StudentForm type={type} data={data} />,
 };
-    
+
 
 const FormModal = ({ table, type, data, id }:
     {

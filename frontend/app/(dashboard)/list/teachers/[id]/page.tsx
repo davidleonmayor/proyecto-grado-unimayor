@@ -8,6 +8,7 @@ import singleBranch from "@/public/singleBranch.png";
 import singleClass from "@/public/singleClass.png";
 import singleLesson from "@/public/singleLesson.png";
 import BigCalendar from "@/app/components/BigCalendar";
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import Announcement from "@/app/components/Announcement";
 import Link from "next/link";
 import Performance from "@/app/components/Performance";
@@ -63,7 +64,7 @@ const SingleTeacherPage = () => {
                                     />
                                     <span>Ingreso: Agosto 2020</span>
                                 </div>
-                                <div className="w-full md:w-1/3 lg:w-full 2xl:w-1/3 flex items-center gap-2">
+                                <div className="w-full md:w-1/3 lg:w- 2xl:w-1/3 flex items-center gap-2">
                                     <Image
                                         src={emailImage}
                                         alt="email icon"
