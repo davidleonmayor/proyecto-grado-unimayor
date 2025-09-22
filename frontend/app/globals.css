@@ -3,6 +3,8 @@
 
 @theme {
   --color-principal: #fcdf5d;
+  --color-principalDark: #FACD05;
+  --color-principal: #fcdf5d;
   --color-secondary: #0ea5e9;
   --color-hoverColor: #94d6f5;
   --color-tertiary: #a2a1f0;

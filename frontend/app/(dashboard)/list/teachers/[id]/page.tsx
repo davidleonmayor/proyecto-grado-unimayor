@@ -1,5 +1,4 @@
 import Image from "next/image";
-import bloodImage from "@/public/blood.png";
 import dateImage from "@/public/date.png";
 import phoneImage from "@/public/phone.png";
 import emailImage from "@/public/mail.png";

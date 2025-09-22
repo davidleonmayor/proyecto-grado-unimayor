@@ -1,5 +1,4 @@
 import Image from "next/image";
-import bloodImage from "@/public/blood.png";
 import dateImage from "@/public/date.png";
 import phoneImage from "@/public/phone.png";
 import emailImage from "@/public/mail.png";
@@ -12,6 +11,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import Announcement from "@/app/components/Announcement";
 import Link from "next/link";
 import Performance from "@/app/components/Performance";
+import FormModal from "@/app/components/FormModal";
 
 const SingleStudentPage = () => {
 
@@ -35,8 +35,19 @@ const SingleStudentPage = () => {
                                 className="w-36 h-36 rounded-full object-cover"
                             />
                         </div>
-                        <div className="w-2/3 flex flex-col justify-between gap-4">
+                        <div className="w-2/3 flex flex-col justify-between gap-4 flex-wrap">
                             <h1 className="text-xl font-semibold">David Castillo</h1>
+                            <FormModal type="update" table="student" data={{
+                                id: 2,
+                                username: "David Castillo",
+                                email: "david.castillo@unimayor.edu.co",
+                                password:"1234567",
+                                img:
+                                    "https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200",
+                                carrera: "Tecnología en Desarrollo de Software",
+                                opcionGrado: "Pasantía",
+                                status: "En revisión"
+                            }} />
                             <p className="text-sm text-gray-500">
                                 Estudiante de Tecnologia en Desarrollo de Software, actualmente en proceso de
                                 opción de grado mediante Trabajo de Aplicación.

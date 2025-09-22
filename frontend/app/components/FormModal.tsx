@@ -56,7 +56,7 @@ const FormModal = ({ table, type, data, id }:
 
     return (
         <>
-            <button className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
+            <button className={`${size} flex items-center justify-center rounded-full ${bgColor} cursor-pointer`}
                 onClick={() => setOpen(true)}
             >
                 <Image src={`/${type}.png`} alt="" width={16} height={16} />

@@ -127,7 +127,7 @@ const StudentForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
           {errors.sex && <p className="text-red-500 text-xs">{errors.sex.message as string}</p>}
         </div>
 
-        {/* ROLE - Siempre será Estudiante */}
+        {/* ROLE */}
         <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
           <label className="text-xs text-gray-500">Rol</label>
           <input

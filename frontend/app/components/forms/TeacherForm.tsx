@@ -173,7 +173,7 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
             </div>
 
             {/* BUTTON */}
-            <button className="bg-blue-400 text-white p-2 rounded-md">
+            <button className="bg-blue-400 text-white p-2 rounded-md hover:bg-blue-700">
                 {type === "create" ? "Crear" : "Actualizar"}
             </button>
         </form>
