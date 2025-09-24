@@ -1,0 +1,25 @@
+---
+import ProductiveImg from '../assets/illustration-stay-productive.png'
+import { Image } from 'astro:assets';
+---
+
+<section class="mb-10 pt-28">
+    <div class="container md:grid md:grid-cols-2 md:gap-8 mx-auto text-center">
+        <Image class="mb-4" src={ProductiveImg} alt="Productive Img"/>
+        <div class="md:self-center">
+            <h2 class="mb-4 text-2xl font-700 md:text-3xl">Mantente productivo, desde donde tu quieras</h2>
+            <p class="mb-4">
+                Con nuestro sistema no tendras que preocuparte por perdidas o daños, puede consultar
+                toda la información desde donde tu quieras con la seguridad de que todo este en orden.
+            </p>
+            <p class="mb-4">
+                Todo acerca de los proyectos de grado en un solo lugar. Facil, efectivo y en orden.
+            </p>
+            <a href="#"
+            class="group items-center relative flex justify-start gap-2 w-fit text-accent-100 transition-colors duration-300 hover:text-white after:absolute after:bottom-0 after:h-[1.5px] after:w-full after:bg-accent-100 hover:after:bg-white">
+                <span>Mira como funciona nuestro sistema</span>
+                <i class="fas fa-arrow-right size-4 translate-y-[.2rem] rounded-full bg-accent-100 text-center text-[.6rem] leading-4 text-black transition-colors duration-300 group-hover:bg-white"></i>
+            </a>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,36 @@
+---
+import { Image } from "astro:assets";
+import Access from '../assets/icon-access-anywhere.svg'
+import Security from '../assets/icon-security.svg'
+import Collab from '../assets/icon-collaboration.svg'
+import File from '../assets/icon-any-file.svg'
+import FeatureCard from "./FeatureCard.astro";
+---
+
+<section class="max-w-[900px] mx-auto mt-28">
+    <div class="container md:grid md:grid-cols-2 md:gap-24">
+        <FeatureCard 
+        image={Access}
+        title="Accede a los expedientes cuando quieras."
+        text="La habilidad de consultar los trabajos de grado desde donde quieras cuando tu quieras."
+        alt="Access"/>
+
+        <FeatureCard 
+        image={Security}
+        title="Seguridad e Integridad"
+        text="Mantiene la informacion de los trabajos de grado segura sin perdida alguna de información"
+        alt="Security"/>
+
+        <FeatureCard
+        image={Collab}
+        title="Actualización en tiempo real"
+        text="Permite subir los seguimientos de los trabajos de grado en tiempo real."
+        alt="Collab"/>
+
+        <FeatureCard
+        image={File}
+        title="Guarda cualquier tipo de trabajo de grado"
+        text="Nuestro sistema soporta cualquier tipo de trabajo de grado con su respectiva información"
+        alt="File"/>
+    </div>
+</section>
