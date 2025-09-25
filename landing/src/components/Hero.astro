@@ -1,0 +1,112 @@
+---
+import HeroImg from '../assets/illustration-intro.png'
+import { Image } from 'astro:assets';
+import img1 from "../assets/img1.jpg";
+import img2 from '../assets/img2.jpg';
+import img3 from '../assets/img3.jpg';
+import img5 from '../assets/img5.jpg';
+import img6 from '../assets/img6.jpg';
+---
+
+<section class="relative font-secondary">
+  <div class="hero-bg"></div>
+  <div class="container max-w-[600px] pt-10 mx-auto text-center">
+
+    <!-- CARRUSEL -->
+    <div id="default-carousel" class="relative w-full" data-carousel="slide">
+      <!-- Carousel wrapper -->
+      <div class="relative h-56 overflow-hidden rounded-lg md:h-96">
+        <!-- Item 1 (visible al inicio) -->
+        <div class="duration-700 ease-in-out" data-carousel-item="active">
+          <Image src={img1} alt="Imagen 1" class="w-full h-full object-cover" />
+        </div>
+        <!-- Item 2 -->
+        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+          <Image src={img2} alt="Imagen 2" class="w-full h-full object-cover" />
+        </div>
+        <!-- Item 3 -->
+        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+          <Image src={img3} alt="Imagen 3" class="w-full h-full object-cover" />
+        </div>
+        <!-- Item 4 -->
+        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+          <Image src={img5} alt="Imagen 4" class="w-full h-full object-cover" />
+        </div>
+        <!-- Item 5 -->
+        <div class="hidden duration-700 ease-in-out" data-carousel-item>
+          <Image src={img6} alt="Imagen 5" class="w-full h-full object-cover" />
+        </div>
+      </div>
+
+      <!-- Slider indicators -->
+      <div class="absolute z-30 flex -translate-x-1/2 bottom-5 left-1/2 space-x-3 rtl:space-x-reverse">
+        <button type="button" class="w-3 h-3 rounded-full" aria-label="Slide 1" data-carousel-slide-to="0"></button>
+        <button type="button" class="w-3 h-3 rounded-full" aria-label="Slide 2" data-carousel-slide-to="1"></button>
+        <button type="button" class="w-3 h-3 rounded-full" aria-label="Slide 3" data-carousel-slide-to="2"></button>
+        <button type="button" class="w-3 h-3 rounded-full" aria-label="Slide 4" data-carousel-slide-to="3"></button>
+        <button type="button" class="w-3 h-3 rounded-full" aria-label="Slide 5" data-carousel-slide-to="4"></button>
+      </div>
+
+      <!-- Slider controls -->
+      <button type="button" class="absolute top-0 start-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-prev>
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 group-hover:bg-white/50">
+          <svg class="w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 1 1 5l4 4"/>
+          </svg>
+          <span class="sr-only">Anterior</span>
+        </span>
+      </button>
+      <button type="button" class="absolute top-0 end-0 z-30 flex items-center justify-center h-full px-4 cursor-pointer group focus:outline-none" data-carousel-next>
+        <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/30 group-hover:bg-white/50">
+          <svg class="w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+          </svg>
+          <span class="sr-only">Siguiente</span>
+        </span>
+      </button>
+    </div>
+
+    <!-- Texto debajo del carrusel -->
+    <div class="text-center mt-6">
+      <h1 class="mb-4 text-3xl font-bold md:text-4xl">
+        Todos los expedientes de proyectos de grado en una ubicación segura, fácil de manejar y muy bien ordenado.
+      </h1>
+      <p class="mb-4">
+        El gestor de proyectos de grado te ayudará a guardar, organizar y consultar todo acerca de los trabajos de grado de los estudiantes.
+      </p>
+      <button 
+        class="relative rounded-full bg-gradient-to-tr from-accent-100 to-accent-200 px-12 py-3 font-bold text-white overflow-hidden
+        after:content-[''] after:absolute after:inset-0 after:rounded-full
+        after:bg-white/0 after:transition-all after:duration-300 hover:after:bg-white/30">
+        <span class="relative z-10">Empieza Ahora</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<style>
+.hero-bg {
+  background: hsl(217, 28%, 15%) url(../assets/bg-curvy-mobile.svg);
+  background-repeat: no-repeat;
+  background-position: bottom center;
+  background-size: contain;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  bottom: 14rem;
+  z-index: -1;
+}
+
+@media (min-width: 768px) {
+  .hero-bg {
+    background: hsl(217, 28%, 15%) url(../assets/bg-curvy-desktop.svg);
+    background-repeat: no-repeat;
+    background-position: bottom center;
+    background-size: 100% 279px;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    bottom: 0;
+  }
+}
+</style>

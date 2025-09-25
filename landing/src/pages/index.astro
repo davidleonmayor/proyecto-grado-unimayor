@@ -1,0 +1,17 @@
+---
+import '../styles/global.css';
+import MainLayout from '../layout/MainLayout.astro';
+import Hero from '../components/Hero.astro';
+import Features from '../components/Features.astro';
+import Productive from '../components/Productive.astro';
+import Testimonial from '../components/Testimonial.astro';
+import Newsletter from '../components/Newsletter';
+---
+
+<MainLayout>
+	<Hero/>
+	<Features/>
+	<Productive/>
+	<Testimonial/>
+	<Newsletter client:visible/>
+</MainLayout>
