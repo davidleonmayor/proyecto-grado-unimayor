@@ -45,7 +45,8 @@ export const MessageForm = () => {
     const onSubmit = async (data: FormValues, action: "generar" | "enviar") => {
         if (action === "enviar") {
             try {
-                const response = await fetch("http://localhost:4000/api/send-email", {
+                // const response = await fetch("http://localhost:4000/api/send-email", {
+                const response = await fetch("https://tempback-proyecto.onrender.com/api/send-email", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
