@@ -1,0 +1,150 @@
+---
+import Monolithic from "../assets/Monolithic-Architecture.webp";
+import ClientServer from "../assets/client-server.webp";
+import NTier from "../assets/n-tier-logical.svg";
+import ServiceOriented from "../assets/service-oriented.jpg";
+import Microservices from "../assets/microservices.webp";
+import EventDriven from "../assets/Event-Driven-Architecture-diagram.webp";
+import CloudNative from "../assets/cloud-native.png";
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Computer System Evolution</title>
+
+    <style>
+      body {
+        font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS",
+          sans-serif;
+      }
+
+      img {
+        width: 300px;
+        height: 200px;
+      }
+
+      .content-table {
+        border-collapse: collapse;
+        margin: 4rem auto;
+        font-size: 0.9em;
+        min-width: 400px;
+        border-radius: 5px 5px 0 0;
+        overflow: hidden;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.35);
+      }
+
+      .content-table thead tr {
+        background-color: #006098;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      .content-table thead tr:first-of-type {
+        background-color: #014f7c;
+      }
+
+      .content-table th,
+      .content-table td {
+        padding: 12px 15px;
+      }
+
+      .content-table tbody td {
+        text-align: center;
+        border-bottom: 1px solid #dddddd;
+        border-right: 1px solid #dddddd;
+      }
+
+      .content-table tbody tr:nth-of-type(even) {
+        background-color: #f3f3f3;
+        font-weight: bolder;
+        color: #014f7c;
+      }
+
+      .content-table tbody tr:last-of-type {
+        border-bottom: 2px solid #006098;
+      }
+    </style>
+  </head>
+
+  <body>
+    <table class="content-table">
+      <thead>
+        <tr>
+          <th colspan="3">Computer System Evolution</th>
+        </tr>
+        <tr>
+          <th>System</th>
+          <th>Concept</th>
+          <th>Image</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td>Monolithic</td>
+          <td>
+            In software engineering, a monolithic architecture refers to an
+            application built as a single, indivisible unit...
+          </td>
+          <td><img src={Monolithic.src} alt="Monolithic Image" loading="lazy" /></td>
+        </tr>
+
+        <tr>
+          <td>Client-Server</td>
+          <td>
+            Splits the system into two parts: the client (user interface) and
+            the server (data and logic).
+          </td>
+          <td><img src={ClientServer.src} alt="Client-Server Image" loading="lazy" /></td>
+        </tr>
+
+        <tr>
+          <td>N-Tier (Layered)</td>
+          <td>
+            Divides the system into multiple layers: presentation, business
+            logic, and data.
+          </td>
+          <td><img src={NTier.src} alt="N-Tier Image" loading="lazy" /></td>
+        </tr>
+
+        <tr>
+          <td>Service-Oriented</td>
+          <td>
+            Applications are designed as reusable services that communicate
+            using standard protocols (e.g., SOAP, XML).
+          </td>
+          <td><img src={ServiceOriented.src} alt="Service-Oriented Image" loading="lazy" /></td>
+        </tr>
+
+        <tr>
+          <td>Microservices</td>
+          <td>
+            Microservices are an architectural style for building applications
+            as a collection of independent, small, and self-contained services.
+          </td>
+          <td><img src={Microservices.src} alt="Microservices Image" loading="lazy" /></td>
+        </tr>
+
+        <tr>
+          <td>Event-Driven</td>
+          <td>
+            Components communicate by producing and reacting to events
+            asynchronously, allowing scalability and real-time responses.
+          </td>
+          <td><img src={EventDriven.src} alt="Event-Driven Image" loading="lazy" /></td>
+        </tr>
+
+        <tr>
+          <td>Cloud-Native / Serverless</td>
+          <td>
+            Applications designed for the cloud, often using serverless
+            functions (e.g., AWS Lambda) without managing servers directly.
+          </td>
+          <td><img src={CloudNative.src} alt="Cloud-Native Image" loading="lazy" /></td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
