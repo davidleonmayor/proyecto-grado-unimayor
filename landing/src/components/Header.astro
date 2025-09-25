@@ -1,0 +1,16 @@
+---
+import { Image } from 'astro:assets'
+import Navbar from '../components/Navbar.astro'
+import Logo from '../assets/Header.png'
+---
+
+<header class="bg-primary-100">
+    <div class="item-center w-full flex justify-between py-4 px-6">
+        <a href="#">
+            <!-- <Image src={Logo} alt="Logo" /> -->
+             <h2 class="text-xl font-bold">Gestor de Proyectos</h2> 
+        </a>
+
+        <Navbar/>
+    </div>
+</header>

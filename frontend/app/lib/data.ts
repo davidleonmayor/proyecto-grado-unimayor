@@ -2,7 +2,15 @@
 
 export let role = "admin";
 
-export const careersData = [
+export interface CareerData {
+    id:number;
+    nombre: "Ingeniería Multimedia" | "Tecnología en Desarrollo de Software" | "Ingeniería Informática";
+    codigo:string;
+}
+
+
+
+export const careersData:CareerData[] = [
   {
     id: 1,
     nombre: "Ingeniería Multimedia",
@@ -254,5 +262,4 @@ export const calendarEvents = [
     end: new Date(2025, 8, 26, 16, 30),
   },
 ];
-
 

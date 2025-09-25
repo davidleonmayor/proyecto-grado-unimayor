@@ -1,0 +1,21 @@
+---
+const navItems = [
+    {name: "Caracteristicas", href: "#caracteristicas"},
+    {name: "Equipo", href: "#equipo"},
+    {name: "Iniciar Sesion", href: "https://proyecto-grado-unimayor.vercel.app/admin"},
+]
+---
+
+
+<nav>
+    <ul class="flex items-center gap-8">
+        {
+            navItems.map((item) => (
+                <li>
+                    <a class="text-accent-400 transition-colors duration-300 hover:text-white" href={item.href}>{item.name}</a>
+                </li>
+            ))
+        }
+
+    </ul>
+</nav>
