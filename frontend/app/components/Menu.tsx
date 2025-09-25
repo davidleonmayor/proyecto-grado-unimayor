@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { role } from "../lib/data";
 
+
 const menuItems = [
   {
     title: "MENÚ",
@@ -58,6 +59,12 @@ const menuItems = [
         icon: "/calendar.png",
         label: "Eventos",
         href: "/list/events",
+        visible: ["student", "teacher", "dean", "admin"],
+      },
+      {
+        icon: "/plane.svg",
+        label: "Envi",
+        href: "/list/messages",
         visible: ["student", "teacher", "dean", "admin"],
       },
       {
