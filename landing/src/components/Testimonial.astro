@@ -1,0 +1,52 @@
+---
+import Quote from '../assets/bg-quotes.png'
+import { Image } from 'astro:assets';
+import Profile1 from '../assets/profile-1.jpg'
+import Profile2 from '../assets/profile-2.jpg'
+import Profile3 from '../assets/profile-3.jpg'
+
+const testimonialData = [
+    {
+        text: "Este gestor ha mejorado mi rapidez a la hora de calificar y consultar los proyectos de grado de mis estudiantes",
+        name: "Jesus David Leon",
+        image: Profile1,
+        position: "Fundador de Citria"
+    },
+    {
+        text: "Gracias a este sistema no me preocupo que mis expedientes fisicos se pierdan o se dañen ya que los tengo digitalizados y guardados.",
+        name: "Santiago Torres",
+        image: Profile2,
+        position: "CEO de Citria"
+    },
+    {
+        text: "Puedo realizar todos los seguimientos de miles de proyectos de grado sin que colapse de información, bastante amplia y funcional",
+        name: "Gabriela Orozco",
+        image: Profile3,
+        position: "Lider de proyectos"
+    }
+]
+---
+
+<section class="pt-28" id="equipo">
+    <div class="container mx-auto text-center">
+        <div class="relative z-20 md:grid md:grid-cols-3 md:gap-6 ">
+            <Image class="absolute top-[-2rem] -z-10" src={Quote} alt="Quote"/>
+
+            {testimonialData.map((review) => (
+                <div class="mb-8 rounded-lg bg-primary-400 px-6 pb-6 pt-8 md:mb-0">
+                    <p class="mb-4 leading-7">{review.text}</p>
+                    <div class="flex items-center justify-start gap-4">
+                        <Image class="size-[45px] rounded-full" 
+                        src={review.image} 
+                        alt={review.text}/>
+
+                        <div>
+                            <h4 class="font-700">{review.name}</h4>
+                            <span class="text-sm">{review.position}</span>
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
+    </div>
+</section>
