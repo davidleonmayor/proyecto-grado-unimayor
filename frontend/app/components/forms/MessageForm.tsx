@@ -53,7 +53,7 @@ export const MessageForm = () => {
                     body: JSON.stringify(data),
                 });
 
-                const result = await response.json(); // 👈 leer la respuesta del backend
+                const result = await response.json();
 
                 if (response.ok) {
                     Swal.fire({
@@ -67,7 +67,7 @@ export const MessageForm = () => {
                         title: "Error",
                         text: result.error || "No se pudo enviar el correo",
                     });
-                    console.error("Error en respuesta:", result); // 👈 log en consola
+                    console.error("Error en respuesta:", result); 
                 }
             } catch (error) {
                 Swal.fire({
@@ -75,7 +75,7 @@ export const MessageForm = () => {
                     title: "Error",
                     text: "Hubo un problema de conexión con el servidor",
                 });
-                console.error("Error de conexión:", error); // 👈 log en consola
+                console.error("Error de conexión:", error); 
             }
         }
     };
@@ -222,17 +222,11 @@ export const MessageForm = () => {
 
                 {/* Botones */}
                 <div className="flex gap-2">
-                    <button
-                        type="button"
-                        onClick={handleSubmit((data) => onSubmit(data, "generar"))}
-                        className="flex-1 bg-green-500 text-white py-1.5 rounded font-bold hover:bg-green-600"
-                    >
-                        Generar Documento
-                    </button>
+                   
                     <button
                         type="submit"
                         onClick={handleSubmit((data) => onSubmit(data, "enviar"))}
-                        className="flex-1 bg-blue-500 text-white py-1.5 rounded font-bold hover:bg-blue-600"
+                        className="flex-1 bg-blue-500 text-white py-1.5 rounded font-bold cursor-pointer hover:bg-blue-600"
                     >
                         Generar y Enviar
                     </button>
