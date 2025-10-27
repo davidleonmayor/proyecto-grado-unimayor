@@ -1,7 +1,6 @@
-import jwt from 'jsonwebtoken';
-import { envs } from '../../config';
-import { UUIDTypes } from 'uuid';
-
+import jwt from "jsonwebtoken";
+import { envs } from "../../config";
+import type { UUIDTypes } from "uuid";
 
 /**
  * Genera un token JWT para un usuario
@@ -10,15 +9,13 @@ import { UUIDTypes } from 'uuid';
  */
 
 export const generateJWT = (uid: UUIDTypes) => {
-    try {
-        const token = jwt.sign(
-            { uid },
-            envs.JWT_SECRET, {
-            expiresIn: '24h'
-        });
-        return token;
-    } catch (error) {
-        console.error('[generateJWT]: Error generating JWT:', error);
-        return null;
-    }
-}
+  try {
+    const token = jwt.sign({ uid }, envs.JWT_SECRET, {
+      expiresIn: "24h",
+    });
+    return token;
+  } catch (error) {
+    console.error("[generateJWT]: Error generating JWT:", error);
+    return null;
+  }
+};
