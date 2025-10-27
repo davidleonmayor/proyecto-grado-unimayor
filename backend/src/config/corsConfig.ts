@@ -1,8 +1,9 @@
-import type { CorsOptions } from "cors";
+import { CorsOptions } from "cors";
+import { envs } from "./envs";
 
 export const corsConfig: CorsOptions = {
   origin: function (origin: string | undefined, callback) {
-    const allowedOrigins = [process.env.FRONTEDN_URL];
+    const allowedOrigins = [envs.FRONTEND_URL];
 
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true); // Allow
