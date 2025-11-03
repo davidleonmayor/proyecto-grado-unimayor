@@ -32,30 +32,31 @@ export class AuthController {
         try {
             const { name, email, password } = req.body;
 
-            const existingUser = await this.authService.findUserByEmail(email);
-            if (existingUser) {
+            const existingPersona =
+                await this.authService.findUserByEmail(email);
+            if (existingPersona) {
                 return res.status(409).json({
                     error: "El usuario ya existe",
                 });
             }
 
-            const user = await this.authService.createUser(
+            const persona = await this.authService.createUser(
                 name,
                 email,
                 password,
             );
 
             // await AuthEmail.sendConfirmationEmail({
-            //     name: user.name,
-            //     email: user.email,
-            //     token: user.token,
+            //     name: persona.nombres,
+            //     email: persona.correo_electronico,
+            //     token: persona.token,
             // });
 
             // ✅ Devolver string directamente
             return res
                 .status(201)
                 .json(
-                    `Usuario creado correctamente, confirma tu cuenta. Token: ${user.token}`,
+                    `Usuario creado correctamente, confirma tu cuenta. Token: ${persona.token}`,
                 );
         } catch (error) {
             console.error("Error en register:", error);
@@ -75,19 +76,21 @@ export class AuthController {
                 return res.status(400).json({ error: "Token inválido" });
             }
 
-            const user = await prisma.user.findUnique({ where: { token } });
-            if (!user) {
+            const persona = await prisma.persona.findUnique({
+                where: { token },
+            });
+            if (!persona) {
                 return res.status(401).json({ error: "Token no válido" });
             }
 
-            if (user.confirmed) {
+            if (persona.confirmed) {
                 return res
                     .status(400)
                     .json({ error: "La cuenta ya está confirmada" });
             }
 
-            await prisma.user.update({
-                where: { id: user.id },
+            await prisma.persona.update({
+                where: { id_persona: persona.id_persona },
                 data: {
                     confirmed: true,
                     token: null,
@@ -109,17 +112,17 @@ export class AuthController {
         try {
             const { email, password } = req.body;
 
-            const userExists = await prisma.user.findUnique({
-                where: { email: email.toLowerCase() },
+            const personaExists = await prisma.persona.findUnique({
+                where: { correo_electronico: email.toLowerCase() },
             });
 
-            if (!userExists) {
+            if (!personaExists) {
                 return res.status(404).json({
                     error: "Usuario no encontrado",
                 });
             }
 
-            if (!userExists.confirmed) {
+            if (!personaExists.confirmed) {
                 return res.status(403).json({
                     error: "La cuenta no ha sido confirmada. Revisa tu email.",
                 });
@@ -127,7 +130,7 @@ export class AuthController {
 
             const isPasswordCorrect = await checkPassword(
                 password,
-                userExists.password,
+                personaExists.password,
             );
 
             if (!isPasswordCorrect) {
@@ -137,8 +140,8 @@ export class AuthController {
             }
 
             const token = generateJWT({
-                id: userExists.id,
-                email: userExists.email,
+                id: personaExists.id_persona,
+                email: personaExists.correo_electronico,
             });
 
             // ✅ Login devuelve el token como string (caso especial)
@@ -154,17 +157,19 @@ export class AuthController {
     async checkPasswordLogin(req: Request, res: Response, next: NextFunction) {
         try {
             const { password } = req.body;
-            const { id } = req.user;
+            const { id_persona } = req.user;
 
-            const user = await prisma.user.findUnique({ where: { id } });
+            const persona = await prisma.persona.findUnique({
+                where: { id_persona },
+            });
 
-            if (!user) {
+            if (!persona) {
                 return res.status(404).json({ error: "Usuario no encontrado" });
             }
 
             const isPasswordCorrect = await checkPassword(
                 password,
-                user.password,
+                persona.password,
             );
             if (!isPasswordCorrect) {
                 return res.status(401).json({
@@ -183,10 +188,10 @@ export class AuthController {
         try {
             const { email } = req.body;
 
-            const user = await this.authService.findUserByEmail(
+            const persona = await this.authService.findUserByEmail(
                 email.toLowerCase(),
             );
-            if (!user) {
+            if (!persona) {
                 return res.status(404).json({
                     error: "Usuario no encontrado",
                 });
@@ -194,14 +199,14 @@ export class AuthController {
 
             const token = generateToken();
 
-            await prisma.user.update({
-                where: { email: user.email },
+            await prisma.persona.update({
+                where: { correo_electronico: persona.correo_electronico },
                 data: { token },
             });
 
             await AuthEmail.sendPasswordResetToken({
-                email: user.email,
-                name: user.name,
+                email: persona.correo_electronico,
+                name: persona.nombres,
                 token: token,
             });
 
@@ -226,7 +231,7 @@ export class AuthController {
                 return res.status(400).json({ error: "Token inválido" });
             }
 
-            const tokenFound = await prisma.user.findUnique({
+            const tokenFound = await prisma.persona.findUnique({
                 where: { token },
             });
             if (!tokenFound) {
@@ -259,18 +264,18 @@ export class AuthController {
                 return res.status(400).json({ error: "Token inválido" });
             }
 
-            const userWithToken = await prisma.user.findUnique({
+            const personaWithToken = await prisma.persona.findUnique({
                 where: { token },
             });
-            if (!userWithToken) {
+            if (!personaWithToken) {
                 return res
                     .status(404)
                     .json({ error: "Token no válido o expirado" });
             }
 
             const hashedPassword = await hashPassword(password);
-            await prisma.user.update({
-                where: { id: userWithToken.id },
+            await prisma.persona.update({
+                where: { id_persona: personaWithToken.id_persona },
                 data: {
                     token: null,
                     password: hashedPassword,
@@ -302,17 +307,19 @@ export class AuthController {
     ) {
         try {
             const { currentPassword, password } = req.body;
-            const { id } = req.user;
+            const { id_persona } = req.user;
 
-            const user = await prisma.user.findUnique({ where: { id } });
+            const persona = await prisma.persona.findUnique({
+                where: { id_persona },
+            });
 
-            if (!user) {
+            if (!persona) {
                 return res.status(404).json({ error: "Usuario no encontrado" });
             }
 
             const isPasswordCorrect = await checkPassword(
                 currentPassword,
-                user.password,
+                persona.password,
             );
 
             if (!isPasswordCorrect) {
@@ -322,8 +329,8 @@ export class AuthController {
             }
 
             const newHashedPassword = await hashPassword(password);
-            await prisma.user.update({
-                where: { id: user.id },
+            await prisma.persona.update({
+                where: { id_persona: persona.id_persona },
                 data: { password: newHashedPassword },
             });
 
@@ -356,15 +363,15 @@ export class AuthController {
     async updateProfile(req: Request, res: Response, next: NextFunction) {
         try {
             const { name, email } = req.body;
-            const { id } = req.user;
+            const { id_persona } = req.user;
 
             // Verificar si el email ya existe (si cambió)
-            if (email !== req.user.email) {
-                const emailExists = await prisma.user.findUnique({
-                    where: { email: email.toLowerCase() },
+            if (email !== req.user.correo_electronico) {
+                const emailExists = await prisma.persona.findUnique({
+                    where: { correo_electronico: email.toLowerCase() },
                 });
 
-                if (emailExists && emailExists.id !== id) {
+                if (emailExists && emailExists.id_persona !== id_persona) {
                     return res.status(409).json({
                         error: "Este email ya está en uso",
                     });
@@ -372,11 +379,11 @@ export class AuthController {
             }
 
             // Actualizar perfil
-            await prisma.user.update({
-                where: { id },
+            await prisma.persona.update({
+                where: { id_persona },
                 data: {
-                    name,
-                    email: email.toLowerCase(),
+                    nombres: name,
+                    correo_electronico: email.toLowerCase(),
                 },
             });
 
@@ -390,18 +397,20 @@ export class AuthController {
     async updatePassword(req: Request, res: Response, next: NextFunction) {
         try {
             const { current_password, password } = req.body;
-            const { id } = req.user;
+            const { id_persona } = req.user;
 
-            const user = await prisma.user.findUnique({ where: { id } });
+            const persona = await prisma.persona.findUnique({
+                where: { id_persona },
+            });
 
-            if (!user) {
+            if (!persona) {
                 return res.status(404).json({ error: "Usuario no encontrado" });
             }
 
             // Verificar contraseña actual
             const isPasswordCorrect = await checkPassword(
                 current_password,
-                user.password,
+                persona.password,
             );
 
             if (!isPasswordCorrect) {
@@ -412,8 +421,8 @@ export class AuthController {
 
             // Actualizar contraseña
             const newHashedPassword = await hashPassword(password);
-            await prisma.user.update({
-                where: { id: user.id },
+            await prisma.persona.update({
+                where: { id_persona: persona.id_persona },
                 data: { password: newHashedPassword },
             });
 

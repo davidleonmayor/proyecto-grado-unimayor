@@ -7,182 +7,517 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Person {
-  idPersona          String   @id
-  carnet             String?
-  nombres            String
-  apellidos          String
-  tipoDocIdentidad   String
-  numDocIdentidad    String   @unique
-  emailInstitucional String   @unique
-  telefono           String?
-  tipoVinculacion    String // Estudiante/Docente/Externo
-  fechaRegistro      DateTime @default(now())
+model tipo_documento {
+  id_tipo_documento String   @id @default(cuid())
+  documento         String   @db.VarChar(50)
+  persona           persona[]
 
-  estudianteProgramas StudentProgram[]
-  actores             Actor[]
-  seguimientos        FollowUp[]
+  @@map("TIPO_DOCUMENTO")
 }
 
-model Faculty {
-  id             Int    @id @default(autoincrement())
-  nombreFacultad String
-  codigoFacultad String @unique
+model persona {
+  id_persona            String   @id @default(cuid())
+  nombres               String   @db.VarChar(100)
+  apellidos             String   @db.VarChar(100)
+  id_tipo_doc_identidad String
+  num_doc_identidad     String   @unique @db.VarChar(50)
+  numero_celular        String?  @db.VarChar(20)
+  fecha_registro        DateTime @default(now()) @db.DateTime(0)
+  correo_electronico    String   @unique @db.VarChar(100)
+  password              String?  @db.VarChar(60)
+  token                 String?  @unique @db.VarChar(6)
+  confirmed             Boolean  @default(false)
+  ultimo_acceso         DateTime? @db.DateTime(0)
+  intentos_fallidos     Int      @default(0)
+  bloqueado_hasta       DateTime? @db.DateTime(0)
 
-  programas AcademicProgram[]
+  tipo_documento tipo_documento @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
+  actores        actores[]
+
+  @@index([id_tipo_doc_identidad])
+  @@index([correo_electronico])
+  @@index([token])
+  @@map("PERSONA")
 }
 
-model AcademicProgram {
-  id             Int    @id @default(autoincrement())
-  nombrePrograma String
-  codigoSnies    String @unique
-  estado         String
-  idFacultad     Int
+model tipo_rol {
+  id_rol         String   @id @default(cuid())
+  nombre_rol     String   @db.VarChar(100)
+  descripcion    String?  @db.Text
+  fecha_creacion DateTime @default(now()) @db.DateTime(0)
+  activo         Boolean  @default(true)
+  actores        actores[]
 
-  facultad    Faculty          @relation(fields: [idFacultad], references: [id])
-  niveles     ProgramLevel[]
-  estudiantes StudentProgram[]
+  @@map("TIPO_ROL")
 }
 
-model TrainingLevel {
-  id          Int     @id @default(autoincrement())
-  nombreNivel String
-  descripcion String?
+model facultad {
+  id_facultad        String              @id @default(cuid())
+  nombre_facultad    String              @db.VarChar(200)
+  codigo_facultad    String              @db.VarChar(20)
+  programa_academico programa_academico[]
 
-  programas ProgramLevel[]
+  @@map("FACULTAD")
 }
 
-model ProgramLevel {
-  id               Int    @id @default(autoincrement())
-  idPrograma       Int
-  idNivelFormacion Int
-  estado           String
+model nivel_formacion {
+  id_nivel               String                   @id @default(cuid())
+  nombre_nivel           String                   @db.VarChar(100)
+  descripcion            String?                  @db.Text
+  programa_academico     programa_academico[]
+  opcion_grado_formacion opcion_grado_formacion[]
 
-  programa AcademicProgram @relation(fields: [idPrograma], references: [id])
-  nivel    TrainingLevel   @relation(fields: [idNivelFormacion], references: [id])
-  opciones DegreeOption[]
+  @@map("NIVEL_FORMACION")
 }
 
-model DegreeOption {
-  id                Int     @id @default(autoincrement())
-  nombreOpcion      String
-  descripcionOpcion String?
-  estado            String
-  idProgramaNivel   Int
+model programa_academico {
+  id_programa         String          @id @default(cuid())
+  nombre_programa     String          @db.VarChar(200)
+  id_nivel_formacion  String
+  estado              String          @db.VarChar(20)
+  id_facultad         String
+  nivel_formacion     nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
+  facultad            facultad        @relation(fields: [id_facultad], references: [id_facultad])
+  trabajo_grado       trabajo_grado[]
 
-  programaNivel ProgramLevel @relation(fields: [idProgramaNivel], references: [id])
-  trabajos      Thesis[]
+  @@index([id_nivel_formacion])
+  @@index([id_facultad])
+  @@map("PROGRAMA_ACADEMICO")
 }
 
-model StudentProgram {
-  carnet          String
-  idPrograma      Int
-  estadoAcademico String
-  fechaIngreso    DateTime
-  fechaEgreso     DateTime?
+model opcion_grado {
+  id_opcion_grado        String                    @id @default(cuid())
+  nombre_opcion_grado    String                    @db.VarChar(100)
+  descripcion            String?                   @db.Text
+  estado                 String                    @db.VarChar(20)
+  tipo_modalidad         String?                   @db.VarChar(50)
+  fecha_creacion         DateTime                  @default(now()) @db.DateTime(0)
+  trabajo_grado          trabajo_grado[]
+  opcion_grado_formacion opcion_grado_formacion[]
 
-  persona  Person          @relation(fields: [carnet], references: [idPersona])
-  programa AcademicProgram @relation(fields: [idPrograma], references: [id])
-
-  @@id([carnet, idPrograma])
+  @@map("OPCION_GRADO")
 }
 
-model Thesis {
-  id               Int       @id @default(autoincrement())
-  titulo           String
-  idOpcionGrado    Int
-  idEstadoActual   Int
-  fechaRegistro    DateTime  @default(now())
-  fechaFinEstimada DateTime?
-  resumen          String?   @db.Text
+model opcion_grado_formacion {
+  id_opcion_grado_formacion String          @id @default(cuid())
+  id_opcion_grado           String
+  id_nivel_formacion        String
+  opcion_grado              opcion_grado    @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
+  nivel_formacion           nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
 
-  opcion       DegreeOption @relation(fields: [idOpcionGrado], references: [id])
-  estado       ThesisStatus @relation(fields: [idEstadoActual], references: [id])
-  actores      Actor[]
-  seguimientos FollowUp[]
-  practicas    Internship[]
+  @@index([id_opcion_grado])
+  @@index([id_nivel_formacion])
+  @@map("opcion_grado_formacion")
 }
 
-model RoleType {
-  id          Int     @id @default(autoincrement())
-  nombreRol   String
-  descripcion String?
+model empresa {
+  id_empresa     String         @id @default(cuid())
+  nit_empresa    String         @db.VarChar(50)
+  nombre_empresa String         @db.VarChar(200)
+  direccion      String?        @db.VarChar(200)
+  email          String?        @db.VarChar(100)
+  telefono       String?        @db.VarChar(20)
+  estado         String         @db.VarChar(20)
+  trabajo_grado  trabajo_grado[]
 
-  actores Actor[]
+  @@map("EMPRESA")
 }
 
-model Actor {
-  id              Int       @id @default(autoincrement())
-  idPersona       String
-  idTrabajoGrado  Int
-  idTipoRol       Int
-  fechaAsignacion DateTime
-  fechaRetiro     DateTime?
-  estado          String
-  observaciones   String?
+model estado_tg {
+  id_estado_tg          String           @id @default(cuid())
+  nombre_estado         String           @db.VarChar(100)
+  descripcion           String?          @db.Text
+  orden                 Int
+  trabajo_grado         trabajo_grado[]
+  seguimiento_anterior  seguimiento_tg[] @relation("EstadoAnterior")
+  seguimiento_nuevo     seguimiento_tg[] @relation("EstadoNuevo")
 
-  persona Person   @relation(fields: [idPersona], references: [idPersona])
-  trabajo Thesis   @relation(fields: [idTrabajoGrado], references: [id])
-  rol     RoleType @relation(fields: [idTipoRol], references: [id])
+  @@map("ESTADO_TG")
 }
 
-model ThesisStatus {
-  id           Int     @id @default(autoincrement())
-  nombreEstado String
-  descripcion  String?
-  orden        Int
+model trabajo_grado {
+  id_trabajo_grado      String             @id @default(cuid())
+  titulo_trabajo        String             @db.VarChar(500)
+  fecha_fin_estima      DateTime?          @db.Date
+  fecha_inicio          DateTime           @db.Date
+  resumen               String?            @db.Text
+  id_opcion_grado       String
+  id_estado_actual      String
+  fecha_registro        DateTime           @default(now()) @db.DateTime(0)
+  id_empresa_practica   String?
+  id_programa_academico String
+  opcion_grado          opcion_grado       @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
+  estado_tg             estado_tg          @relation(fields: [id_estado_actual], references: [id_estado_tg])
+  empresa               empresa?           @relation(fields: [id_empresa_practica], references: [id_empresa])
+  programa_academico    programa_academico @relation(fields: [id_programa_academico], references: [id_programa])
+  actores               actores[]
+  seguimiento_tg        seguimiento_tg[]
+  distincion_tg         distincion_tg[]
 
-  trabajos        Thesis[]
-  seguimientosAnt FollowUp[] @relation("EstadoAnterior")
-  seguimientosNvo FollowUp[] @relation("EstadoNuevo")
+  @@index([id_opcion_grado])
+  @@index([id_estado_actual])
+  @@index([id_empresa_practica])
+  @@index([id_programa_academico])
+  @@map("TRABAJO_GRADO")
 }
 
-model FollowUp {
-  id                Int       @id @default(autoincrement())
-  idTrabajoGrado    Int
-  idActor           String
-  idEstadoAnterior  Int?
-  fechaRegistro     DateTime  @default(now())
-  tipoAccion        String
-  descripcion       String?
-  idEstadoNuevo     Int?
-  concepto          String?
-  fechaSustentacion DateTime?
-  lugar             String?
-  calificacionFinal Int?
-  distincion        String?
-  numeroResolucion  String?
-  fechaResolucion   DateTime?
-  numeroOficio      String?
-  fechaOficio       DateTime?
-  nombreDocumento   String?
-  tipoDocumento     String?
-  archivo           Bytes?
-  rutaArchivo       String?
+model actores {
+  id_actor         String          @id @default(cuid())
+  id_persona       String
+  id_trabajo_grado String
+  id_tipo_rol      String
+  fecha_asignacion DateTime        @default(now())
+  fecha_retiro     DateTime?       @db.DateTime(0)
+  estado           String          @db.VarChar(20)
+  observaciones    String?         @db.Text
+  persona          persona         @relation(fields: [id_persona], references: [id_persona])
+  trabajo_grado    trabajo_grado   @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  tipo_rol         tipo_rol        @relation(fields: [id_tipo_rol], references: [id_rol])
+  seguimiento_tg   seguimiento_tg[]
 
-  trabajo        Thesis        @relation(fields: [idTrabajoGrado], references: [id])
-  actor          Person        @relation(fields: [idActor], references: [idPersona])
-  estadoAnterior ThesisStatus? @relation("EstadoAnterior", fields: [idEstadoAnterior], references: [id])
-  estadoNuevo    ThesisStatus? @relation("EstadoNuevo", fields: [idEstadoNuevo], references: [id])
+  @@index([id_persona])
+  @@index([id_trabajo_grado])
+  @@index([id_tipo_rol])
+  @@map("ACTORES")
 }
 
-model Company {
-  id            Int    @id @default(autoincrement())
-  nit           String @unique
-  nombre        String
-  direccion     String
-  telefono      String
-  emailContacto String
-  estado        String
+model accion_seg {
+  id_accion      String          @id @default(cuid())
+  tipo_accion    String          @db.VarChar(100)
+  descripcion    String?         @db.Text
+  seguimiento_tg seguimiento_tg[]
 
-  practicas Internship[]
+  @@map("accion_seg")
 }
 
-model Internship {
-  id             Int  @id @default(autoincrement())
-  idEmpresa      Int
-  idTrabajoGrado Int?
+model seguimiento_tg {
+  id_seguimiento     String         @id @default(cuid())
+  id_trabajo_grado   String
+  id_actor           String
+  fecha_registro     DateTime       @default(now()) @db.DateTime(0)
+  id_accion          String
+  resumen            String?        @db.Text
+  id_estado_anterior String?
+  id_estado_nuevo    String?
+  numero_oficio      String?        @db.VarChar(50)
+  fecha_oficio       DateTime?      @db.Date
+  nombre_documento   String?        @db.VarChar(200)
+  tipo_documento     String?        @db.VarChar(50)
+  archivo            Bytes?         @db.LongBlob
+  calificacion       Decimal?       @db.Decimal(3, 2)
+  distincion         String?        @db.VarChar(100)
+  fecha              DateTime?      @db.Date
+  numero_resolucion  String?        @db.VarChar(50)
+  trabajo_grado      trabajo_grado  @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  actores            actores        @relation(fields: [id_actor], references: [id_actor])
+  accion_seg         accion_seg     @relation(fields: [id_accion], references: [id_accion])
+  estado_anterior    estado_tg?     @relation("EstadoAnterior", fields: [id_estado_anterior], references: [id_estado_tg])
+  estado_nuevo       estado_tg?     @relation("EstadoNuevo", fields: [id_estado_nuevo], references: [id_estado_tg])
+  distincion_tg      distincion_tg[]
 
-  empresa Company @relation(fields: [idEmpresa], references: [id])
-  trabajo Thesis? @relation(fields: [idTrabajoGrado], references: [id])
+  @@index([id_trabajo_grado])
+  @@index([id_actor])
+  @@index([id_accion])
+  @@index([id_estado_anterior])
+  @@index([id_estado_nuevo])
+  @@map("SEGUIMIENTO_TG")
 }
+
+model distinciones {
+  id_distincion String         @id @default(cuid())
+  nombre        String         @db.VarChar(100)
+  distincion_tg distincion_tg[]
+
+  @@map("DISTINCIONES")
+}
+
+model distincion_tg {
+  id_distincion_tg String        @id @default(cuid())
+  calificacion     Decimal       @db.Decimal(3, 2)
+  fecha            DateTime      @db.Date
+  numero_resolucion String       @db.VarChar(50)
+  id_distincion     String
+  id_trabajo_grado  String
+  id_seguimiento    String
+  distinciones      distinciones  @relation(fields: [id_distincion], references: [id_distincion])
+  trabajo_grado     trabajo_grado @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  seguimiento_tg    seguimiento_tg @relation(fields: [id_seguimiento], references: [id_seguimiento])
+
+  @@index([id_distincion])
+  @@index([id_trabajo_grado])
+  @@index([id_seguimiento])
+  @@map("DISTINCION_TG")
+}
+
+
+// // Configuración del generador de Prisma Client
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// // Configuración de la base de datos MySQL
+// datasource db {
+//   provider = "mysql"
+//   url      = env("DATABASE_URL")
+// }
+
+// // Tabla de tipos de documentos de identidad (catálogo)
+// model TIPO_DOCUMENTO {
+//   ID_TIPO_DOCUMENTO Int       @id @default(autoincrement()) // Identificador único del tipo de documento
+//   DOCUMENTO         String    @db.VarChar(50) // Nombre del documento (CC, CE, PAS, TI)
+//   PERSONA           PERSONA[] // Relación con personas que tienen este tipo de documento
+
+//   @@map("TIPO_DOCUMENTO")
+// }
+
+// // Tabla de personas (estudiantes, docentes, personal) - AHORA CON AUTENTICACIÓN
+// model PERSONA {
+//   ID_PERSONA            Int             @id @default(autoincrement()) // Identificador único de la persona
+//   NOMBRES               String          @db.VarChar(100) // Nombres de la persona
+//   APELLIDOS             String          @db.VarChar(100) // Apellidos de la persona
+//   ID_TIPO_DOC_IDENTIDAD Int // Clave foránea hacia el tipo de documento
+//   NUM_DOC_IDENTIDAD     String          @unique @db.VarChar(50) // Número del documento de identidad (único)
+//   NUMERO_CELULAR        String?         @db.VarChar(20) // Número de celular (opcional)
+//   FECHA_REGISTRO        DateTime        @default(now()) @db.DateTime(0) // Fecha de registro en el sistema
+//   CORREO_ELECTRONICO    String          @unique @db.VarChar(100) // Correo electrónico único (para autenticación)
+
+//   // === CAMPOS DE AUTENTICACIÓN ===
+//   PASSWORD              String?         @db.VarChar(60) // Hash de contraseña (bcrypt ~60 chars) - opcional para personas sin acceso
+//   TOKEN                 String?         @unique @db.VarChar(6) // Token temporal para verificación/recuperación (único)
+//   CONFIRMED             Boolean         @default(false) // Indica si el correo ha sido confirmado
+//   ULTIMO_ACCESO         DateTime?       @db.DateTime(0) // Fecha del último acceso al sistema
+//   INTENTOS_FALLIDOS     Int             @default(0) // Contador de intentos de login fallidos
+//   BLOQUEADO_HASTA       DateTime?       @db.DateTime(0) // Fecha hasta la cual la cuenta está bloqueada
+//   // ================================
+
+//   TIPO_DOCUMENTO        TIPO_DOCUMENTO  @relation(fields: [ID_TIPO_DOC_IDENTIDAD], references: [ID_TIPO_DOCUMENTO]) // Relación con tipo de documento
+//   ACTORES               ACTORES[] // Relación con los roles que desempeña esta persona
+
+//   @@index([ID_TIPO_DOC_IDENTIDAD])
+//   @@index([CORREO_ELECTRONICO]) // Índice para búsquedas rápidas por email en login
+//   @@index([TOKEN]) // Índice para validación rápida de tokens
+//   @@map("PERSONA")
+// }
+
+// // Tabla de roles universitarios (catálogo)
+// model TIPO_ROL {
+//   ID_ROL         Int       @id @default(autoincrement()) // Identificador único del rol
+//   NOMBRE_ROL     String    @db.VarChar(100) // Nombre del rol (Profesor, Director, Coordinador, etc.)
+//   DESCRIPCION    String?   @db.Text // Descripción del rol y sus responsabilidades
+//   FECHA_CREACION DateTime  @default(now()) @db.DateTime(0) // Fecha de creación del rol
+//   ACTIVO         Boolean   @default(true) // Indica si el rol está activo
+//   ACTORES        ACTORES[] // Relación con actores que tienen este rol
+
+//   @@map("TIPO_ROL")
+// }
+
+// // Tabla de facultades de la institución (catálogo)
+// model FACULTAD {
+//   ID_FACULTAD       Int                  @id @default(autoincrement()) // Identificador único de la facultad
+//   NOMBRE_FACULTAD   String               @db.VarChar(200) // Nombre de la facultad
+//   CODIGO_FACULTAD   String               @db.VarChar(20) // Código de la facultad
+//   PROGRAMA_ACADEMICO PROGRAMA_ACADEMICO[] // Relación con programas académicos de esta facultad
+
+//   @@map("FACULTAD")
+// }
+
+// // Tabla de niveles de formación académica (catálogo)
+// model NIVEL_FORMACION {
+//   ID_NIVEL                Int                       @id @default(autoincrement()) // Identificador único del nivel
+//   NOMBRE_NIVEL            String                    @db.VarChar(100) // Nombre del nivel (Tecnólogo, Pregrado, etc.)
+//   DESCRIPCION             String?                   @db.Text // Descripción del nivel de formación
+//   PROGRAMA_ACADEMICO      PROGRAMA_ACADEMICO[] // Relación con programas académicos de este nivel
+//   opcion_grado_formacion  opcion_grado_formacion[] // Relación con opciones de grado disponibles
+
+//   @@map("NIVEL_FORMACION")
+// }
+
+// // Tabla de programas académicos
+// model PROGRAMA_ACADEMICO {
+//   ID_PROGRAMA         Int               @id @default(autoincrement()) // Identificador único del programa
+//   NOMBRE_PROGRAMA     String            @db.VarChar(200) // Nombre del programa académico
+//   ID_NIVEL_FORMACION  Int // Clave foránea hacia el nivel de formación
+//   ESTADO              String            @db.VarChar(20) // Estado del programa (activo/inactivo)
+//   ID_FACULTAD         Int // Clave foránea hacia la facultad (corregido de ID_FACULTA)
+//   NIVEL_FORMACION     NIVEL_FORMACION   @relation(fields: [ID_NIVEL_FORMACION], references: [ID_NIVEL]) // Relación con nivel de formación
+//   FACULTAD            FACULTAD          @relation(fields: [ID_FACULTAD], references: [ID_FACULTAD]) // Relación con facultad
+//   TRABAJO_GRADO       TRABAJO_GRADO[] // Relación con trabajos de grado del programa
+
+//   @@index([ID_NIVEL_FORMACION])
+//   @@index([ID_FACULTAD])
+//   @@map("PROGRAMA_ACADEMICO")
+// }
+
+// // Tabla de opciones/modalidades de grado (catálogo)
+// model OPCION_GRADO {
+//   ID_OPCION_GRADO        Int                       @id @default(autoincrement()) // Identificador único de la opción
+//   NOMBRE_OPCION_GRADO    String                    @db.VarChar(100) // Nombre de la opción (Tesis, Práctica, etc.)
+//   DESCRIPCION            String?                   @db.Text // Descripción de la modalidad
+//   ESTADO                 String                    @db.VarChar(20) // Estado de la opción (activa/inactiva)
+//   TIPO_MODALIDAD         String?                   @db.VarChar(50) // Tipo de modalidad
+//   FECHA_CREACION         DateTime                  @default(now()) @db.DateTime(0) // Fecha de creación
+//   TRABAJO_GRADO          TRABAJO_GRADO[] // Relación con trabajos que usan esta opción
+//   opcion_grado_formacion opcion_grado_formacion[] // Relación con niveles de formación
+
+//   @@map("OPCION_GRADO")
+// }
+
+// // Tabla intermedia: relaciona opciones de grado con niveles de formación
+// model opcion_grado_formacion {
+//   id_opcion_grado_formacion Int             @id @default(autoincrement()) // Identificador único
+//   ID_OPCION_GRADO           Int // Clave foránea hacia opción de grado
+//   ID_NIVEL_FORMACION        Int // Clave foránea hacia nivel de formación
+//   OPCION_GRADO              OPCION_GRADO    @relation(fields: [ID_OPCION_GRADO], references: [ID_OPCION_GRADO]) // Relación con opción de grado
+//   NIVEL_FORMACION           NIVEL_FORMACION @relation(fields: [ID_NIVEL_FORMACION], references: [ID_NIVEL]) // Relación con nivel de formación
+
+//   @@index([ID_OPCION_GRADO])
+//   @@index([ID_NIVEL_FORMACION])
+//   @@map("opcion_grado_formacion")
+// }
+
+// // Tabla de empresas para prácticas profesionales
+// model EMPRESA {
+//   ID_EMPRESA     Int             @id @default(autoincrement()) // Identificador único de la empresa
+//   NIT_EMPRESA    String          @db.VarChar(50) // NIT de la empresa
+//   NOMBRE_EMPRESA String          @db.VarChar(200) // Nombre de la empresa
+//   DIRECCION      String?         @db.VarChar(200) // Dirección de la empresa
+//   EMAIL          String?         @db.VarChar(100) // Email de contacto
+//   TELEFONO       String?         @db.VarChar(20) // Teléfono de contacto
+//   ESTADO         String          @db.VarChar(20) // Estado de la empresa (activa/inactiva)
+//   TRABAJO_GRADO  TRABAJO_GRADO[] // Relación con trabajos de grado (prácticas)
+
+//   @@map("EMPRESA")
+// }
+
+// // Tabla de estados del flujo de trabajo de grado (catálogo)
+// model ESTADO_TG {
+//   ID_ESTADO_TG           Int              @id @default(autoincrement()) // Identificador único del estado
+//   NOMBRE_ESTADO          String           @db.VarChar(100) // Nombre del estado
+//   DESCRIPCION            String?          @db.Text // Descripción del estado
+//   ORDEN                  Int // Orden en el flujo del proceso
+//   TRABAJO_GRADO          TRABAJO_GRADO[] // Relación con trabajos en este estado
+//   SEGUIMIENTO_ANTERIOR   SEGUIMIENTO_TG[] @relation("EstadoAnterior") // Seguimientos que vienen de este estado
+//   SEGUIMIENTO_NUEVO      SEGUIMIENTO_TG[] @relation("EstadoNuevo") // Seguimientos que van a este estado
+
+//   @@map("ESTADO_TG")
+// }
+
+// // Tabla principal de trabajos de grado
+// model TRABAJO_GRADO {
+//   ID_TRABAJO_GRADO      Int                 @id @default(autoincrement()) // Identificador único del trabajo
+//   TITULO_TRABAJO        String              @db.VarChar(500) // Título del trabajo de grado
+//   FECHA_FIN_ESTIMA      DateTime?           @db.Date // Fecha estimada de finalización
+//   FECHA_INICIO          DateTime            @db.Date // Fecha de inicio del trabajo
+//   RESUMEN               String?             @db.Text // Resumen del trabajo
+//   ID_OPCION_GRADO       Int // Clave foránea hacia la opción/modalidad de grado
+//   ID_ESTADO_ACTUAL      Int // Clave foránea hacia el estado actual
+//   FECHA_REGISTRO        DateTime            @default(now()) @db.DateTime(0) // Fecha de registro en el sistema
+//   ID_EMPRESA_PRACTICA   Int? // Clave foránea hacia empresa (solo para prácticas)
+//   ID_PROGRAMA_ACADEMICO Int // Clave foránea hacia programa académico
+//   OPCION_GRADO          OPCION_GRADO        @relation(fields: [ID_OPCION_GRADO], references: [ID_OPCION_GRADO]) // Relación con opción de grado
+//   ESTADO_TG             ESTADO_TG           @relation(fields: [ID_ESTADO_ACTUAL], references: [ID_ESTADO_TG]) // Relación con estado actual
+//   EMPRESA               EMPRESA?            @relation(fields: [ID_EMPRESA_PRACTICA], references: [ID_EMPRESA]) // Relación con empresa (opcional)
+//   PROGRAMA_ACADEMICO    PROGRAMA_ACADEMICO  @relation(fields: [ID_PROGRAMA_ACADEMICO], references: [ID_PROGRAMA]) // Relación con programa académico
+//   ACTORES               ACTORES[] // Relación con actores involucrados
+//   SEGUIMIENTO_TG        SEGUIMIENTO_TG[] // Relación con seguimientos del trabajo
+//   DISTINCION_TG         DISTINCION_TG[] // Relación con distinciones recibidas
+
+//   @@index([ID_OPCION_GRADO])
+//   @@index([ID_ESTADO_ACTUAL])
+//   @@index([ID_EMPRESA_PRACTICA])
+//   @@index([ID_PROGRAMA_ACADEMICO])
+//   @@map("TRABAJO_GRADO")
+// }
+
+// // Tabla de actores: asigna personas con roles a trabajos de grado
+// model ACTORES {
+//   ID_ACTOR         Int              @id @default(autoincrement()) // Identificador único del actor
+//   ID_PERSONA       Int // Clave foránea hacia la persona
+//   ID_TRABAJO_GRADO Int // Clave foránea hacia el trabajo de grado
+//   ID_TIPO_ROL      Int // Clave foránea hacia el tipo de rol
+//   FECHA_ASIGNACION DateTime         @default(now()) // Fecha de asignación del rol (sin default, se asigna manualmente)
+//   FECHA_RETIRO     DateTime?        @db.DateTime(0) // Fecha de retiro del rol (opcional)
+//   ESTADO           String           @db.VarChar(20) // Estado de la asignación (activo/inactivo)
+//   OBSERVACIONES    String?          @db.Text // Observaciones adicionales
+//   PERSONA          PERSONA          @relation(fields: [ID_PERSONA], references: [ID_PERSONA]) // Relación con persona
+//   TRABAJO_GRADO    TRABAJO_GRADO    @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO]) // Relación con trabajo de grado
+//   TIPO_ROL         TIPO_ROL         @relation(fields: [ID_TIPO_ROL], references: [ID_ROL]) // Relación con tipo de rol
+//   SEGUIMIENTO_TG   SEGUIMIENTO_TG[] // Relación con seguimientos realizados por este actor
+
+//   @@index([ID_PERSONA])
+//   @@index([ID_TRABAJO_GRADO])
+//   @@index([ID_TIPO_ROL])
+//   @@map("ACTORES")
+// }
+
+// // Tabla de acciones posibles en el seguimiento (catálogo)
+// model accion_seg {
+//   ID_ACCION      Int              @id @default(autoincrement()) // Identificador único de la acción
+//   TIPO_ACCION    String           @db.VarChar(100) // Nombre de la acción
+//   DESCRIPCION    String?          @db.Text // Descripción de la acción
+//   SEGUIMIENTO_TG SEGUIMIENTO_TG[] // Relación con seguimientos que usan esta acción
+
+//   @@map("accion_seg")
+// }
+
+// // Tabla de seguimiento: registra todas las acciones y cambios de estado
+// model SEGUIMIENTO_TG {
+//   ID_SEGUIMIENTO     Int            @id @default(autoincrement()) // Identificador único del seguimiento
+//   ID_TRABAJO_GRADO   Int // Clave foránea hacia el trabajo de grado
+//   ID_ACTOR           Int // Clave foránea hacia el actor que realiza la acción
+//   FECHA_REGISTRO     DateTime       @default(now()) @db.DateTime(0) // Fecha de registro del seguimiento
+//   ID_ACCION          Int // Clave foránea hacia el tipo de acción
+//   RESUMEN            String?        @db.Text // Resumen de la acción realizada
+//   ID_ESTADO_ANTERIOR Int? // Clave foránea hacia el estado anterior (opcional)
+//   ID_ESTADO_NUEVO    Int? // Clave foránea hacia el nuevo estado (opcional)
+//   NUMERO_OFICIO      String?        @db.VarChar(50) // Número de oficio asociado
+//   FECHA_OFICIO       DateTime?      @db.Date // Fecha del oficio
+//   NOMBRE_DOCUMENTO   String?        @db.VarChar(200) // Nombre del documento adjunto
+//   TIPO_DOCUMENTO     String?        @db.VarChar(50) // Tipo de documento adjunto
+//   ARCHIVO            Bytes?         @db.LongBlob // Archivo adjunto en binario
+//   CALIFICACION       Decimal?       @db.Decimal(3, 2) // Calificación obtenida
+//   DISTINCION         String?        @db.VarChar(100) // Distinción recibida
+//   FECHA              DateTime?      @db.Date // Fecha del evento
+//   NUMERO_RESOLUCION  String?        @db.VarChar(50) // Número de resolución
+//   TRABAJO_GRADO      TRABAJO_GRADO  @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO]) // Relación con trabajo de grado
+//   ACTORES            ACTORES        @relation(fields: [ID_ACTOR], references: [ID_ACTOR]) // Relación con actor
+//   accion_seg         accion_seg     @relation(fields: [ID_ACCION], references: [ID_ACCION]) // Relación con acción
+//   ESTADO_ANTERIOR    ESTADO_TG?     @relation("EstadoAnterior", fields: [ID_ESTADO_ANTERIOR], references: [ID_ESTADO_TG]) // Relación con estado anterior
+//   ESTADO_NUEVO       ESTADO_TG?     @relation("EstadoNuevo", fields: [ID_ESTADO_NUEVO], references: [ID_ESTADO_TG]) // Relación con estado nuevo
+//   DISTINCION_TG      DISTINCION_TG[] // Relación con distinciones otorgadas en este seguimiento
+
+//   @@index([ID_TRABAJO_GRADO])
+//   @@index([ID_ACTOR])
+//   @@index([ID_ACCION])
+//   @@index([ID_ESTADO_ANTERIOR])
+//   @@index([ID_ESTADO_NUEVO])
+//   @@map("SEGUIMIENTO_TG")
+// }
+
+// // Tabla de tipos de distinciones (catálogo)
+// model DISTINCIONES {
+//   ID_DISTINCION Int             @id @default(autoincrement()) // Identificador único de la distinción
+//   NOMBRE        String          @db.VarChar(100) // Nombre de la distinción
+//   DISTINCION_TG DISTINCION_TG[] // Relación con distinciones otorgadas
+
+//   @@map("DISTINCIONES")
+// }
+
+// // Tabla de distinciones otorgadas a trabajos de grado
+// model DISTINCION_TG {
+//   ID_DISTINCION_TG  Int            @id @default(autoincrement()) // Identificador único
+//   CALIFICACION      Decimal        @db.Decimal(3, 2) // Calificación obtenida
+//   FECHA             DateTime       @db.Date // Fecha de otorgamiento
+//   NUMERO_RESOLUCION String         @db.VarChar(50) // Número de resolución
+//   ID_DISTINCION     Int // Clave foránea hacia el tipo de distinción
+//   ID_TRABAJO_GRADO  Int // Clave foránea hacia el trabajo de grado
+//   ID_SEGUIMIENTO    Int // Clave foránea hacia el seguimiento donde se otorgó
+//   DISTINCIONES      DISTINCIONES   @relation(fields: [ID_DISTINCION], references: [ID_DISTINCION]) // Relación con tipo de distinción
+//   TRABAJO_GRADO     TRABAJO_GRADO  @relation(fields: [ID_TRABAJO_GRADO], references: [ID_TRABAJO_GRADO]) // Relación con trabajo de grado
+//   SEGUIMIENTO_TG    SEGUIMIENTO_TG @relation(fields: [ID_SEGUIMIENTO], references: [ID_SEGUIMIENTO]) // Relación con seguimiento
+
+//   @@index([ID_DISTINCION])
+//   @@index([ID_TRABAJO_GRADO])
+//   @@index([ID_SEGUIMIENTO])
+//   @@map("DISTINCION_TG")
+// }

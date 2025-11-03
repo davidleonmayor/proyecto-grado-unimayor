@@ -1,149 +1,119 @@
 import type { Request, Response, NextFunction } from "express";
-import { User } from "@prisma/client";
+import { type persona as Persona } from "@prisma/client";
 import jwt from "jsonwebtoken";
 
 import { envs, prisma, logger } from "../../config";
 
 declare global {
-  namespace Express {
-    export interface Request {
-      user?: User;
+    namespace Express {
+        export interface Request {
+            user?: Persona;
+        }
     }
-  }
 }
 
 export class AuthMiddleware {
-  public async isAuthenticatedUser(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) {
-    try {
-      // 1. Verificar que existe el header Authorization
-      const authHeader = req.headers.authorization;
+    public async isAuthenticatedUser(
+        req: Request,
+        res: Response,
+        next: NextFunction,
+    ) {
+        try {
+            const authHeader = req.headers.authorization;
 
-      if (!authHeader) {
-        logger.warn("Authentication attempt without Authorization header");
-        return res.status(401).json({
-          success: false,
-          error: "No autorizado",
-          message: "Token de autenticación no proporcionado",
-        });
-      }
+            if (!authHeader) {
+                logger.warn("Intento sin header Authorization");
+                return res.status(401).json({
+                    success: false,
+                    message: "Token de autenticación no proporcionado",
+                });
+            }
 
-      // 2. Verificar formato Bearer token
-      if (!authHeader.startsWith("Bearer ")) {
-        logger.warn("Invalid Authorization header format");
-        return res.status(401).json({
-          success: false,
-          error: "No autorizado",
-          message: "Formato de token inválido. Use: Bearer <token>",
-        });
-      }
+            if (!authHeader.startsWith("Bearer ")) {
+                logger.warn("Formato inválido de token");
+                return res.status(401).json({
+                    success: false,
+                    message: "Formato inválido. Use: Bearer <token>",
+                });
+            }
 
-      // 3. Extraer token
-      const token = authHeader.split(" ")[1];
+            const token = authHeader.split(" ")[1];
+            if (!token) {
+                logger.warn("Token vacío");
+                return res.status(401).json({
+                    success: false,
+                    message: "Token vacío o inválido",
+                });
+            }
 
-      if (!token || token.trim() === "") {
-        logger.warn("Empty token provided");
-        return res.status(401).json({
-          success: false,
-          error: "No autorizado",
-          message: "Token vacío",
-        });
-      }
+            let decoded: any;
+            try {
+                decoded = jwt.verify(token, envs.JWT_SECRET);
+            } catch (error: any) {
+                logger.warn(`Fallo al verificar JWT: ${error.message}`);
+                if (error.name === "TokenExpiredError") {
+                    return res.status(401).json({
+                        success: false,
+                        message: "Token expirado. Inicia sesión nuevamente.",
+                    });
+                }
+                return res.status(401).json({
+                    success: false,
+                    message: "Token inválido o corrupto",
+                });
+            }
 
-      // 4. Verificar y decodificar token
-      let decoded: any;
-      try {
-        decoded = jwt.verify(token, envs.JWT_SECRET);
-      } catch (jwtError: any) {
-        logger.warn(`JWT verification failed: ${jwtError.message}`);
+            if (!decoded?.id) {
+                logger.warn("Token sin ID de usuario");
+                return res.status(401).json({
+                    success: false,
+                    message: "Token inválido: no contiene usuario",
+                });
+            }
 
-        if (jwtError.name === "TokenExpiredError") {
-          return res.status(401).json({
-            success: false,
-            error: "Token expirado",
-            message:
-              "Tu sesión ha expirado. Por favor, inicia sesión nuevamente",
-          });
+            // Buscar persona autenticada
+            const persona = await prisma.persona.findUnique({
+                where: { id_persona: decoded.id },
+                select: {
+                    id_persona: true,
+                    nombres: true,
+                    apellidos: true,
+                    correo_electronico: true,
+                    confirmed: true,
+                    token: true,
+                    ultimo_acceso: true,
+                },
+            });
+
+            if (!persona) {
+                logger.warn(`No existe persona con ID ${decoded.id}`);
+                return res.status(404).json({
+                    success: false,
+                    message: "Usuario no encontrado",
+                });
+            }
+
+            if (!persona.confirmed) {
+                logger.warn(
+                    `Acceso no confirmado: ${persona.correo_electronico}`,
+                );
+                return res.status(403).json({
+                    success: false,
+                    message: "Debes confirmar tu cuenta antes de continuar",
+                });
+            }
+
+            req.user = persona;
+            logger.debug(`Autenticado: ${persona.correo_electronico}`);
+            next();
+        } catch (error: any) {
+            logger.error(`Error en AuthMiddleware: ${error.message}`);
+            if (!res.headersSent) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Error interno en autenticación",
+                });
+            }
         }
-
-        if (jwtError.name === "JsonWebTokenError") {
-          return res.status(401).json({
-            success: false,
-            error: "Token inválido",
-            message: "El token proporcionado no es válido",
-          });
-        }
-
-        return res.status(401).json({
-          success: false,
-          error: "Error de autenticación",
-          message: "Error al verificar el token",
-        });
-      }
-
-      // 5. Verificar que el token contiene un ID
-      if (!decoded || !decoded.id) {
-        logger.warn("Token does not contain user ID");
-        return res.status(401).json({
-          success: false,
-          error: "Token inválido",
-          message: "El token no contiene información de usuario",
-        });
-      }
-
-      // 6. Buscar usuario en la base de datos
-      const user = await prisma.user.findUnique({
-        where: { id: decoded.id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          confirmed: true,
-          password: true,
-          token: true, // AGREGAR
-          createdAt: true,
-          updatedAt: true, // AGREGAR
-        },
-      });
-
-      if (!user) {
-        logger.warn(`User not found for token: ${decoded.id}`);
-        return res.status(404).json({
-          success: false,
-          error: "Usuario no encontrado",
-          message: "El usuario asociado al token no existe",
-        });
-      }
-
-      // 7. Verificar que la cuenta esté confirmada
-      if (!user.confirmed) {
-        logger.warn(`Unconfirmed account access attempt: ${user.email}`);
-        return res.status(403).json({
-          success: false,
-          error: "Cuenta no confirmada",
-          message: "Debes confirmar tu cuenta antes de continuar",
-        });
-      }
-
-      // 8. Adjuntar usuario al request
-      req.user = user;
-
-      logger.debug(`User authenticated: ${user.email}`);
-      next();
-    } catch (error: any) {
-      logger.error(`Authentication middleware error: ${error.message}`, error);
-
-      // Evitar enviar respuesta si ya se envió
-      if (!res.headersSent) {
-        return res.status(500).json({
-          success: false,
-          error: "Error del servidor",
-          message: "Error al procesar la autenticación",
-        });
-      }
     }
-  }
 }
