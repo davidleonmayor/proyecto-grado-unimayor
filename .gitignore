@@ -1,7 +1,7 @@
 # backend
 *node_modules/
 .env
-.env.local  
+.env.local
 package-lock.json
 .pnpm-store
 
@@ -17,3 +17,6 @@ dump.sql
 **/.next
 
 HP Sebastían
+
+# workflow env
+logs

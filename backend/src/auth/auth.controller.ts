@@ -30,7 +30,30 @@ export class AuthController {
 
     async register(req: Request, res: Response, next: NextFunction) {
         try {
-            const { name, email, password } = req.body;
+            const {
+                names,
+                lastNames,
+                typeOfDentityDocument,
+                idDocumentNumber,
+                phoneNumber,
+                email,
+                password,
+            } = req.body;
+
+            // Validar campos obligatorios antes de continuar
+            if (
+                !names ||
+                !lastNames ||
+                !typeOfDentityDocument ||
+                !idDocumentNumber ||
+                !phoneNumber ||
+                !email ||
+                !password
+            ) {
+                return res.status(400).json({
+                    error: "Faltan campos requeridos para el registro.",
+                });
+            }
 
             const existingPersona =
                 await this.authService.findUserByEmail(email);
@@ -40,12 +63,19 @@ export class AuthController {
                 });
             }
 
+            console.log("data to create user: ", req.body);
+
             const persona = await this.authService.createUser(
-                name,
+                names,
+                lastNames,
+                typeOfDentityDocument,
+                idDocumentNumber,
+                phoneNumber,
                 email,
                 password,
             );
 
+            // TODO: solve brevo error, they closed me the permission
             // await AuthEmail.sendConfirmationEmail({
             //     name: persona.nombres,
             //     email: persona.correo_electronico,
@@ -53,15 +83,17 @@ export class AuthController {
             // });
 
             // ✅ Devolver string directamente
-            return res
-                .status(201)
-                .json(
-                    `Usuario creado correctamente, confirma tu cuenta. Token: ${persona.token}`,
-                );
-        } catch (error) {
+            return res.status(201).json(
+                // `Usuario creado correctamente, confirma tu cuenta. Token: ${persona.token}`,
+                `Usuario creado correctamente, confirma tu cuenta. Token: ${persona.token}`,
+            );
+        } catch (error: any) {
             console.error("Error en register:", error);
+
             return res.status(500).json({
-                error: "Ocurrió un error interno al registrar el usuario.",
+                error:
+                    error.message ||
+                    "Ocurrió un error interno al registrar el usuario.",
             });
         }
     }

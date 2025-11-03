@@ -27,6 +27,9 @@ export class Routes {
         authRoutes.initRoutes();
         exampleRoutes.initRoutes();
 
+        app.get("/api", (req, res) => {
+            res.send("Hello World!");
+        });
         app.use("/api/auth", authRoutes.router);
         app.use("/api/example", exampleRoutes.router);
     }
