@@ -7,7 +7,7 @@ import { envs, prisma, logger } from "../../config";
 declare global {
     namespace Express {
         export interface Request {
-            user?: Persona;
+            user?: Partial<Persona>;
         }
     }
 }

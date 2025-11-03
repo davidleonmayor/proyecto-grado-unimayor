@@ -1,23 +1,31 @@
 FROM node:22-slim
 
-RUN apt-get update -y && apt-get install -y openssl
+# Instalar openssl
+RUN apt-get update -y && \
+    apt-get install -y openssl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Instalar pnpm globalmente
 RUN npm install -g pnpm
 
+# Crear directorio de trabajo
 WORKDIR /app
 
-# Copiar los manifests de dependencias
-COPY package.json pnpm-lock.yaml ./
+# Copiar package.json
+COPY package.json ./
+
+# Instalar dependencias
 RUN pnpm install
 
-COPY prisma ./prisma
-# RUN pnpx prisma migrate dev # this create a new migration file with the current schema
-RUN pnpx prisma generate
-
+# Copiar el resto del código
 COPY . .
 
+# Generar Prisma client
+RUN pnpx prisma generate
+
+# Exponer puerto
 EXPOSE 4000
 
-CMD ["sh", "-c", "pnpm prisma migrate deploy"]
-# CMD ["sh", "-c", "pnpm prisma migrate deploy && pnpm run seed && pnpm run dev"]
-
+# Comando de inicio
+CMD ["sh", "-c", "pnpx prisma migrate deploy && pnpm run dev"]

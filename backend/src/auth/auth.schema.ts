@@ -1,7 +1,7 @@
 import type { Schema } from "express-validator";
 
 export const RegisterSchema: Schema = {
-    name: {
+    names: {
         in: ["body"],
         exists: {
             errorMessage: "Name is required",
@@ -15,6 +15,69 @@ export const RegisterSchema: Schema = {
         },
         trim: true,
     },
+    lastNames: {
+        in: ["body"],
+        exists: {
+            errorMessage: "lastNames is required",
+        },
+        isString: {
+            errorMessage: "lastNames must be a string",
+        },
+        isLength: {
+            options: { min: 1, max: 50 },
+            errorMessage: "lastNames must be between 1 and 50 characters",
+        },
+        trim: true,
+    },
+    typeOfDentityDocument: {
+        in: ["body"],
+        exists: {
+            errorMessage: "typeOfDentityDocument is required",
+        },
+        isString: {
+            errorMessage: "typeOfDentityDocument must be a string",
+        },
+        isLength: {
+            options: { min: 1, max: 50 },
+            errorMessage:
+                "typeOfDentityDocument must be between 1 and 50 characters",
+        },
+        trim: true,
+    },
+    idDocumentNumber: {
+        in: ["body"],
+        exists: {
+            errorMessage: "idDocumentNumber is required",
+        },
+        isString: {
+            errorMessage: "idDocumentNumber must be a string",
+        },
+        isLength: {
+            options: { min: 5, max: 50 },
+            errorMessage:
+                "idDocumentNumber must be between 5 and 50 characters",
+        },
+        trim: true,
+    },
+    phoneNumber: {
+        in: ["body"],
+        exists: {
+            errorMessage: "phoneNumber is required",
+        },
+        isString: {
+            errorMessage: "phoneNumber must be a string",
+        },
+        isLength: {
+            options: { min: 7, max: 20 },
+            errorMessage: "phoneNumber must be between 7 and 20 digits",
+        },
+        matches: {
+            options: /^[0-9+\-() ]+$/,
+            errorMessage:
+                "phoneNumber must contain only digits or symbols (+, -, () )",
+        },
+        trim: true,
+    },
     email: {
         in: ["body"],
         exists: {
@@ -25,8 +88,8 @@ export const RegisterSchema: Schema = {
         },
         normalizeEmail: true,
         isLength: {
-            options: { max: 50 },
-            errorMessage: "Email must not exceed 50 characters",
+            options: { max: 100 },
+            errorMessage: "Email must not exceed 100 characters",
         },
         trim: true,
     },
