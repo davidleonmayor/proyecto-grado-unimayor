@@ -1,13 +1,18 @@
+'use client';
+
 import Image from "next/image";
 import profileImage from "@/public/profile.png";
 import mailImage from "@/public/mail.png";
 import phoneImage from "@/public/phone.png";
-import { role, teachersData } from "@/app/lib/data";
+import { teachersData } from "@/app/lib/data";
+import { useAuth } from "@/app/contexts/AuthContext";
 import UserCard from "@/app/components/UserCard";
 import PieChart from "@/app/components/PieChart";
 
 export default function ProfilePage() {
-  // Simulando datos del usuario actual basado en el rol
+  const { user } = useAuth();
+  const role = user?.role || 'student';
+  
   const currentUser = teachersData[0] || {
     nombre: "Usuario Actual",
     email: "usuario@unimayor.edu.co",
@@ -25,7 +30,6 @@ export default function ProfilePage() {
 
   return (
     <div className="p-4 flex gap-4 flex-col">
-      {/* PROFILE HEADER */}
       <div className="bg-white rounded-xl p-6">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <div className="relative">
@@ -64,7 +68,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* STATISTICS CARDS */}
       <div className="flex gap-4 justify-between flex-wrap">
         <UserCard type="Proyectos Dirigidos" />
         <UserCard type="Estudiantes Asignados" />
@@ -72,7 +75,6 @@ export default function ProfilePage() {
         <UserCard type="Reportes Generados" />
       </div>
 
-      {/* CHARTS SECTION */}
       <div className="flex gap-4 flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 h-[400px]">
           <PieChart data={pieData} title="Actividad de Proyectos" />
@@ -101,7 +103,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ACTIVITY SECTION */}
       <div className="bg-white rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Actividad Reciente</h2>
         <div className="space-y-4">

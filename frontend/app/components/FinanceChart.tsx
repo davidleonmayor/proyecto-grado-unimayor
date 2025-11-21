@@ -72,7 +72,6 @@ const data = [
 export default function FinanceChart() {
     return (
         <div className="bg-white rounded-xl w-full h-full p-4">
-            {/* TITLE */}
             <div className="flex justify-between items-center">
                 <h1 className="text-lg font-semibold">Grafico</h1>
                 <Image src={moreDarkImage} alt="more dark image" width={20} height={20} />

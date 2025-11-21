@@ -9,8 +9,6 @@ type ValuePiece = Date | null;
 
 type Value = ValuePiece | [ValuePiece, ValuePiece];
 
-
-{/*TEMPORARY*/ }
 const events = [
     {
         id: 1,

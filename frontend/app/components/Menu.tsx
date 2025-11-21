@@ -1,6 +1,8 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
-import { role } from "../lib/data";
+import { useAuth } from "../contexts/AuthContext";
 
 const menuItems = [
   {
@@ -96,6 +98,14 @@ const menuItems = [
 
 
 export default function Menu() {
+  const { user, logout } = useAuth();
+  const role = user?.role || 'student';
+
+  const handleLogout = (e: React.MouseEvent) => {
+    e.preventDefault();
+    logout();
+  };
+
   return (
     <div className="mt-4 text-sm">
       {menuItems.map(i => (
@@ -103,17 +113,30 @@ export default function Menu() {
           <span className="hidden lg:block text-gray-400 font-light my-4">{i.title}</span>
           {i.items.map(item => {
             if (item.visible.includes(role)) {
+              if (item.href === '/logout') {
+                return (
+                  <button
+                    key={item.label}
+                    onClick={handleLogout}
+                    className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md px-4 
+                                                               transition-all duration-300 ease-in-out
+                                                               hover:bg-hoverColor hover:text-white hover:font-semibold 
+                                                               hover:scale-105 hover:shadow-lg w-full text-left"
+                  >
+                    <Image src={item.icon} alt={i.title} width={20} height={20} />
+                    <span className="hidden lg:block">{item.label}</span>
+                  </button>
+                );
+              }
               return (
-                (
-                  <Link href={item.href} key={item.label} className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md px-4 
+                <Link href={item.href} key={item.label} className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md px-4 
                                                                      transition-all duration-300 ease-in-out
                                                                      hover:bg-hoverColor hover:text-white hover:font-semibold 
                                                                      hover:scale-105 hover:shadow-lg">
-                    <Image src={item.icon} alt={i.title} width={20} height={20} />
-                    <span className="hidden lg:block">{item.label}</span>
-                  </Link>
-                )
-              )
+                  <Image src={item.icon} alt={i.title} width={20} height={20} />
+                  <span className="hidden lg:block">{item.label}</span>
+                </Link>
+              );
             }
           })}
         </div>

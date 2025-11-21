@@ -20,7 +20,6 @@ export default function SettingsPage() {
 
   return (
     <div className="p-4 flex gap-4 flex-col">
-      {/* HEADER */}
       <div className="bg-white rounded-xl p-6">
         <div className="flex items-center gap-4">
           <Image src={settingImage} alt="settings" width={32} height={32} />
@@ -31,7 +30,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* STATISTICS CARDS */}
       <div className="flex gap-4 justify-between flex-wrap">
         <UserCard type="Usuarios Activos" />
         <UserCard type="Configuraciones Aplicadas" />
@@ -39,9 +37,7 @@ export default function SettingsPage() {
         <UserCard type="Backups Realizados" />
       </div>
 
-      {/* SETTINGS SECTIONS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* NOTIFICATIONS */}
         <div className="bg-white rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Notificaciones</h2>
           <div className="space-y-4">
@@ -93,7 +89,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* PREFERENCES */}
         <div className="bg-white rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Preferencias</h2>
           <div className="space-y-4">
@@ -135,7 +130,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* SYSTEM SETTINGS */}
         <div className="bg-white rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Configuración del Sistema</h2>
           <div className="space-y-4">
@@ -154,7 +148,6 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* ACTIONS */}
         <div className="bg-white rounded-xl p-6">
           <h2 className="text-lg font-semibold mb-4">Acciones</h2>
           <div className="space-y-3">

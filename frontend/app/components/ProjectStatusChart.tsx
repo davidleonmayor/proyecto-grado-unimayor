@@ -1,8 +1,6 @@
 'use client'
 import Image from 'next/image';
 import moreDarkImage from '@/public/moreDark.png';
-
-{/* CHAT GPT HELPS ME WITH THESE ERRORS AGAIN */ }
 import {
   BarChart,
   Bar,
@@ -15,7 +13,6 @@ import {
   ResponsiveContainer
 } from 'recharts';
 
-{/* CHAT GPT HELPS ME WITH THIS ONE TOO */ }
 const Legend = RechartsLegend as unknown as React.FC<any>;
 
 const data = [

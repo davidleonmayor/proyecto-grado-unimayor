@@ -1,3 +1,5 @@
+'use client';
+
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
@@ -8,7 +10,8 @@ import Table from "@/app/components/Table";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import { role, degreeOptionsData } from "@/app/lib/data";
+import { degreeOptionsData } from "@/app/lib/data";
+import { useAuth } from "@/app/contexts/AuthContext";
 import FormModal from "@/app/components/FormModal";
 
 type DegreeOption = {
@@ -25,6 +28,9 @@ const columns = [
 ];
 
 const DegreeOptionsListPage = () => {
+  const { user } = useAuth();
+  const role = user?.role || 'student';
+  
   const renderRow = (item: DegreeOption) => (
     <tr
       key={item.id}
@@ -54,7 +60,6 @@ const DegreeOptionsListPage = () => {
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      {/* TOP */}
       <div className="flex items-center justify-between">
         <h1 className="hidden md:block text-lg font-semibold">
           Opciones de Grado
@@ -69,17 +74,12 @@ const DegreeOptionsListPage = () => {
               <Image src={sortImage} alt="" width={14} height={14} />
             </button>
             {role === 'admin' && (
-              // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-              //     <Image src={deleteImage} alt="" width={16} height={16} />
-              // </button>
               <FormModal table="degreeOption" type="create" />
             )}
           </div>
         </div>
       </div>
-      {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={degreeOptionsData} />
-      {/* PAGINATION */}
       <Pagination />
     </div>
   );

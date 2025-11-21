@@ -1,10 +1,14 @@
+'use client';
+
+import { useState } from 'react';
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import Pagination from "@/app/components/Pagination";
 import Table from "@/app/components/Table";
-import { role, reportsData } from "@/app/lib/data";
+import { reportsData } from "@/app/lib/data";
+import { useAuth } from "@/app/contexts/AuthContext";
 import FormModal from "@/app/components/FormModal";
 import FinanceChart from "@/app/components/FinanceChart";
 import ProjectStatusChart from "@/app/components/ProjectStatusChart";
@@ -12,6 +16,8 @@ import PieChart from "@/app/components/PieChart";
 import AreaChart from "@/app/components/AreaChart";
 import CountCharts from "@/app/components/CountCharts";
 import UserCard from "@/app/components/UserCard";
+import GenerateReportModal from "@/app/components/GenerateReportModal";
+import { downloadReportAsText } from "@/app/lib/reportGenerator";
 
 type Report = {
   id: number;
@@ -29,6 +35,19 @@ const columns = [
 ];
 
 const ReportListPage = () => {
+  const { user } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const role = user?.role || 'student';
+
+  const handleDownload = (item: Report) => {
+    downloadReportAsText({
+      titulo: item.titulo,
+      tipo: item.tipo,
+      fecha: item.fecha,
+      generadoPor: item.generadoPor,
+    });
+  };
+
   const renderRow = (item: Report) => (
     <tr
       key={item.id}
@@ -54,7 +73,10 @@ const ReportListPage = () => {
       <td className="hidden lg:table-cell">{item.generadoPor}</td>
       <td>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1 bg-secondary hover:bg-hoverColor text-white rounded-lg text-xs font-semibold">
+          <button
+            onClick={() => handleDownload(item)}
+            className="px-3 py-1 bg-secondary hover:bg-hoverColor text-white rounded-lg text-xs font-semibold transition-all"
+          >
             Descargar
           </button>
           {role === "admin" && (
@@ -82,7 +104,6 @@ const ReportListPage = () => {
 
   return (
     <div className="p-4 flex gap-4 flex-col">
-      {/* USER CARDS */}
       <div className="flex gap-4 justify-between flex-wrap">
         <UserCard type="Total Reportes Generados" />
         <UserCard type="Reportes Este Mes" />
@@ -90,7 +111,6 @@ const ReportListPage = () => {
         <UserCard type="Reportes Pendientes" />
       </div>
 
-      {/* CHARTS SECTION - ROW 1 */}
       <div className="flex gap-4 flex-col lg:flex-row">
         <div className="w-full lg:w-1/3 h-[400px]">
           <PieChart data={pieData} title="Tipos de Reportes" />
@@ -110,7 +130,6 @@ const ReportListPage = () => {
         </div>
       </div>
 
-      {/* CHARTS SECTION - ROW 2 */}
       <div className="flex gap-4 flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 h-[450px]">
           <ProjectStatusChart />
@@ -120,7 +139,6 @@ const ReportListPage = () => {
         </div>
       </div>
 
-      {/* TABLE SECTION */}
       <div className="bg-white p-4 rounded-md flex-1">
         <div className="flex items-center justify-between">
           <h1 className="hidden md:block text-lg font-semibold">
@@ -136,7 +154,10 @@ const ReportListPage = () => {
                 <Image src={sortImage} alt="" width={14} height={14} />
               </button>
               {(role === "admin" || role === "dean") && (
-                <button className="px-4 py-2 bg-secondary hover:bg-hoverColor text-white rounded-lg text-sm font-semibold">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-4 py-2 bg-secondary hover:bg-hoverColor text-white rounded-lg text-sm font-semibold transition-all"
+                >
                   Generar Reporte
                 </button>
               )}
@@ -146,6 +167,8 @@ const ReportListPage = () => {
         <Table columns={columns} renderRow={renderRow} data={reportsData} />
         <Pagination />
       </div>
+
+      <GenerateReportModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 };

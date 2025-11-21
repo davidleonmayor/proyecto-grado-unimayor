@@ -6,41 +6,38 @@ import z from "zod";
 import InputField from "../InputField";
 import Image from "next/image";
 import uploadImage from "@/public/upload.png";
+import { tipoDocumentoData, tipoRolData } from "@/app/lib/data";
 
 const schema = z.object({
-    username: z
-        .string()
-        .min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres" })
-        .max(20, { message: "El nombre de usuario no debe exceder los 20 caracteres" }),
-    email: z
-        .string()
-        .email({ message: "Correo electrónico inválido" }),
-    password: z
-        .string()
-        .min(6, { message: "La contraseña debe tener al menos 6 caracteres" })
-        .max(100, { message: "La contraseña no debe exceder los 100 caracteres" }),
-    role: z
-        .enum(["Director de Proyecto", "Tutor", "Docente"], {
-            message: "Rol inválido",
-        }),
-    firstName: z
+    NOMBRES: z
         .string()
         .min(1, { message: "El nombre es obligatorio" })
-        .max(50, { message: "El nombre no debe exceder los 50 caracteres" }),
-    lastName: z
+        .max(100, { message: "El nombre no debe exceder los 100 caracteres" }),
+    APELLIDOS: z
         .string()
         .min(1, { message: "El apellido es obligatorio" })
-        .max(50, { message: "El apellido no debe exceder los 50 caracteres" }),
-    phone: z
+        .max(100, { message: "El apellido no debe exceder los 100 caracteres" }),
+    ID_TIPO_DOC_IDENTIDAD: z
+        .number()
+        .min(1, { message: "Debe seleccionar un tipo de documento" }),
+    NUM_DOC_IDENTIDAD: z
         .string()
-        .min(7, { message: "El teléfono debe tener al menos 7 caracteres" })
-        .max(15, { message: "El teléfono no debe exceder los 15 caracteres" }),
-    sex: z
-        .enum(["Masculino", "Femenino"], {
-            message: "Sexo inválido",
-        }),
-    img: z
-        .instanceof(File, { message: "Debe ser un archivo" })
+        .min(5, { message: "El número de documento es obligatorio" })
+        .max(50, { message: "El número de documento no debe exceder los 50 caracteres" }),
+    NUMERO_CELULAR: z
+        .string()
+        .max(20, { message: "El número de celular no debe exceder los 20 caracteres" })
+        .optional()
+        .or(z.literal("")),
+    CORREO_ELECTRONICO: z.string().email({ message: "Correo electrónico inválido" }),
+    PASSWORD: z
+        .string()
+        .min(6, { message: "La contraseña debe tener al menos 6 caracteres" })
+        .max(60, { message: "La contraseña no debe exceder los 60 caracteres" }),
+    ID_TIPO_ROL: z
+        .number()
+        .min(1, { message: "Debe seleccionar un rol" }),
+    img: z.instanceof(File).optional().or(z.literal("")),
 });
 
 
@@ -65,97 +62,98 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
                 {type === "create" ? "Crear nuevo profesor" : "Actualizar profesor"}
             </h1>
 
-            {/* AUTH INFO */}
-            <span className="text-xs text-gray-400 font-medium">Informacion de Autentificacion</span>
+            <span className="text-xs text-gray-400 font-medium">Información Personal</span>
 
             <div className="flex justify-between gap-4 flex-wrap">
+                <InputField
+                    label="Nombres"
+                    name="NOMBRES"
+                    defaultValue={data?.NOMBRES || data?.nombres}
+                    register={register}
+                    error={errors.NOMBRES}
+                />
+                <InputField
+                    label="Apellidos"
+                    name="APELLIDOS"
+                    defaultValue={data?.APELLIDOS || data?.apellidos}
+                    register={register}
+                    error={errors.APELLIDOS}
+                />
+                
+                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
+                    <label className="text-xs text-gray-500">Tipo de Documento</label>
+                    <select
+                        {...register("ID_TIPO_DOC_IDENTIDAD", { valueAsNumber: true })}
+                        defaultValue={data?.ID_TIPO_DOC_IDENTIDAD || data?.id_tipo_doc_identidad}
+                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                    >
+                        <option value="">Seleccionar</option>
+                        {tipoDocumentoData.map((doc) => (
+                            <option key={doc.ID_TIPO_DOCUMENTO} value={doc.ID_TIPO_DOCUMENTO}>
+                                {doc.DOCUMENTO}
+                            </option>
+                        ))}
+                    </select>
+                    {errors.ID_TIPO_DOC_IDENTIDAD && (
+                        <p className="text-red-500 text-xs">{errors.ID_TIPO_DOC_IDENTIDAD.message as string}</p>
+                    )}
+                </div>
 
                 <InputField
-                    label="Nombre de usuario"
-                    name="username"
-                    defaultValue={data?.username}
+                    label="Número de Documento"
+                    name="NUM_DOC_IDENTIDAD"
+                    defaultValue={data?.NUM_DOC_IDENTIDAD || data?.num_doc_identidad}
                     register={register}
-                    error={errors.username}
+                    error={errors.NUM_DOC_IDENTIDAD}
                 />
                 <InputField
-                    label="Email"
-                    name="email"
-                    type="email"
-                    defaultValue={data?.email}
+                    label="Número de Celular"
+                    name="NUMERO_CELULAR"
+                    defaultValue={data?.NUMERO_CELULAR || data?.numero_celular}
                     register={register}
-                    error={errors.email}
+                    error={errors.NUMERO_CELULAR}
                 />
-                <InputField
-                    label="Contrasenia"
-                    name="password"
-                    type="password"
-                    defaultValue={data?.password}
-                    register={register}
-                    error={errors.password}
-                />
-
             </div>
 
-            {/* PERSONAL INFO */}
-            <span className="text-xs text-gray-400 font-medium">
-                Informacion Personal
-            </span>
+            <span className="text-xs text-gray-400 font-medium">Rol y Autenticación</span>
 
             <div className="flex justify-between gap-4 flex-wrap">
-                <InputField
-                    label="Nombre"
-                    name="firstName"
-                    defaultValue={data?.firstName}
-                    register={register}
-                    error={errors.firstName}
-                />
-                <InputField
-                    label="Apellido"
-                    name="lastName"
-                    defaultValue={data?.lastName}
-                    register={register}
-                    error={errors.lastName}
-                />
-                <InputField
-                    label="Teléfono"
-                    name="phone"
-                    defaultValue={data?.phone}
-                    register={register}
-                    error={errors.phone}
-                />
-
-                {/* SELECT SEX */}
-                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-                    <label className="text-xs text-gray-500">Sexo</label>
+                <div className="flex flex-col gap-2 w-full md:w-1/3 justify-center">
+                    <label className="text-xs text-gray-500">Tipo de Rol</label>
                     <select
-                        {...register("sex")}
-                        defaultValue={data?.sex}
-                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full "
+                        {...register("ID_TIPO_ROL", { valueAsNumber: true })}
+                        defaultValue={data?.ID_TIPO_ROL || data?.id_tipo_rol}
+                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
                     >
                         <option value="">Seleccionar</option>
-                        <option value="Masculino">Masculino</option>
-                        <option value="Femenino">Femenino</option>
+                        {tipoRolData.filter(r => r.ID_ROL !== 4).map((rol) => (
+                            <option key={rol.ID_ROL} value={rol.ID_ROL}>
+                                {rol.NOMBRE_ROL}
+                            </option>
+                        ))}
                     </select>
-                    {errors.sex && <p className="text-red-500 text-xs">{errors.sex.message as string}</p>}
+                    {errors.ID_TIPO_ROL && (
+                        <p className="text-red-500 text-xs">{errors.ID_TIPO_ROL.message as string}</p>
+                    )}
                 </div>
 
-                {/* SELECT ROLE */}
-                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-                    <label className="text-xs text-gray-500">Rol</label>
-                    <select
-                        {...register("role")}
-                        defaultValue={data?.role}
-                        className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full "
-                    >
-                        <option value="">Seleccionar</option>
-                        <option value="Director de Proyecto">Director de Proyecto</option>
-                        <option value="Tutor">Tutor</option>
-                        <option value="Docente">Docente</option>
-                    </select>
-                    {errors.role && <p className="text-red-500 text-xs">{errors.role.message as string}</p>}
-                </div>
+                <InputField
+                    label="Correo Electrónico"
+                    name="CORREO_ELECTRONICO"
+                    type="email"
+                    defaultValue={data?.CORREO_ELECTRONICO || data?.correo_electronico}
+                    register={register}
+                    error={errors.CORREO_ELECTRONICO}
+                />
+                <InputField
+                    label="Contraseña"
+                    name="PASSWORD"
+                    type="password"
+                    defaultValue={data?.PASSWORD || data?.password}
+                    register={register}
+                    error={errors.PASSWORD}
+                />
 
-                {/* UPLOAD IMAGE */}
                 <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
                     <label className="text-xs text-gray-500 flex items-center gap-2 cursos-pointer" htmlFor="img">
                         <Image src={uploadImage} alt="subir imagen" width={28} height={28} />
@@ -172,7 +170,6 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
                 </div>
             </div>
 
-            {/* BUTTON */}
             <button className="bg-blue-400 text-white p-2 rounded-md hover:bg-blue-700">
                 {type === "create" ? "Crear" : "Actualizar"}
             </button>

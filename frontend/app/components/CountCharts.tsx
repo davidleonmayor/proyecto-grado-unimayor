@@ -2,8 +2,6 @@
 
 import Image from 'next/image';
 import checkImage from "@/public/check.png";
-
-{/*Chatgpt helps me with this fck sht*/ }
 import {
   RadialBarChart as RechartsRadialBarChart,
   RadialBar as RechartsRadialBar,
@@ -13,7 +11,6 @@ import {
 import type { RadialBarProps, LegendProps } from 'recharts';
 import moreDarkImage from "@/public/moreDark.png";
 
-{/*Chatgpt helps me with this fck sht too*/ }
 const RadialBarChart = RechartsRadialBarChart as unknown as React.FC<any>;
 const RadialBar = RechartsRadialBar as unknown as React.FC<RadialBarProps>;
 const Legend = RechartsLegend as unknown as React.FC<any>;
@@ -41,13 +38,11 @@ const data = [
 export default function CountCharts() {
   return (
     <div className="bg-white rounded-xl w-full h-full p-4">
-      {/* TITLE */}
       <div className="flex justify-between items-center">
         <h1 className="text-lg font-semibold">Estudiantes</h1>
         <Image src={moreDarkImage} alt="more dark image" width={20} height={20} />
       </div>
 
-      {/* CHARTS */}
       <div className="relative w-full h-[75%]">
         <ResponsiveContainer>
           <RadialBarChart
@@ -73,7 +68,6 @@ export default function CountCharts() {
         />
       </div>
 
-      {/* BOTTOM */}
       <div className="flex justify-center gap-16">
         <div className="flex flex-col gap-1">
           <div className="w-5 h-5 bg-principal rounded-full" />

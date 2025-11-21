@@ -1,3 +1,5 @@
+'use client';
+
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
@@ -7,7 +9,8 @@ import Pagination from "@/app/components/Pagination";
 import Table from "@/app/components/Table";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
-import { role, calendarEvents } from "@/app/lib/data";
+import { calendarEvents } from "@/app/lib/data";
+import { useAuth } from "@/app/contexts/AuthContext";
 import FormModal from "@/app/components/FormModal";
 
 const columns = [
@@ -18,6 +21,9 @@ const columns = [
 ];
 
 const EventListPage = () => {
+  const { user } = useAuth();
+  const role = user?.role || 'student';
+  
   const renderRow = (item: any) => {
     const startDate = new Date(item.start);
     const endDate = new Date(item.end);

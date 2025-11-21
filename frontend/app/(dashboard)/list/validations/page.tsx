@@ -1,10 +1,13 @@
+'use client';
+
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import Pagination from "@/app/components/Pagination";
 import Table from "@/app/components/Table";
-import { role, validationsData } from "@/app/lib/data";
+import { validationsData } from "@/app/lib/data";
+import { useAuth } from "@/app/contexts/AuthContext";
 import FormModal from "@/app/components/FormModal";
 import PieChart from "@/app/components/PieChart";
 import ProjectStatusChart from "@/app/components/ProjectStatusChart";
@@ -28,6 +31,9 @@ const columns = [
 ];
 
 const ValidationListPage = () => {
+  const { user } = useAuth();
+  const role = user?.role || 'student';
+  
   const renderRow = (item: Validation) => (
     <tr
       key={item.id}
@@ -88,7 +94,6 @@ const ValidationListPage = () => {
 
   return (
     <div className="p-4 flex gap-4 flex-col">
-      {/* CHARTS SECTION */}
       <div className="flex gap-4 flex-col lg:flex-row">
         <div className="w-full lg:w-1/2 h-[450px]">
           <PieChart data={pieData} title="Estado de Validaciones" />
@@ -98,7 +103,6 @@ const ValidationListPage = () => {
         </div>
       </div>
 
-      {/* TABLE SECTION */}
       <div className="bg-white p-4 rounded-md flex-1">
         <div className="flex items-center justify-between">
           <h1 className="hidden md:block text-lg font-semibold">
