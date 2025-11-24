@@ -22,10 +22,10 @@ RUN pnpm install
 COPY . .
 
 # Generar Prisma client
-RUN pnpx prisma generate
+RUN pnpm exec prisma generate
 
 # Exponer puerto
 EXPOSE 4000
 
 # Comando de inicio
-CMD ["sh", "-c", "pnpx prisma migrate deploy && pnpm run dev"]
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm run dev"]
