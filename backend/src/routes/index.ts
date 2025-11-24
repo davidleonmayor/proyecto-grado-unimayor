@@ -1,6 +1,7 @@
-import { Application } from "express";
+import { Application, Router } from "express";
 import { AuthRoutes } from "../auth/auth.routes";
 import { ExampleRoutes } from "../example/example.routes";
+import { ProjectRoutes } from "./project.routes";
 
 /**
  * Este archivo centraliza todas las rutas de la aplicación.
@@ -27,10 +28,13 @@ export class Routes {
         authRoutes.initRoutes();
         exampleRoutes.initRoutes();
 
+        const projectRoutes = new ProjectRoutes();
+
         app.get("/api", (req, res) => {
             res.send("Hello World!");
         });
         app.use("/api/auth", authRoutes.router);
         app.use("/api/example", exampleRoutes.router);
+        app.use("/api/projects", projectRoutes.router);
     }
 }
