@@ -189,6 +189,55 @@ class ApiClient {
   getDownloadUrl(historyId: string): string {
     return `${this.baseURL}/api/projects/history/${historyId}/download`;
   }
+
+  // Admin CRUD operations (Privileged users only)
+  async getAllProjects(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/admin/all', {
+      requiresAuth: true,
+    });
+  }
+
+  async createProject(projectData: any): Promise<any> {
+    return this.request<any>('/api/projects/admin', {
+      method: 'POST',
+      requiresAuth: true,
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async updateProject(projectId: string, projectData: any): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
+      method: 'PUT',
+      requiresAuth: true,
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async deleteProject(projectId: string): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // Helper endpoints for forms
+  async getFormData(): Promise<any> {
+    return this.request<any>('/api/projects/form-data', {
+      requiresAuth: true,
+    });
+  }
+
+  async getAvailableStudents(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/students', {
+      requiresAuth: true,
+    });
+  }
+
+  async getAvailableAdvisors(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/advisors', {
+      requiresAuth: true,
+    });
+  }
 }
 
 export const api = new ApiClient(API_URL);
