@@ -89,6 +89,13 @@ export class ProjectRoutes {
             this.controller.createProject
         );
 
+        // Get project detail (Privileged)
+        this.router.get("/admin/:id",
+            this.authMiddleware.isAuthenticatedUser,
+            this.roleMiddleware.isPrivilegedUser,
+            this.controller.getProjectById
+        );
+
         // Update project (Privileged)
         this.router.put("/admin/:id",
             this.authMiddleware.isAuthenticatedUser,

@@ -205,6 +205,12 @@ class ApiClient {
     });
   }
 
+  async getProjectById(projectId: string): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
+      requiresAuth: true,
+    });
+  }
+
   async updateProject(projectId: string, projectData: any): Promise<any> {
     return this.request<any>(`/api/projects/admin/${projectId}`, {
       method: 'PUT',

@@ -386,6 +386,7 @@ export class ProjectController {
                     },
                     empresa: true,
                     actores: {
+                        where: { estado: "Activo" },
                         include: {
                             persona: true,
                             tipo_rol: true
@@ -417,6 +418,79 @@ export class ProjectController {
         } catch (error) {
             logger.error("Error getting all projects:", error);
             return res.status(500).json({ error: "Error al obtener proyectos" });
+        }
+    }
+
+    // Get project detail (Privileged)
+    async getProjectById(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+
+            const project = await prisma.trabajo_grado.findUnique({
+                where: { id_trabajo_grado: id },
+                include: {
+                    opcion_grado: true,
+                    estado_tg: true,
+                    empresa: true,
+                    programa_academico: {
+                        include: {
+                            facultad: true
+                        }
+                    },
+                    actores: {
+                        where: { estado: "Activo" },
+                        include: {
+                            persona: true,
+                            tipo_rol: true
+                        }
+                    }
+                }
+            });
+
+            if (!project) {
+                return res.status(404).json({ error: "Proyecto no encontrado" });
+            }
+
+            const students = project.actores
+                .filter(actor => actor.tipo_rol.nombre_rol === "Estudiante")
+                .map(actor => ({
+                    id: actor.persona.id_persona,
+                    name: `${actor.persona.nombres} ${actor.persona.apellidos}`,
+                    email: actor.persona.correo_electronico,
+                    document: actor.persona.num_doc_identidad
+                }));
+
+            const advisors = project.actores
+                .filter(actor => actor.tipo_rol.nombre_rol === "Director")
+                .map(actor => ({
+                    id: actor.persona.id_persona,
+                    name: `${actor.persona.nombres} ${actor.persona.apellidos}`,
+                    email: actor.persona.correo_electronico
+                }));
+
+            return res.json({
+                id: project.id_trabajo_grado,
+                title: project.titulo_trabajo,
+                summary: project.resumen,
+                modalityId: project.id_opcion_grado,
+                statusId: project.id_estado_actual,
+                programId: project.id_programa_academico,
+                companyId: project.id_empresa_practica,
+                startDate: project.fecha_inicio.toISOString(),
+                endDate: project.fecha_fin_estima ? project.fecha_fin_estima.toISOString() : null,
+                students,
+                advisors,
+                metadata: {
+                    modality: project.opcion_grado.nombre_opcion_grado,
+                    status: project.estado_tg.nombre_estado,
+                    program: project.programa_academico.nombre_programa,
+                    faculty: project.programa_academico.facultad.nombre_facultad,
+                    company: project.empresa?.nombre_empresa || null
+                }
+            });
+        } catch (error) {
+            logger.error("Error getting project detail:", error);
+            return res.status(500).json({ error: "Error al obtener proyecto" });
         }
     }
 
@@ -540,7 +614,9 @@ export class ProjectController {
                 programId,
                 companyId,
                 startDate,
-                endDate
+                endDate,
+                students,
+                advisors
             } = req.body;
 
             const project = await prisma.trabajo_grado.findUnique({
@@ -551,17 +627,147 @@ export class ProjectController {
                 return res.status(404).json({ error: "Proyecto no encontrado" });
             }
 
-            await prisma.trabajo_grado.update({
-                where: { id_trabajo_grado: id },
-                data: {
-                    ...(title && { titulo_trabajo: title }),
-                    ...(summary && { resumen: summary }),
-                    ...(modalityId && { id_opcion_grado: modalityId }),
-                    ...(statusId && { id_estado_actual: statusId }),
-                    ...(programId && { id_programa_academico: programId }),
-                    ...(companyId !== undefined && { id_empresa_practica: companyId || null }),
-                    ...(startDate && { fecha_inicio: new Date(startDate) }),
-                    ...(endDate !== undefined && { fecha_fin_estima: endDate ? new Date(endDate) : null })
+            if (students !== undefined) {
+                if (!Array.isArray(students) || students.length < 1 || students.length > 2) {
+                    return res.status(400).json({
+                        error: "Debe asignar entre 1 y 2 estudiantes al proyecto"
+                    });
+                }
+            }
+
+            if (advisors !== undefined) {
+                if (!Array.isArray(advisors) || advisors.length > 2) {
+                    return res.status(400).json({
+                        error: "Máximo 2 asesores permitidos"
+                    });
+                }
+            }
+
+            const normalizedCompanyId = companyId === "" ? null : companyId;
+
+            await prisma.$transaction(async (tx) => {
+                await tx.trabajo_grado.update({
+                    where: { id_trabajo_grado: id },
+                    data: {
+                        ...(title !== undefined && { titulo_trabajo: title }),
+                        ...(summary !== undefined && { resumen: summary }),
+                        ...(modalityId !== undefined && { id_opcion_grado: modalityId }),
+                        ...(statusId !== undefined && { id_estado_actual: statusId }),
+                        ...(programId !== undefined && { id_programa_academico: programId }),
+                        ...(normalizedCompanyId !== undefined && { id_empresa_practica: normalizedCompanyId }),
+                        ...(startDate !== undefined && { fecha_inicio: new Date(startDate) }),
+                        ...(endDate !== undefined && { fecha_fin_estima: endDate ? new Date(endDate) : null })
+                    }
+                });
+
+                // Update students if provided
+                if (students !== undefined) {
+                    const studentRole = await tx.tipo_rol.findFirst({
+                        where: { nombre_rol: "Estudiante" }
+                    });
+
+                    if (!studentRole) {
+                        throw new Error("Rol Estudiante no configurado");
+                    }
+
+                    const currentStudentActors = await tx.actores.findMany({
+                        where: {
+                            id_trabajo_grado: id,
+                            id_tipo_rol: studentRole.id_rol
+                        }
+                    });
+
+                    const newStudentIds = new Set<string>(students);
+                    const existingStudentIds = new Set(currentStudentActors.map(actor => actor.id_persona));
+
+                    for (const actor of currentStudentActors) {
+                        if (!newStudentIds.has(actor.id_persona)) {
+                            await tx.actores.update({
+                                where: { id_actor: actor.id_actor },
+                                data: {
+                                    estado: "Inactivo",
+                                    fecha_retiro: new Date()
+                                }
+                            });
+                        } else if (actor.estado !== "Activo") {
+                            await tx.actores.update({
+                                where: { id_actor: actor.id_actor },
+                                data: {
+                                    estado: "Activo",
+                                    fecha_retiro: null
+                                }
+                            });
+                        }
+                    }
+
+                    for (const studentId of newStudentIds) {
+                        if (!existingStudentIds.has(studentId)) {
+                            await tx.actores.create({
+                                data: {
+                                    id_persona: studentId,
+                                    id_trabajo_grado: id,
+                                    id_tipo_rol: studentRole.id_rol,
+                                    fecha_asignacion: new Date(),
+                                    estado: "Activo"
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // Update advisors if provided
+                if (advisors !== undefined) {
+                    const directorRole = await tx.tipo_rol.findFirst({
+                        where: { nombre_rol: "Director" }
+                    });
+
+                    if (!directorRole) {
+                        throw new Error("Rol Director no configurado");
+                    }
+
+                    const currentAdvisorActors = await tx.actores.findMany({
+                        where: {
+                            id_trabajo_grado: id,
+                            id_tipo_rol: directorRole.id_rol
+                        }
+                    });
+
+                    const newAdvisorIds = new Set<string>(advisors);
+                    const existingAdvisorIds = new Set(currentAdvisorActors.map(actor => actor.id_persona));
+
+                    for (const actor of currentAdvisorActors) {
+                        if (!newAdvisorIds.has(actor.id_persona)) {
+                            await tx.actores.update({
+                                where: { id_actor: actor.id_actor },
+                                data: {
+                                    estado: "Inactivo",
+                                    fecha_retiro: new Date()
+                                }
+                            });
+                        } else if (actor.estado !== "Activo") {
+                            await tx.actores.update({
+                                where: { id_actor: actor.id_actor },
+                                data: {
+                                    estado: "Activo",
+                                    fecha_retiro: null
+                                }
+                            });
+                        }
+                    }
+
+                    for (const advisorId of newAdvisorIds) {
+                        if (!existingAdvisorIds.has(advisorId)) {
+                            await tx.actores.create({
+                                data: {
+                                    id_persona: advisorId,
+                                    id_trabajo_grado: id,
+                                    id_tipo_rol: directorRole.id_rol,
+                                    fecha_asignacion: new Date(),
+                                    estado: "Activo"
+                                }
+                            });
+                        }
+                    }
                 }
             });
 
