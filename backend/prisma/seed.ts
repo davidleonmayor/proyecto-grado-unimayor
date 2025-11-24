@@ -18,13 +18,53 @@ async function hashPassword(password: string): Promise<string> {
 async function main() {
     console.log("🌱 Iniciando seed de la base de datos...");
 
+    // LIMPIEZA DE DATOS EXISTENTES (en orden inverso de dependencias)
+    console.log("🧹 Limpiando datos existentes...");
+    await prisma.distincion_tg.deleteMany({});
+    await prisma.seguimiento_tg.deleteMany({});
+    await prisma.actores.deleteMany({});
+    await prisma.trabajo_grado.deleteMany({});
+    await prisma.persona.deleteMany({});
+    await prisma.distinciones.deleteMany({});
+    await prisma.accion_seg.deleteMany({});
+    await prisma.estado_tg.deleteMany({});
+    await prisma.empresa.deleteMany({});
+    await prisma.opcion_grado_formacion.deleteMany({});
+    await prisma.opcion_grado.deleteMany({});
+    await prisma.programa_academico.deleteMany({});
+    await prisma.nivel_formacion.deleteMany({});
+    await prisma.facultad.deleteMany({});
+    await prisma.tipo_rol.deleteMany({});
+    await prisma.tipo_documento.deleteMany({});
+    console.log("✅ Datos existentes eliminados");
+
     // 1. TIPOS DE DOCUMENTO
     console.log("📄 Creando tipos de documento...");
     const tiposDocumento = await Promise.all([
-        prisma.tipo_documento.create({ data: { documento: "CC" } }),
-        prisma.tipo_documento.create({ data: { documento: "CE" } }),
-        prisma.tipo_documento.create({ data: { documento: "PAS" } }),
-        prisma.tipo_documento.create({ data: { documento: "TI" } }),
+        prisma.tipo_documento.create({
+            data: {
+                id_tipo_documento: "clxyz6bvt0000kh0gao8tqvhz",
+                documento: "CC"
+            }
+        }),
+        prisma.tipo_documento.create({
+            data: {
+                id_tipo_documento: "clxyz6bvt0001kh0g3m4n5o6p",
+                documento: "CE"
+            }
+        }),
+        prisma.tipo_documento.create({
+            data: {
+                id_tipo_documento: "clxyz6bvt0002kh0g7q8r9s0t",
+                documento: "PAS"
+            }
+        }),
+        prisma.tipo_documento.create({
+            data: {
+                id_tipo_documento: "clxyz6bvt0003kh0g1u2v3w4x",
+                documento: "TI"
+            }
+        }),
     ]);
 
     // 2. TIPOS DE ROL

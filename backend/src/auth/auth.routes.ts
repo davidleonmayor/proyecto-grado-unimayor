@@ -30,7 +30,7 @@ export class AuthRoutes {
     initRoutes() {
         // public routes
         this.router.post(
-            "/create-account",
+            "/register",
             validateSchema(RegisterSchema),
             this.authController.register,
         );

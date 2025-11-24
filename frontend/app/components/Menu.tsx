@@ -27,8 +27,8 @@ const menuItems = [
             {
                 icon: "/project.png",
                 label: "Proyectos de Grado",
-                href: "/list/degreeOptions",
-                visible: ["admin", "teacher", "dean"],
+                href: "/dashboard/projects",
+                visible: ["admin", "teacher", "dean", "student"],
             },
             // {
             //   icon: "/assignment.png",
