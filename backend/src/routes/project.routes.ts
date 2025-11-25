@@ -73,6 +73,13 @@ export class ProjectRoutes {
             this.controller.getAvailableAdvisors
         );
 
+        // Get dashboard statistics (Privileged)
+        this.router.get("/stats/dashboard",
+            this.authMiddleware.isAuthenticatedUser,
+            this.roleMiddleware.isPrivilegedUser,
+            this.controller.getDashboardStats
+        );
+
         // CRUD OPERATIONS (Privileged users only)
 
         // Get ALL projects (Privileged)

@@ -67,6 +67,10 @@ class ApiClient {
 
       return data as T;
     } catch (error) {
+      // Handle network errors (connection refused, etc.)
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      }
       if (error instanceof Error) {
         throw error;
       }
@@ -241,6 +245,13 @@ class ApiClient {
 
   async getAvailableAdvisors(): Promise<any[]> {
     return this.request<any[]>('/api/projects/advisors', {
+      requiresAuth: true,
+    });
+  }
+
+  // Dashboard statistics
+  async getDashboardStats(): Promise<any> {
+    return this.request<any>('/api/projects/stats/dashboard', {
       requiresAuth: true,
     });
   }

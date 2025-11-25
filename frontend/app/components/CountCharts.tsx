@@ -19,26 +19,48 @@ const RadialBar = RechartsRadialBar as unknown as React.FC<RadialBarProps>;
 const Legend = RechartsLegend as unknown as React.FC<any>;
 
 
-const data = [
-  {
-    name: 'Total',
-    count: 100,
-    fill: 'white',
-  },
-  {
-    name: 'Sin entregar',
-    count: 45,
-    fill: '#a2a1f0',
-  },
-  {
-    name: 'Entregado',
-    count: 55,
-    fill: '#fcdf5d',
-  },
-];
+interface CountChartsProps {
+  entregado: number;
+  sinEntregar: number;
+  total: number;
+  porcentajeEntregado: number;
+  porcentajeSinEntregar: number;
+}
 
+export default function CountCharts({ 
+  entregado = 0, 
+  sinEntregar = 0, 
+  total = 0,
+  porcentajeEntregado = 0,
+  porcentajeSinEntregar = 0
+}: CountChartsProps) {
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('es-CO').format(num);
+  };
 
-export default function CountCharts() {
+  const data = total > 0 ? [
+    {
+      name: 'Total',
+      count: 100,
+      fill: 'white',
+    },
+    {
+      name: 'Sin entregar',
+      count: porcentajeSinEntregar,
+      fill: '#a2a1f0',
+    },
+    {
+      name: 'Entregado',
+      count: porcentajeEntregado,
+      fill: '#fcdf5d',
+    },
+  ] : [
+    {
+      name: 'Total',
+      count: 100,
+      fill: 'white',
+    },
+  ];
   return (
     <div className="bg-white rounded-xl w-full h-full p-4">
       {/* TITLE */}
@@ -77,13 +99,13 @@ export default function CountCharts() {
       <div className="flex justify-center gap-16">
         <div className="flex flex-col gap-1">
           <div className="w-5 h-5 bg-principal rounded-full" />
-          <h1 className="font-bold">1,234</h1>
-          <h2 className="text-xs text-gray-500">Entregado (55%)</h2>
+          <h1 className="font-bold">{formatNumber(entregado)}</h1>
+          <h2 className="text-xs text-gray-500">Entregado ({porcentajeEntregado}%)</h2>
         </div>
         <div className="flex flex-col gap-1">
           <div className="w-5 h-5 bg-tertiary rounded-full" />
-          <h1 className="font-bold">1,234</h1>
-          <h2 className="text-xs text-gray-500">Sin entregar (45%)</h2>
+          <h1 className="font-bold">{formatNumber(sinEntregar)}</h1>
+          <h2 className="text-xs text-gray-500">Sin entregar ({porcentajeSinEntregar}%)</h2>
         </div>
       </div>
     </div>

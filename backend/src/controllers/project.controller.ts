@@ -930,5 +930,254 @@ export class ProjectController {
             return res.status(500).json({ error: "Error al eliminar proyecto" });
         }
     }
+
+    // Get dashboard statistics (Privileged only)
+    async getDashboardStats(req: Request, res: Response) {
+        try {
+            // Get total projects
+            const totalProjects = await prisma.trabajo_grado.count();
+
+            // Get active projects (not finished/rejected)
+            // MySQL doesn't support case-insensitive mode, so we check both cases
+            const estadosTerminados = await prisma.estado_tg.findMany({
+                where: {
+                    OR: [
+                        { nombre_estado: { contains: 'Finalizado' } },
+                        { nombre_estado: { contains: 'finalizado' } },
+                        { nombre_estado: { contains: 'Aprobado' } },
+                        { nombre_estado: { contains: 'aprobado' } },
+                        { nombre_estado: { contains: 'Rechazado' } },
+                        { nombre_estado: { contains: 'rechazado' } }
+                    ]
+                }
+            });
+            const estadosTerminadosIds = estadosTerminados.map(e => e.id_estado_tg);
+
+            const proyectosEnCurso = await prisma.trabajo_grado.count({
+                where: {
+                    NOT: {
+                        id_estado_actual: { in: estadosTerminadosIds }
+                    }
+                }
+            });
+
+            // Get finished projects
+            const proyectosFinalizados = await prisma.trabajo_grado.count({
+                where: {
+                    OR: [
+                        { id_estado_actual: { in: estadosTerminadosIds } }
+                    ]
+                }
+            });
+
+            // Get active directors/advisors
+            const directorRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: "Director" }
+            });
+
+            // Get unique active directors using findMany with distinct
+            const profesoresActivos = directorRole ? (await prisma.actores.findMany({
+                where: {
+                    id_tipo_rol: directorRole.id_rol,
+                    estado: "Activo"
+                },
+                select: {
+                    id_persona: true
+                },
+                distinct: ['id_persona']
+            })).length : 0;
+
+            // Get student statistics (entregado vs sin entregar)
+            const studentRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: "Estudiante" }
+            });
+
+            // Get unique active students
+            const totalEstudiantes = studentRole ? (await prisma.actores.findMany({
+                where: {
+                    id_tipo_rol: studentRole.id_rol,
+                    estado: "Activo"
+                },
+                select: {
+                    id_persona: true
+                },
+                distinct: ['id_persona']
+            })).length : 0;
+
+            // Get students with deliveries (entregado)
+            const entregaAccion = await prisma.accion_seg.findFirst({
+                where: {
+                    OR: [
+                        { tipo_accion: { contains: 'Entrega' } },
+                        { tipo_accion: { contains: 'entrega' } }
+                    ]
+                }
+            });
+
+            const estudiantesConEntrega = entregaAccion && studentRole ? (await prisma.actores.findMany({
+                where: {
+                    id_tipo_rol: studentRole.id_rol,
+                    estado: "Activo",
+                    seguimiento_tg: {
+                        some: {
+                            id_accion: entregaAccion.id_accion
+                        }
+                    }
+                },
+                select: {
+                    id_persona: true
+                },
+                distinct: ['id_persona']
+            })).length : 0;
+
+            const estudiantesSinEntrega = totalEstudiantes - estudiantesConEntrega;
+
+            // Get projects by status for weekly chart (last 4 weeks)
+            const cuatroSemanasAtras = new Date();
+            cuatroSemanasAtras.setDate(cuatroSemanasAtras.getDate() - 28);
+
+            const estadosAprobado = await prisma.estado_tg.findMany({
+                where: {
+                    OR: [
+                        { nombre_estado: { contains: 'Aprobado' } },
+                        { nombre_estado: { contains: 'aprobado' } }
+                    ]
+                }
+            });
+            const estadosRechazado = await prisma.estado_tg.findMany({
+                where: {
+                    OR: [
+                        { nombre_estado: { contains: 'Rechazado' } },
+                        { nombre_estado: { contains: 'rechazado' } }
+                    ]
+                }
+            });
+
+            const aprobadosIds = estadosAprobado.map(e => e.id_estado_tg);
+            const rechazadosIds = estadosRechazado.map(e => e.id_estado_tg);
+
+            // Get weekly data
+            const proyectosPorSemana = await prisma.trabajo_grado.findMany({
+                where: {
+                    fecha_registro: {
+                        gte: cuatroSemanasAtras
+                    }
+                },
+                select: {
+                    fecha_registro: true,
+                    id_estado_actual: true
+                }
+            });
+
+            // Group by week (last 4 weeks from today)
+            const semanas: { [key: string]: { aprobado: number; rechazado: number } } = {};
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            // Initialize all 4 weeks
+            for (let i = 1; i <= 4; i++) {
+                semanas[`Semana ${i}`] = { aprobado: 0, rechazado: 0 };
+            }
+
+            proyectosPorSemana.forEach(proyecto => {
+                const fecha = new Date(proyecto.fecha_registro);
+                fecha.setHours(0, 0, 0, 0);
+                
+                // Calculate days difference
+                const diffTime = hoy.getTime() - fecha.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                // Determine which week (1-4)
+                let semanaNum = Math.ceil(diffDays / 7);
+                
+                // Only count if within last 4 weeks
+                if (semanaNum >= 1 && semanaNum <= 4) {
+                    const nombreSemana = `Semana ${semanaNum}`;
+
+                    if (aprobadosIds.includes(proyecto.id_estado_actual)) {
+                        semanas[nombreSemana].aprobado++;
+                    } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
+                        semanas[nombreSemana].rechazado++;
+                    }
+                }
+            });
+
+            const weeklyData = Object.keys(semanas).sort((a, b) => {
+                const numA = parseInt(a.replace('Semana ', ''));
+                const numB = parseInt(b.replace('Semana ', ''));
+                return numA - numB;
+            }).map(name => ({
+                name,
+                aprobado: semanas[name].aprobado,
+                rechazado: semanas[name].rechazado
+            }));
+
+            // Get monthly data (last 12 months)
+            const doceMesesAtras = new Date();
+            doceMesesAtras.setMonth(doceMesesAtras.getMonth() - 12);
+
+            const proyectosPorMes = await prisma.trabajo_grado.findMany({
+                where: {
+                    fecha_registro: {
+                        gte: doceMesesAtras
+                    }
+                },
+                select: {
+                    fecha_registro: true,
+                    id_estado_actual: true
+                }
+            });
+
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const monthlyData: { [key: string]: { aprobados: number; rechazados: number } } = {};
+
+            proyectosPorMes.forEach(proyecto => {
+                const fecha = new Date(proyecto.fecha_registro);
+                const mes = meses[fecha.getMonth()];
+
+                if (!monthlyData[mes]) {
+                    monthlyData[mes] = { aprobados: 0, rechazados: 0 };
+                }
+
+                if (aprobadosIds.includes(proyecto.id_estado_actual)) {
+                    monthlyData[mes].aprobados++;
+                } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
+                    monthlyData[mes].rechazados++;
+                }
+            });
+
+            const monthlyChartData = meses.map(mes => ({
+                name: mes,
+                aprobados: monthlyData[mes]?.aprobados || 0,
+                rechazados: monthlyData[mes]?.rechazados || 0
+            }));
+
+            return res.json({
+                stats: {
+                    totalProjects,
+                    proyectosEnCurso,
+                    proyectosFinalizados,
+                    profesoresActivos
+                },
+                students: {
+                    total: totalEstudiantes,
+                    entregado: estudiantesConEntrega,
+                    sinEntregar: estudiantesSinEntrega,
+                    porcentajeEntregado: totalEstudiantes > 0 ? Math.round((estudiantesConEntrega / totalEstudiantes) * 100) : 0,
+                    porcentajeSinEntregar: totalEstudiantes > 0 ? Math.round((estudiantesSinEntrega / totalEstudiantes) * 100) : 0
+                },
+                weeklyChart: weeklyData.length > 0 ? weeklyData : [
+                    { name: 'Semana 1', aprobado: 0, rechazado: 0 },
+                    { name: 'Semana 2', aprobado: 0, rechazado: 0 },
+                    { name: 'Semana 3', aprobado: 0, rechazado: 0 },
+                    { name: 'Semana 4', aprobado: 0, rechazado: 0 }
+                ],
+                monthlyChart: monthlyChartData
+            });
+        } catch (error) {
+            logger.error("Error getting dashboard stats:", error);
+            return res.status(500).json({ error: "Error al obtener estadísticas" });
+        }
+    }
 }
 
