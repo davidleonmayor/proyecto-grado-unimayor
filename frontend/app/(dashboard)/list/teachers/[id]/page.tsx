@@ -1,3 +1,5 @@
+'use client';
+
 import Image from "next/image";
 import dateImage from "@/public/date.png";
 import phoneImage from "@/public/phone.png";
@@ -12,8 +14,9 @@ import Announcement from "@/app/components/Announcement";
 import Link from "next/link";
 import Performance from "@/app/components/Performance";
 import FormModal from "@/app/components/FormModal";
+import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
 
-const SingleTeacherPage = () => {
+const SingleTeacherPageContent = () => {
 
     const imageUrl = "https://images.pexels.com/photos/1102341/pexels-photo-1102341.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
@@ -148,4 +151,13 @@ const SingleTeacherPage = () => {
         </div>
     );
 }
+
+const SingleTeacherPage = () => {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']}>
+            <SingleTeacherPageContent />
+        </RoleProtectedRoute>
+    );
+};
+
 export default SingleTeacherPage;

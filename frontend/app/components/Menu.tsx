@@ -1,6 +1,8 @@
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
-import { role } from "../lib/data";
+import { useUserRole } from "../hooks/useUserRole";
 
 const menuItems = [
     {
@@ -58,7 +60,7 @@ const menuItems = [
                 icon: "/calendar.png",
                 label: "Eventos",
                 href: "/list/events",
-                visible: ["student", "teacher", "dean", "admin"],
+                visible: ["teacher", "dean", "admin"],
             },
             // {
             //     icon: "/plane.svg",
@@ -100,6 +102,20 @@ const menuItems = [
 ];
 
 export default function Menu() {
+    const { role, loading } = useUserRole();
+
+    // Show loading state only while actually loading
+    if (loading) {
+        return (
+            <div className="mt-4 text-sm flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-gray-400"></div>
+            </div>
+        );
+    }
+
+    // Default to student if no role but authenticated
+    const currentRole = role || 'student';
+
     return (
         <div className="mt-4 text-sm">
             {menuItems.map((i) => (
@@ -108,7 +124,7 @@ export default function Menu() {
                         {i.title}
                     </span>
                     {i.items.map((item) => {
-                        if (item.visible.includes(role)) {
+                        if (item.visible.includes(currentRole)) {
                             return (
                                 <Link
                                     href={item.href}
@@ -130,6 +146,7 @@ export default function Menu() {
                                 </Link>
                             );
                         }
+                        return null;
                     })}
                 </div>
             ))}
