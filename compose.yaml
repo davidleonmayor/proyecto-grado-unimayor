@@ -8,6 +8,8 @@ services:
             - "4000:4000"
         env_file:
             - ./backend/.env
+        environment:
+            DATABASE_URL: "mysql://${MYSQL_USER:-david}:${MYSQL_PASSWORD:-secret}@db:3306/${MYSQL_DATABASE:-money_up}"
         restart: unless-stopped
         depends_on:
             db:

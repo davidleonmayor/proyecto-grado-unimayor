@@ -6,70 +6,30 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend as Rechar
 
 const Legend = RechartsLegend as unknown as React.FC<any>;
 
-const data = [
-    {
-        name: 'Ene',
-        aprobados: 4000,
-        rechazados: 2400,
-    },
-    {
-        name: 'Feb',
-        aprobados: 3000,
-        rechazados: 1398,
-    },
-    {
-        name: 'Mar',
-        aprobados: 2000,
-        rechazados: 9800,
-    },
-    {
-        name: 'Abr',
-        aprobados: 2780,
-        rechazados: 3908,
-    },
-    {
-        name: 'May',
-        aprobados: 1890,
-        rechazados: 4800,
-    },
-    {
-        name: 'Jun',
-        aprobados: 2390,
-        rechazados: 3800,
-    },
-    {
-        name: 'Jul',
-        aprobados: 3490,
-        rechazados: 4300,
-    },
-    {
-        name: 'Ago',
-        aprobados: 3490,
-        rechazados: 4300,
-    },
-    {
-        name: 'Sep',
-        aprobados: 3490,
-        rechazados: 4300,
-    },
-    {
-        name: 'Oct',
-        aprobados: 3490,
-        rechazados: 4300,
-    },
-    {
-        name: 'Nov',
-        aprobados: 3490,
-        rechazados: 4300,
-    },
-    {
-        name: 'Dic',
-        aprobados: 3490,
-        rechazados: 4300,
-    },
-];
+interface FinanceChartProps {
+  data?: Array<{
+    name: string;
+    aprobados: number;
+    rechazados: number;
+  }>;
+}
 
-export default function FinanceChart() {
+export default function FinanceChart({ data = [] }: FinanceChartProps) {
+  // Use provided data or default empty data
+  const chartData = data.length > 0 ? data : [
+    { name: 'Ene', aprobados: 0, rechazados: 0 },
+    { name: 'Feb', aprobados: 0, rechazados: 0 },
+    { name: 'Mar', aprobados: 0, rechazados: 0 },
+    { name: 'Abr', aprobados: 0, rechazados: 0 },
+    { name: 'May', aprobados: 0, rechazados: 0 },
+    { name: 'Jun', aprobados: 0, rechazados: 0 },
+    { name: 'Jul', aprobados: 0, rechazados: 0 },
+    { name: 'Ago', aprobados: 0, rechazados: 0 },
+    { name: 'Sep', aprobados: 0, rechazados: 0 },
+    { name: 'Oct', aprobados: 0, rechazados: 0 },
+    { name: 'Nov', aprobados: 0, rechazados: 0 },
+    { name: 'Dic', aprobados: 0, rechazados: 0 },
+  ];
     return (
         <div className="bg-white rounded-xl w-full h-full p-4">
             {/* TITLE */}
@@ -81,7 +41,7 @@ export default function FinanceChart() {
                 <LineChart
                     width={500}
                     height={300}
-                    data={data}
+                    data={chartData}
                     margin={{
                         top: 5,
                         right: 30,

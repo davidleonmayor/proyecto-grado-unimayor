@@ -67,6 +67,10 @@ class ApiClient {
 
       return data as T;
     } catch (error) {
+      // Handle network errors (connection refused, etc.)
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      }
       if (error instanceof Error) {
         throw error;
       }
@@ -186,8 +190,146 @@ class ApiClient {
     });
   }
 
+  // Download file with authentication
+  async downloadFile(historyId: string): Promise<void> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No se encontró el token de autenticación');
+    }
+
+    try {
+      const response = await fetch(
+        `${this.baseURL}/api/projects/history/${historyId}/download`,
+        {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || 'Error al descargar el archivo'
+        );
+      }
+
+      // Get filename from Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'archivo.pdf';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Convert response to blob
+      const blob = await response.blob();
+
+      // Create a temporary URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary anchor element and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      }
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error al descargar el archivo');
+    }
+  }
+
   getDownloadUrl(historyId: string): string {
     return `${this.baseURL}/api/projects/history/${historyId}/download`;
+  }
+
+  // Admin CRUD operations (Privileged users only)
+  async getAllProjects(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/admin/all', {
+      requiresAuth: true,
+    });
+  }
+
+  async createProject(projectData: any): Promise<any> {
+    return this.request<any>('/api/projects/admin', {
+      method: 'POST',
+      requiresAuth: true,
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async getProjectById(projectId: string): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
+      requiresAuth: true,
+    });
+  }
+
+  async updateProject(projectId: string, projectData: any): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
+      method: 'PUT',
+      requiresAuth: true,
+      body: JSON.stringify(projectData),
+    });
+  }
+
+  async deleteProject(projectId: string): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // Get available statuses (for review form)
+  async getStatuses(): Promise<Array<{ id_estado_tg: string; nombre_estado: string }>> {
+    return this.request<Array<{ id_estado_tg: string; nombre_estado: string }>>('/api/projects/statuses', {
+      requiresAuth: true,
+    });
+  }
+
+  // Helper endpoints for forms
+  async getFormData(): Promise<any> {
+    return this.request<any>('/api/projects/form-data', {
+      requiresAuth: true,
+    });
+  }
+
+  async getAvailableStudents(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/students', {
+      requiresAuth: true,
+    });
+  }
+
+  async getAvailableAdvisors(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/advisors', {
+      requiresAuth: true,
+    });
+  }
+
+  // Dashboard statistics
+  async getDashboardStats(): Promise<any> {
+    return this.request<any>('/api/projects/stats/dashboard', {
+      requiresAuth: true,
+    });
+  }
+
+  // Teacher/Director dashboard statistics
+  async getTeacherDashboardStats(): Promise<any> {
+    return this.request<any>('/api/projects/stats/teacher-dashboard', {
+      requiresAuth: true,
+    });
   }
 }
 

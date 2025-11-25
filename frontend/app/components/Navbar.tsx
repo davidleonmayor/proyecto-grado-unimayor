@@ -70,7 +70,7 @@ export default function Navbar() {
             width={20}
             height={20}
           />
-          <div className="absolute -top-3 -right-3 w-5 h-5 flex items-center justify-center bg-purple-500 text-white rounded-full text-xs">1</div>
+          <div className="absolute -top-3 -right-3 w-5 h-5 flex items-center justify-center bg-primary-500 text-white rounded-full text-xs">1</div>
         </div>
 
         {/* User Info with Dropdown */}

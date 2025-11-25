@@ -3,14 +3,14 @@
 import { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 
-export default function DashboardProjectDetailRedirect() {
+export default function DashboardProjectsAdminEditRedirect() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.id as string;
   
   useEffect(() => {
     if (projectId) {
-      router.replace(`/projects/${projectId}`);
+      router.replace(`/projects/admin/edit/${projectId}`);
     }
   }, [router, projectId]);
 

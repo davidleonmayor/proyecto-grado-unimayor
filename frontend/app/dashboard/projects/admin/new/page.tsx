@@ -1,18 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-export default function DashboardProjectDetailRedirect() {
+export default function DashboardProjectsAdminNewRedirect() {
   const router = useRouter();
-  const params = useParams();
-  const projectId = params.id as string;
   
   useEffect(() => {
-    if (projectId) {
-      router.replace(`/projects/${projectId}`);
-    }
-  }, [router, projectId]);
+    router.replace('/projects/admin/new');
+  }, [router]);
 
   return (
     <div className="flex justify-center items-center h-64">

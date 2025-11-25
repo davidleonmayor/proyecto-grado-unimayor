@@ -18,30 +18,22 @@ import {
 {/* CHAT GPT HELPS ME WITH THIS ONE TOO */ }
 const Legend = RechartsLegend as unknown as React.FC<any>;
 
-const data = [
-  {
-    name: 'Semana 1',
-    aprobado: 60,
-    rechazado: 40,
-  },
-  {
-    name: 'Semana 2',
-    aprobado: 70,
-    rechazado: 30,
-  },
-  {
-    name: 'Semana 3',
-    aprobado: 20,
-    rechazado: 50,
-  },
-  {
-    name: 'Semana 4',
-    aprobado: 31,
-    rechazado: 42,
-  }
-];
+interface ProjectStatusChartProps {
+  data?: Array<{
+    name: string;
+    aprobado: number;
+    rechazado: number;
+  }>;
+}
 
-export default function ProjectStatusChart() {
+export default function ProjectStatusChart({ data = [] }: ProjectStatusChartProps) {
+  // Use provided data or default empty data
+  const chartData = data.length > 0 ? data : [
+    { name: 'Semana 1', aprobado: 0, rechazado: 0 },
+    { name: 'Semana 2', aprobado: 0, rechazado: 0 },
+    { name: 'Semana 3', aprobado: 0, rechazado: 0 },
+    { name: 'Semana 4', aprobado: 0, rechazado: 0 }
+  ];
   return (
     <div className='bg-white rounded-lg p-4 h-full'>
       <div className="flex justify-between items-center">
@@ -52,7 +44,7 @@ export default function ProjectStatusChart() {
         <BarChart
           width={500}
           height={300}
-          data={data}
+          data={chartData}
           barSize={20}
         >
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ddd" />
@@ -70,7 +62,7 @@ export default function ProjectStatusChart() {
           <Bar 
             dataKey="rechazado" 
             fill="#F44336" 
-            activeBar={<Rectangle fill="gold" stroke="purple" />} 
+            activeBar={<Rectangle fill="gold" stroke="#FACD05" />} 
             legendType="circle"
             radius={[10,10,0,0]}
             />

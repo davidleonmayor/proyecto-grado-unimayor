@@ -120,11 +120,11 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 px-4 py-8">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-pink-50 to-blue-50 px-4 py-8">
             <div className="w-full max-w-2xl">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600 mb-2">
+                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600 mb-2">
                         Crear Cuenta
                     </h1>
                     <p className="text-gray-600">Únete a la plataforma de gestión de proyectos</p>
@@ -146,7 +146,7 @@ export default function Register() {
                                     value={formData.names}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="Juan Carlos"
                                 />
                             </div>
@@ -162,7 +162,7 @@ export default function Register() {
                                     value={formData.lastNames}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="Pérez García"
                                 />
                             </div>
@@ -180,7 +180,7 @@ export default function Register() {
                                     value={formData.typeOfDentityDocument}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none bg-white"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none bg-white"
                                 >
                                     <option value="">Seleccionar...</option>
                                     {DOCUMENT_TYPES.map((type) => (
@@ -202,7 +202,7 @@ export default function Register() {
                                     value={formData.idDocumentNumber}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="1234567890"
                                 />
                             </div>
@@ -221,7 +221,7 @@ export default function Register() {
                                     value={formData.phoneNumber}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="3001234567"
                                 />
                             </div>
@@ -237,7 +237,7 @@ export default function Register() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="tu@email.com"
                                 />
                             </div>
@@ -256,7 +256,7 @@ export default function Register() {
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="••••••••"
                                 />
                                 {formData.password && (
@@ -288,7 +288,7 @@ export default function Register() {
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -298,7 +298,7 @@ export default function Register() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full bg-gradient-to-r from-primary-600 to-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-primary-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
                             {isLoading ? (
                                 <span className="flex items-center justify-center">
@@ -320,7 +320,7 @@ export default function Register() {
                             ¿Ya tienes una cuenta?{' '}
                             <Link
                                 href="/sign-in"
-                                className="text-purple-600 font-semibold hover:text-purple-700 hover:underline transition-colors"
+                                className="text-primary-600 font-semibold hover:text-primary-700 hover:underline transition-colors"
                             >
                                 Inicia sesión aquí
                             </Link>
