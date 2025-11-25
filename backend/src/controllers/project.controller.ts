@@ -309,10 +309,36 @@ export class ProjectController {
         }
     }
 
-    // Get available students (personas without confirmed projects)
+    // Get available students (personas without active graduation projects)
     async getAvailableStudents(req: Request, res: Response) {
         try {
-            const students = await prisma.persona.findMany({
+            // Get student role
+            const studentRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: "Estudiante" }
+            });
+
+            if (!studentRole) {
+                return res.json([]);
+            }
+
+            // Get all students with active projects
+            const studentsWithProjects = await prisma.actores.findMany({
+                where: {
+                    id_tipo_rol: studentRole.id_rol,
+                    estado: "Activo"
+                },
+                select: {
+                    id_persona: true
+                },
+                distinct: ['id_persona']
+            });
+
+            const studentIdsWithProjects = new Set(
+                studentsWithProjects.map(a => a.id_persona)
+            );
+
+            // Get all confirmed students
+            const allStudents = await prisma.persona.findMany({
                 where: {
                     confirmed: true,
                     password: { not: null }
@@ -326,7 +352,12 @@ export class ProjectController {
                 }
             });
 
-            return res.json(students.map(s => ({
+            // Filter out students who already have active projects
+            const availableStudents = allStudents.filter(
+                s => !studentIdsWithProjects.has(s.id_persona)
+            );
+
+            return res.json(availableStudents.map(s => ({
                 id: s.id_persona,
                 name: `${s.nombres} ${s.apellidos}`,
                 document: s.num_doc_identidad,
@@ -531,6 +562,40 @@ export class ProjectController {
                 });
             }
 
+            // Check if any student already has an active project
+            const studentRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: "Estudiante" }
+            });
+
+            if (!studentRole) {
+                return res.status(500).json({
+                    error: "Rol Estudiante no configurado"
+                });
+            }
+
+            for (const studentId of students) {
+                const existingProject = await prisma.actores.findFirst({
+                    where: {
+                        id_persona: studentId,
+                        id_tipo_rol: studentRole.id_rol,
+                        estado: "Activo"
+                    },
+                    include: {
+                        trabajo_grado: {
+                            include: {
+                                opcion_grado: true
+                            }
+                        }
+                    }
+                });
+
+                if (existingProject) {
+                    return res.status(400).json({
+                        error: `El estudiante ya tiene un proyecto activo (${existingProject.trabajo_grado.opcion_grado.nombre_opcion_grado}). Un estudiante no puede estar en más de un proyecto de grado o práctica profesional al mismo tiempo.`
+                    });
+                }
+            }
+
             // Create project
             const project = await prisma.trabajo_grado.create({
                 data: {
@@ -545,15 +610,12 @@ export class ProjectController {
                 }
             });
 
-            // Get role IDs
-            const studentRole = await prisma.tipo_rol.findFirst({
-                where: { nombre_rol: "Estudiante" }
-            });
+            // Get director role (studentRole already fetched above)
             const directorRole = await prisma.tipo_rol.findFirst({
                 where: { nombre_rol: "Director" }
             });
 
-            if (!studentRole || !directorRole) {
+            if (!directorRole) {
                 // Rollback project creation
                 await prisma.trabajo_grado.delete({
                     where: { id_trabajo_grado: project.id_trabajo_grado }
@@ -632,6 +694,57 @@ export class ProjectController {
                     return res.status(400).json({
                         error: "Debe asignar entre 1 y 2 estudiantes al proyecto"
                     });
+                }
+
+                // Check if any new student already has an active project (excluding current project)
+                const studentRole = await prisma.tipo_rol.findFirst({
+                    where: { nombre_rol: "Estudiante" }
+                });
+
+                if (!studentRole) {
+                    return res.status(500).json({
+                        error: "Rol Estudiante no configurado"
+                    });
+                }
+
+                // Get current students on this project
+                const currentStudentActors = await prisma.actores.findMany({
+                    where: {
+                        id_trabajo_grado: id,
+                        id_tipo_rol: studentRole.id_rol
+                    },
+                    select: {
+                        id_persona: true
+                    }
+                });
+
+                const currentStudentIds = new Set(currentStudentActors.map(a => a.id_persona));
+
+                // Check new students (not currently on this project)
+                for (const studentId of students) {
+                    if (!currentStudentIds.has(studentId)) {
+                        const existingProject = await prisma.actores.findFirst({
+                            where: {
+                                id_persona: studentId,
+                                id_tipo_rol: studentRole.id_rol,
+                                estado: "Activo",
+                                id_trabajo_grado: { not: id } // Exclude current project
+                            },
+                            include: {
+                                trabajo_grado: {
+                                    include: {
+                                        opcion_grado: true
+                                    }
+                                }
+                            }
+                        });
+
+                        if (existingProject) {
+                            return res.status(400).json({
+                                error: `El estudiante ya tiene un proyecto activo (${existingProject.trabajo_grado.opcion_grado.nombre_opcion_grado}). Un estudiante no puede estar en más de un proyecto de grado o práctica profesional al mismo tiempo.`
+                            });
+                        }
+                    }
                 }
             }
 
