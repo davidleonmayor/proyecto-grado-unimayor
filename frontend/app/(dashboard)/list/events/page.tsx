@@ -1,3 +1,5 @@
+'use client';
+
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
@@ -7,8 +9,10 @@ import Pagination from "@/app/components/Pagination";
 import Table from "@/app/components/Table";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
-import { role, calendarEvents } from "@/app/lib/data";
+import { calendarEvents } from "@/app/lib/data";
 import FormModal from "@/app/components/FormModal";
+import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
+import { useUserRole } from "@/app/hooks/useUserRole";
 
 const columns = [
   { header: "Evento", accesor: "title" },
@@ -17,7 +21,9 @@ const columns = [
   { header: "Hora fin", accesor: "horaFin", className: "hidden md:table-cell" },
 ];
 
-const EventListPage = () => {
+const EventListPageContent = () => {
+  const { role } = useUserRole();
+
   const renderRow = (item: any) => {
     const startDate = new Date(item.start);
     const endDate = new Date(item.end);
@@ -90,6 +96,14 @@ const EventListPage = () => {
       <Table columns={columns} renderRow={renderRow} data={calendarEvents} />
       <Pagination />
     </div>
+  );
+};
+
+const EventListPage = () => {
+  return (
+    <RoleProtectedRoute allowedRoles={['admin', 'teacher', 'dean']}>
+      <EventListPageContent />
+    </RoleProtectedRoute>
   );
 };
 

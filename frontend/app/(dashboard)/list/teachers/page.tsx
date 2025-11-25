@@ -1,3 +1,5 @@
+'use client';
+
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
@@ -8,8 +10,10 @@ import Table from "@/app/components/Table";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import { role, teachersData } from "@/app/lib/data";
+import { teachersData } from "@/app/lib/data";
 import FormModal from "@/app/components/FormModal";
+import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
+import { useUserRole } from "@/app/hooks/useUserRole";
 
 type Teacher = {
     id: number;
@@ -31,7 +35,8 @@ const columns = [
     { header: "Rol", accesor: "rol", className: "hidden md:table-cell" },
 ]
 
-const TeacherListPage = () => {
+const TeacherListPageContent = () => {
+    const { role } = useUserRole();
 
     const renderRow = (item: Teacher) => (
         <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe]">
@@ -98,6 +103,14 @@ const TeacherListPage = () => {
             {/* PAGINATION */}
             <Pagination />
         </div>
+    );
+};
+
+const TeacherListPage = () => {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']}>
+            <TeacherListPageContent />
+        </RoleProtectedRoute>
     );
 };
 

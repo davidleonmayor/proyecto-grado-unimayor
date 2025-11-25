@@ -1,3 +1,5 @@
+'use client';
+
 import Image from "next/image";
 import dateImage from "@/public/date.png";
 import phoneImage from "@/public/phone.png";
@@ -12,8 +14,9 @@ import Announcement from "@/app/components/Announcement";
 import Link from "next/link";
 import Performance from "@/app/components/Performance";
 import FormModal from "@/app/components/FormModal";
+import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
 
-const SingleStudentPage = () => {
+const SingleStudentPageContent = () => {
 
     const imageUrl = "https://images.pexels.com/photos/2888150/pexels-photo-2888150.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
@@ -145,4 +148,13 @@ const SingleStudentPage = () => {
         </div>
     );
 }
+
+const SingleStudentPage = () => {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin', 'teacher', 'dean']}>
+            <SingleStudentPageContent />
+        </RoleProtectedRoute>
+    );
+};
+
 export default SingleStudentPage;
