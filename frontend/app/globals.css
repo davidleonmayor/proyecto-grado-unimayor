@@ -4,7 +4,6 @@
 @theme {
   --color-principal: #fcdf5d;
   --color-principalDark: #FACD05;
-  --color-principal: #fcdf5d;
   --color-secondary: #0ea5e9;
   --color-hoverColor: #94d6f5;
   --color-tertiary: #a2a1f0;
@@ -15,6 +14,30 @@
   --color-pastelYellow: #F9F390;
   --color-pastelGreen: #C1F990;
   --color-pastelRed: #F99090;
+  
+  /* Primary colors (yellow) - replacing purple */
+  --color-primary-50: #fefce8;
+  --color-primary-100: #fef9c3;
+  --color-primary-200: #fef08a;
+  --color-primary-300: #fde047;
+  --color-primary-400: #facc15;
+  --color-primary-500: #fcdf5d;
+  --color-primary-600: #FACD05;
+  --color-primary-700: #eab308;
+  --color-primary-800: #ca8a04;
+  --color-primary-900: #a16207;
+  
+  /* Secondary colors (blue) - for gradients and accents */
+  --color-secondary-50: #eff6ff;
+  --color-secondary-100: #dbeafe;
+  --color-secondary-200: #bfdbfe;
+  --color-secondary-300: #93c5fd;
+  --color-secondary-400: #60a5fa;
+  --color-secondary-500: #0ea5e9;
+  --color-secondary-600: #0284c7;
+  --color-secondary-700: #0369a1;
+  --color-secondary-800: #075985;
+  --color-secondary-900: #0c4a6e;
 }
 
 .react-calendar {

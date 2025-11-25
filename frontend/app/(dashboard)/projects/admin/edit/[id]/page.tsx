@@ -169,7 +169,7 @@ export default function EditProjectPage() {
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
             </div>
         );
     }
@@ -188,7 +188,7 @@ export default function EditProjectPage() {
                         required
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Ej: Sistema de gestión académica"
                     />
                 </div>
@@ -201,7 +201,7 @@ export default function EditProjectPage() {
                         value={summary}
                         onChange={(e) => setSummary(e.target.value)}
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Descripción breve del proyecto..."
                     />
                 </div>
@@ -215,7 +215,7 @@ export default function EditProjectPage() {
                             required
                             value={modalityId}
                             onChange={(e) => setModalityId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                             <option value="">Seleccionar...</option>
                             {formData?.modalities.map(m => (
@@ -232,7 +232,7 @@ export default function EditProjectPage() {
                             required
                             value={statusId}
                             onChange={(e) => setStatusId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                             <option value="">Seleccionar...</option>
                             {formData?.statuses.map(s => (
@@ -251,7 +251,7 @@ export default function EditProjectPage() {
                             required
                             value={programId}
                             onChange={(e) => setProgramId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                             <option value="">Seleccionar...</option>
                             {formData?.programs.map(p => (
@@ -267,7 +267,7 @@ export default function EditProjectPage() {
                         <select
                             value={companyId}
                             onChange={(e) => setCompanyId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         >
                             <option value="">Ninguna</option>
                             {formData?.companies.map(c => (
@@ -287,7 +287,7 @@ export default function EditProjectPage() {
                             required
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     </div>
 
@@ -299,7 +299,7 @@ export default function EditProjectPage() {
                             type="date"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     </div>
                 </div>
@@ -317,7 +317,7 @@ export default function EditProjectPage() {
                                     <label
                                         key={student.id}
                                         className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedStudents.includes(student.id)
-                                            ? 'bg-purple-100 border-2 border-purple-500'
+                                            ? 'bg-primary-100 border-2 border-primary-500'
                                             : 'bg-white border border-gray-200 hover:bg-gray-100'
                                             }`}
                                     >
@@ -325,7 +325,7 @@ export default function EditProjectPage() {
                                             type="checkbox"
                                             checked={selectedStudents.includes(student.id)}
                                             onChange={() => toggleStudent(student.id)}
-                                            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                                         />
                                         <div className="ml-3 flex-1">
                                             <div className="text-sm font-medium text-gray-900">{student.name}</div>
@@ -386,7 +386,7 @@ export default function EditProjectPage() {
                     <button
                         type="submit"
                         disabled={isSaving}
-                        className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium disabled:bg-purple-400"
+                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-primary-400"
                     >
                         {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>

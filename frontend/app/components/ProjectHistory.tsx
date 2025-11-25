@@ -42,7 +42,7 @@ export default function ProjectHistory({ history }: ProjectHistoryProps) {
                 <div key={item.id} className="relative pl-8">
                     {/* Timeline Dot */}
                     <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-white ${item.action.includes('Entrega') ? 'bg-blue-500' :
-                            item.action.includes('Revisión') ? 'bg-purple-500' :
+                            item.action.includes('Revisión') ? 'bg-primary-500' :
                                 item.action.includes('Aprobación') ? 'bg-green-500' : 'bg-gray-400'
                         }`}></div>
 

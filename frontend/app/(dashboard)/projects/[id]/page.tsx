@@ -206,7 +206,7 @@ export default function ProjectDetailPage() {
                                 <textarea
                                     value={reviewComment}
                                     onChange={(e) => setReviewComment(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                                     rows={6}
                                     placeholder="Escribe tus observaciones detalladas aquí..."
                                     required
@@ -221,7 +221,7 @@ export default function ProjectDetailPage() {
                                 <select
                                     value={newStatus}
                                     onChange={(e) => setNewStatus(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white"
                                 >
                                     <option value="">-- Mantener estado actual --</option>
                                     {/* These IDs should come from your DB/Seed */}
@@ -237,7 +237,7 @@ export default function ProjectDetailPage() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                className="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                                className="w-full bg-primary-600 text-white py-2 px-4 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                             >
                                 {isSubmitting ? 'Guardando...' : 'Registrar Revisión'}
                             </button>

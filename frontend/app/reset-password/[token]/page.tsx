@@ -93,16 +93,16 @@ export default function ResetPassword() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 px-4">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-secondary-50 via-primary-50 to-pink-50 px-4">
             <div className="w-full max-w-md">
                 {/* Header */}
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-indigo-400 to-purple-500 rounded-full mb-4">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-secondary-400 to-primary-500 rounded-full mb-4">
                         <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                         </svg>
                     </div>
-                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">
+                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-secondary-600 to-primary-600 mb-2">
                         Nueva Contraseña
                     </h1>
                     <p className="text-gray-600">Ingresa tu nueva contraseña</p>
@@ -122,7 +122,7 @@ export default function ResetPassword() {
                                 value={password}
                                 onChange={(e) => handlePasswordChange(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 outline-none"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-all duration-200 outline-none"
                                 placeholder="••••••••"
                             />
                             {password && (
@@ -154,7 +154,7 @@ export default function ResetPassword() {
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 outline-none"
+                                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary-500 focus:border-transparent transition-all duration-200 outline-none"
                                 placeholder="••••••••"
                             />
                             {confirmPassword && password !== confirmPassword && (
@@ -188,7 +188,7 @@ export default function ResetPassword() {
                         <button
                             type="submit"
                             disabled={isLoading || password !== confirmPassword || passwordStrength < 4}
-                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full bg-gradient-to-r from-secondary-600 to-primary-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-secondary-700 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-secondary-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
                             {isLoading ? (
                                 <span className="flex items-center justify-center">

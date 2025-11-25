@@ -70,7 +70,7 @@ export default function ProjectStatusChart() {
           <Bar 
             dataKey="rechazado" 
             fill="#F44336" 
-            activeBar={<Rectangle fill="gold" stroke="purple" />} 
+            activeBar={<Rectangle fill="gold" stroke="#FACD05" />} 
             legendType="circle"
             radius={[10,10,0,0]}
             />
