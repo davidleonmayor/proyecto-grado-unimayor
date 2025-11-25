@@ -190,10 +190,24 @@ export class ProjectController {
 
             if (!project) return res.status(404).json({ error: "Proyecto no encontrado" });
 
+            // Normalize newStatusId: convert empty string to null, validate if provided
+            let normalizedStatusId: string | null = null;
+            if (newStatusId && typeof newStatusId === 'string' && newStatusId.trim() !== '') {
+                // Validate that the status exists
+                const statusExists = await prisma.estado_tg.findUnique({
+                    where: { id_estado_tg: newStatusId }
+                });
+
+                if (!statusExists) {
+                    return res.status(400).json({ error: "El estado especificado no existe" });
+                }
+
+                normalizedStatusId = newStatusId.trim();
+            }
+
             // Determine action type
             let actionName = "Revisión de Avance";
-            if (newStatusId) {
-                // Logic to determine if it's Approval or Rejection could be here
+            if (normalizedStatusId) {
                 actionName = "Cambio de Estado";
             }
 
@@ -208,17 +222,17 @@ export class ProjectController {
                     id_trabajo_grado: id,
                     id_actor: actor.id_actor,
                     id_accion: action.id_accion,
-                    resumen: description,
-                    id_estado_anterior: project.id_estado_actual,
-                    id_estado_nuevo: newStatusId || undefined
+                    resumen: description || null,
+                    id_estado_anterior: project.id_estado_actual || null,
+                    id_estado_nuevo: normalizedStatusId
                 }
             });
 
             // Update project status if requested
-            if (newStatusId) {
+            if (normalizedStatusId) {
                 await prisma.trabajo_grado.update({
                     where: { id_trabajo_grado: id },
-                    data: { id_estado_actual: newStatusId }
+                    data: { id_estado_actual: normalizedStatusId }
                 });
             }
 
@@ -226,6 +240,12 @@ export class ProjectController {
 
         } catch (error) {
             console.error("Error reviewing iteration:", error);
+            
+            // Handle Prisma foreign key constraint errors
+            if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003') {
+                return res.status(400).json({ error: "Error de validación: el estado especificado no es válido" });
+            }
+
             return res.status(500).json({ error: "Error al registrar revisión" });
         }
     }
@@ -250,6 +270,26 @@ export class ProjectController {
         } catch (error) {
             console.error("Error downloading file:", error);
             return res.status(500).json({ error: "Error al descargar archivo" });
+        }
+    }
+
+    // Get available statuses (for review form - any authenticated user)
+    async getStatuses(req: Request, res: Response) {
+        try {
+            const statuses = await prisma.estado_tg.findMany({
+                select: {
+                    id_estado_tg: true,
+                    nombre_estado: true
+                },
+                orderBy: {
+                    nombre_estado: 'asc'
+                }
+            });
+
+            return res.status(200).json(statuses);
+        } catch (error) {
+            console.error("Error fetching statuses:", error);
+            return res.status(500).json({ error: "Error al obtener estados" });
         }
     }
 
@@ -1176,6 +1216,259 @@ export class ProjectController {
             });
         } catch (error) {
             logger.error("Error getting dashboard stats:", error);
+            return res.status(500).json({ error: "Error al obtener estadísticas" });
+        }
+    }
+
+    // Get dashboard statistics for teachers/directors (non-admin)
+    async getTeacherDashboardStats(req: Request, res: Response) {
+        try {
+            const userId = req.user?.id_persona;
+            if (!userId) return res.status(401).json({ error: "No autorizado" });
+
+            // Get student role first
+            const studentRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: "Estudiante" }
+            });
+
+            // Get user's roles and projects
+            const user = await prisma.persona.findUnique({
+                where: { id_persona: userId },
+                include: {
+                    actores: {
+                        where: { estado: "Activo" },
+                        include: {
+                            tipo_rol: true,
+                            trabajo_grado: {
+                                include: {
+                                    estado_tg: true,
+                                    opcion_grado: true,
+                                    actores: {
+                                        where: {
+                                            estado: "Activo",
+                                            ...(studentRole && { id_tipo_rol: studentRole.id_rol })
+                                        },
+                                        include: {
+                                            persona: true,
+                                            tipo_rol: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (!user) {
+                return res.status(404).json({ error: "Usuario no encontrado" });
+            }
+
+            // Filter only non-student roles (Director, Jurado, etc.)
+            const teacherActors = user.actores.filter(actor => 
+                actor.tipo_rol.nombre_rol !== "Estudiante"
+            );
+
+            // Get projects where user is director/advisor/jury
+            const proyectosAsignados = teacherActors.map(actor => actor.trabajo_grado).filter(p => p);
+            const proyectosUnicos = Array.from(
+                new Map(proyectosAsignados.map(p => [p.id_trabajo_grado, p])).values()
+            );
+
+            // Count projects by status
+            const totalProyectos = proyectosUnicos.length;
+            
+            const estadosTerminados = await prisma.estado_tg.findMany({
+                where: {
+                    OR: [
+                        { nombre_estado: { contains: 'Finalizado' } },
+                        { nombre_estado: { contains: 'finalizado' } },
+                        { nombre_estado: { contains: 'Aprobado' } },
+                        { nombre_estado: { contains: 'aprobado' } },
+                        { nombre_estado: { contains: 'Rechazado' } },
+                        { nombre_estado: { contains: 'rechazado' } }
+                    ]
+                }
+            });
+            const estadosTerminadosIds = estadosTerminados.map(e => e.id_estado_tg);
+
+            const proyectosEnCurso = proyectosUnicos.filter(p => 
+                !estadosTerminadosIds.includes(p.id_estado_actual)
+            ).length;
+
+            const proyectosFinalizados = proyectosUnicos.filter(p => 
+                estadosTerminadosIds.includes(p.id_estado_actual)
+            ).length;
+
+            // Get total students under supervision
+            const estudiantesAsignados = new Set<string>();
+            if (studentRole) {
+                proyectosUnicos.forEach(proyecto => {
+                    proyecto.actores.forEach(actor => {
+                        if (actor.tipo_rol.id_rol === studentRole.id_rol) {
+                            estudiantesAsignados.add(actor.persona.id_persona);
+                        }
+                    });
+                });
+            }
+            const totalEstudiantes = estudiantesAsignados.size;
+
+            // Get students with deliveries
+            const entregaAccion = await prisma.accion_seg.findFirst({
+                where: {
+                    OR: [
+                        { tipo_accion: { contains: 'Entrega' } },
+                        { tipo_accion: { contains: 'entrega' } }
+                    ]
+                }
+            });
+
+            let estudiantesConEntrega = 0;
+            if (entregaAccion) {
+                const estudiantesIds = Array.from(estudiantesAsignados);
+                for (const estudianteId of estudiantesIds) {
+                    const tieneEntrega = await prisma.actores.findFirst({
+                        where: {
+                            id_persona: estudianteId,
+                            estado: "Activo",
+                            seguimiento_tg: {
+                                some: {
+                                    id_accion: entregaAccion.id_accion
+                                }
+                            }
+                        }
+                    });
+                    if (tieneEntrega) estudiantesConEntrega++;
+                }
+            }
+
+            const estudiantesSinEntrega = totalEstudiantes - estudiantesConEntrega;
+
+            // Get weekly stats for assigned projects only (last 4 weeks)
+            const cuatroSemanasAtras = new Date();
+            cuatroSemanasAtras.setDate(cuatroSemanasAtras.getDate() - 28);
+
+            const proyectosIds = proyectosUnicos.map(p => p.id_trabajo_grado);
+            const estadosAprobado = await prisma.estado_tg.findMany({
+                where: {
+                    OR: [
+                        { nombre_estado: { contains: 'Aprobado' } },
+                        { nombre_estado: { contains: 'aprobado' } }
+                    ]
+                }
+            });
+            const estadosRechazado = await prisma.estado_tg.findMany({
+                where: {
+                    OR: [
+                        { nombre_estado: { contains: 'Rechazado' } },
+                        { nombre_estado: { contains: 'rechazado' } }
+                    ]
+                }
+            });
+
+            const aprobadosIds = estadosAprobado.map(e => e.id_estado_tg);
+            const rechazadosIds = estadosRechazado.map(e => e.id_estado_tg);
+
+            const proyectosPorSemana = proyectosUnicos.filter(p => {
+                const fecha = new Date(p.fecha_registro);
+                return fecha >= cuatroSemanasAtras;
+            });
+
+            // Group by week
+            const semanas: { [key: string]: { aprobado: number; rechazado: number } } = {};
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+
+            for (let i = 1; i <= 4; i++) {
+                semanas[`Semana ${i}`] = { aprobado: 0, rechazado: 0 };
+            }
+
+            proyectosPorSemana.forEach(proyecto => {
+                const fecha = new Date(proyecto.fecha_registro);
+                fecha.setHours(0, 0, 0, 0);
+                
+                const diffTime = hoy.getTime() - fecha.getTime();
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                let semanaNum = Math.ceil(diffDays / 7);
+                
+                if (semanaNum >= 1 && semanaNum <= 4) {
+                    const nombreSemana = `Semana ${semanaNum}`;
+
+                    if (aprobadosIds.includes(proyecto.id_estado_actual)) {
+                        semanas[nombreSemana].aprobado++;
+                    } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
+                        semanas[nombreSemana].rechazado++;
+                    }
+                }
+            });
+
+            const weeklyData = Object.keys(semanas).sort((a, b) => {
+                const numA = parseInt(a.replace('Semana ', ''));
+                const numB = parseInt(b.replace('Semana ', ''));
+                return numA - numB;
+            }).map(name => ({
+                name,
+                aprobado: semanas[name].aprobado,
+                rechazado: semanas[name].rechazado
+            }));
+
+            // Get monthly stats for assigned projects (last 12 months)
+            const doceMesesAtras = new Date();
+            doceMesesAtras.setMonth(doceMesesAtras.getMonth() - 12);
+
+            const proyectosPorMes = proyectosUnicos.filter(p => {
+                const fecha = new Date(p.fecha_registro);
+                return fecha >= doceMesesAtras;
+            });
+
+            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+            const monthlyData: { [key: string]: { aprobados: number; rechazados: number } } = {};
+
+            proyectosPorMes.forEach(proyecto => {
+                const fecha = new Date(proyecto.fecha_registro);
+                const mes = meses[fecha.getMonth()];
+
+                if (!monthlyData[mes]) {
+                    monthlyData[mes] = { aprobados: 0, rechazados: 0 };
+                }
+
+                if (aprobadosIds.includes(proyecto.id_estado_actual)) {
+                    monthlyData[mes].aprobados++;
+                } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
+                    monthlyData[mes].rechazados++;
+                }
+            });
+
+            const monthlyChartData = meses.map(mes => ({
+                name: mes,
+                aprobados: monthlyData[mes]?.aprobados || 0,
+                rechazados: monthlyData[mes]?.rechazados || 0
+            }));
+
+            return res.json({
+                stats: {
+                    totalProjects: totalProyectos,
+                    proyectosEnCurso,
+                    proyectosFinalizados,
+                    estudiantesAsignados: totalEstudiantes
+                },
+                students: {
+                    total: totalEstudiantes,
+                    entregado: estudiantesConEntrega,
+                    sinEntregar: estudiantesSinEntrega,
+                    porcentajeEntregado: totalEstudiantes > 0 ? Math.round((estudiantesConEntrega / totalEstudiantes) * 100) : 0,
+                    porcentajeSinEntregar: totalEstudiantes > 0 ? Math.round((estudiantesSinEntrega / totalEstudiantes) * 100) : 0
+                },
+                weeklyChart: weeklyData.length > 0 ? weeklyData : [
+                    { name: 'Semana 1', aprobado: 0, rechazado: 0 },
+                    { name: 'Semana 2', aprobado: 0, rechazado: 0 },
+                    { name: 'Semana 3', aprobado: 0, rechazado: 0 },
+                    { name: 'Semana 4', aprobado: 0, rechazado: 0 }
+                ],
+                monthlyChart: monthlyChartData
+            });
+        } catch (error) {
+            logger.error("Error getting teacher dashboard stats:", error);
             return res.status(500).json({ error: "Error al obtener estadísticas" });
         }
     }

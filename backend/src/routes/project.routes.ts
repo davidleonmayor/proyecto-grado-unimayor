@@ -50,6 +50,12 @@ export class ProjectRoutes {
             this.controller.downloadFile
         );
 
+        // Get statuses (for review form - any authenticated user)
+        this.router.get("/statuses",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.getStatuses
+        );
+
         // HELPER ENDPOINTS FOR FORMS
 
         // Get form data (modalities, statuses, programs)
@@ -73,11 +79,17 @@ export class ProjectRoutes {
             this.controller.getAvailableAdvisors
         );
 
-        // Get dashboard statistics (Privileged)
+        // Get dashboard statistics (Privileged - Admin)
         this.router.get("/stats/dashboard",
             this.authMiddleware.isAuthenticatedUser,
             this.roleMiddleware.isPrivilegedUser,
             this.controller.getDashboardStats
+        );
+
+        // Get dashboard statistics for teachers/directors (Non-student roles)
+        this.router.get("/stats/teacher-dashboard",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.getTeacherDashboardStats
         );
 
         // CRUD OPERATIONS (Privileged users only)

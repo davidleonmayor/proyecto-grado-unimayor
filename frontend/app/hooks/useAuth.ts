@@ -59,6 +59,41 @@ export const useAuth = (): UseAuthReturn => {
         checkAuth();
     }, []);
 
+    // Helper function to determine dashboard route based on user role
+    const determineDashboardRoute = async (): Promise<string> => {
+        try {
+            const projects = await api.getProjects();
+            
+            const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
+            const hasPrivilegedRole = projects.some((project: any) =>
+                PRIVILEGED_ROLES.includes(project.role)
+            );
+
+            const isStudentOnly = projects.every((project: any) =>
+                project.role === 'Estudiante'
+            );
+
+            if (hasPrivilegedRole) {
+                // Try admin dashboard first
+                try {
+                    await api.getDashboardStats();
+                    return '/admin';
+                } catch {
+                    // If not admin, use teacher dashboard
+                    return '/teacher';
+                }
+            } else if (isStudentOnly) {
+                return '/student';
+            } else {
+                // Default to teacher dashboard for other roles
+                return '/teacher';
+            }
+        } catch (error) {
+            // Default fallback
+            return '/teacher';
+        }
+    };
+
     // Login function
     const login = useCallback(async (email: string, password: string) => {
         try {
@@ -72,8 +107,9 @@ export const useAuth = (): UseAuthReturn => {
             const userData = await api.getCurrentUser();
             setUser(userData);
 
-            // Redirect to dashboard (default to admin for now)
-            router.push('/admin');
+            // Determine and redirect to appropriate dashboard
+            const dashboardRoute = await determineDashboardRoute();
+            router.push(dashboardRoute);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Error al iniciar sesión';
             setError(errorMessage);

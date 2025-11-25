@@ -22,6 +22,8 @@ export default function ProjectDetailPage() {
     // Review State
     const [reviewComment, setReviewComment] = useState('');
     const [newStatus, setNewStatus] = useState('');
+    const [statuses, setStatuses] = useState<Array<{ id_estado_tg: string; nombre_estado: string }>>([]);
+    const [loadingStatuses, setLoadingStatuses] = useState(false);
 
     const loadData = async () => {
         try {
@@ -41,6 +43,23 @@ export default function ProjectDetailPage() {
             loadData();
         }
     }, [projectId]);
+
+    useEffect(() => {
+        const loadStatuses = async () => {
+            try {
+                setLoadingStatuses(true);
+                const statusesData = await api.getStatuses();
+                setStatuses(statusesData);
+            } catch (error) {
+                console.error('Error loading statuses:', error);
+                // Don't show error to user, just log it
+            } finally {
+                setLoadingStatuses(false);
+            }
+        };
+
+        loadStatuses();
+    }, []);
 
     const handleUpload = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -213,22 +232,28 @@ export default function ProjectDetailPage() {
                                 />
                             </div>
 
-                            {/* TODO: Fetch dynamic statuses from API */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Cambiar Estado del Proyecto (Opcional)
                                 </label>
-                                <select
-                                    value={newStatus}
-                                    onChange={(e) => setNewStatus(e.target.value)}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white"
-                                >
-                                    <option value="">-- Mantener estado actual --</option>
-                                    {/* These IDs should come from your DB/Seed */}
-                                    <option value="clxyz6bvt0000kh0gao8tqvhz">En Revisión</option>
-                                    <option value="clxyz6bvt0001kh0g3m4n5o6p">Aprobado</option>
-                                    <option value="clxyz6bvt0002kh0g7q8r9s0t">Rechazado / Correcciones</option>
-                                </select>
+                                {loadingStatuses ? (
+                                    <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                                        Cargando estados...
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={newStatus}
+                                        onChange={(e) => setNewStatus(e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white"
+                                    >
+                                        <option value="">-- Mantener estado actual --</option>
+                                        {statuses.map((status) => (
+                                            <option key={status.id_estado_tg} value={status.id_estado_tg}>
+                                                {status.nombre_estado}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
                                 <p className="text-xs text-gray-500 mt-1">
                                     Selecciona un nuevo estado solo si deseas actualizar el estado general del proyecto.
                                 </p>

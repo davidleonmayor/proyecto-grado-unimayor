@@ -1,12 +1,76 @@
 'use client'
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-
+import { useEffect, useState } from "react";
+import { useAuth } from "./hooks/useAuth";
+import api from "./lib/api";
 
 export default function Home() {
   const router = useRouter();
+  const { user, loading } = useAuth();
+  const [isDeterminingRoute, setIsDeterminingRoute] = useState(true);
+
   useEffect(() => {
-    router.push('/admin');
-  }, [router])
+    if (loading) return;
+
+    const determineRoute = async () => {
+      if (!user) {
+        router.push('/sign-in');
+        setIsDeterminingRoute(false);
+        return;
+      }
+
+      try {
+        // Get user's projects to determine role
+        const projects = await api.getProjects();
+        
+        // Check if user has privileged roles
+        const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
+        const hasPrivilegedRole = projects.some((project: any) =>
+          PRIVILEGED_ROLES.includes(project.role)
+        );
+
+        // Check if user is a student only
+        const isStudentOnly = projects.length > 0 && projects.every((project: any) =>
+          project.role === 'Estudiante'
+        );
+
+        if (hasPrivilegedRole) {
+          // Try to access admin dashboard first
+          try {
+            await api.getDashboardStats();
+            router.push('/admin');
+          } catch {
+            // If not admin privileges, use teacher dashboard
+            router.push('/teacher');
+          }
+        } else if (isStudentOnly) {
+          router.push('/student');
+        } else {
+          // Default to teacher dashboard for other roles or no projects
+          router.push('/teacher');
+        }
+      } catch (error) {
+        console.error('Error determining route:', error);
+        // Default fallback
+        router.push('/teacher');
+      } finally {
+        setIsDeterminingRoute(false);
+      }
+    };
+
+    determineRoute();
+  }, [user, loading, router]);
+
+  if (loading || isDeterminingRoute) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-primary-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+          <p className="text-gray-600 font-medium">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
