@@ -298,6 +298,53 @@ export class ProjectController {
     // Get form data (modalities, statuses, programs, companies)
     async getFormData(req: Request, res: Response) {
         try {
+            const userId = req.user?.id_persona;
+
+            // Get privileged roles (Director, Jurado, etc.)
+            const privilegedRoles = await prisma.tipo_rol.findMany({
+                where: {
+                    nombre_rol: { in: ["Director", "Jurado", "Coordinador de Carrera", "Decano"] }
+                }
+            });
+
+            const privilegedRoleIds = privilegedRoles.map(r => r.id_rol);
+
+            // Determine user's faculty if they are a professor/director
+            let userFacultyIds: Set<string> = new Set();
+            if (userId) {
+                // Check if user has privileged roles
+                const userActors = await prisma.actores.findMany({
+                    where: {
+                        id_persona: userId,
+                        id_tipo_rol: { in: privilegedRoleIds }
+                    },
+                    include: {
+                        trabajo_grado: {
+                            include: {
+                                programa_academico: {
+                                    select: {
+                                        id_facultad: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Get unique faculty IDs from projects where user is director/professor
+                userActors.forEach(actor => {
+                    if (actor.trabajo_grado?.programa_academico?.id_facultad) {
+                        userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
+                    }
+                });
+            }
+
+            // Build programs query - filter by faculty if user has restriction
+            const programsWhere: any = { estado: "activo" };
+            if (userFacultyIds.size > 0) {
+                programsWhere.id_facultad = { in: Array.from(userFacultyIds) };
+            }
+
             const [modalities, statuses, programs, companies] = await Promise.all([
                 prisma.opcion_grado.findMany({
                     where: { estado: "activo" },
@@ -313,7 +360,7 @@ export class ProjectController {
                     }
                 }),
                 prisma.programa_academico.findMany({
-                    where: { estado: "activo" },
+                    where: programsWhere,
                     select: {
                         id_programa: true,
                         nombre_programa: true,
@@ -351,9 +398,11 @@ export class ProjectController {
 
     // Get available students (personas without active graduation projects)
     // Optional query parameter: programId - filters students by academic program
+    // Automatically filters by faculty if user is a professor/director
     async getAvailableStudents(req: Request, res: Response) {
         try {
             const programId = req.query.programId as string | undefined;
+            const userId = req.user?.id_persona;
 
             // Get student role
             const studentRole = await prisma.tipo_rol.findFirst({
@@ -362,6 +411,45 @@ export class ProjectController {
 
             if (!studentRole) {
                 return res.json([]);
+            }
+
+            // Get privileged roles (Director, Jurado, etc.)
+            const privilegedRoles = await prisma.tipo_rol.findMany({
+                where: {
+                    nombre_rol: { in: ["Director", "Jurado", "Coordinador de Carrera", "Decano"] }
+                }
+            });
+
+            const privilegedRoleIds = privilegedRoles.map(r => r.id_rol);
+
+            // Determine user's faculty if they are a professor/director
+            let userFacultyIds: Set<string> = new Set();
+            if (userId) {
+                // Check if user has privileged roles
+                const userActors = await prisma.actores.findMany({
+                    where: {
+                        id_persona: userId,
+                        id_tipo_rol: { in: privilegedRoleIds }
+                    },
+                    include: {
+                        trabajo_grado: {
+                            include: {
+                                programa_academico: {
+                                    select: {
+                                        id_facultad: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Get unique faculty IDs from projects where user is director/professor
+                userActors.forEach(actor => {
+                    if (actor.trabajo_grado?.programa_academico?.id_facultad) {
+                        userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
+                    }
+                });
             }
 
             // Get all students with active projects
@@ -382,23 +470,42 @@ export class ProjectController {
 
             // If programId is provided, get students who have projects in that program
             let studentsInProgram: Set<string> = new Set();
+            let programFacultyId: string | null = null;
+            
             if (programId) {
-                const studentsWithProgramProjects = await prisma.actores.findMany({
-                    where: {
-                        id_tipo_rol: studentRole.id_rol,
-                        trabajo_grado: {
-                            id_programa_academico: programId
-                        }
-                    },
-                    select: {
-                        id_persona: true
-                    },
-                    distinct: ['id_persona']
+                // Get program info to check faculty
+                const program = await prisma.programa_academico.findUnique({
+                    where: { id_programa: programId },
+                    select: { id_facultad: true }
                 });
 
-                studentsInProgram = new Set(
-                    studentsWithProgramProjects.map(a => a.id_persona)
-                );
+                if (program) {
+                    programFacultyId = program.id_facultad;
+                    
+                    // If user has faculty restriction, verify program belongs to their faculty
+                    if (userFacultyIds.size > 0 && !userFacultyIds.has(program.id_facultad)) {
+                        return res.status(403).json({ 
+                            error: "No tienes permiso para acceder a estudiantes de este programa" 
+                        });
+                    }
+
+                    const studentsWithProgramProjects = await prisma.actores.findMany({
+                        where: {
+                            id_tipo_rol: studentRole.id_rol,
+                            trabajo_grado: {
+                                id_programa_academico: programId
+                            }
+                        },
+                        select: {
+                            id_persona: true
+                        },
+                        distinct: ['id_persona']
+                    });
+
+                    studentsInProgram = new Set(
+                        studentsWithProgramProjects.map(a => a.id_persona)
+                    );
+                }
             }
 
             // Get all confirmed students
@@ -420,6 +527,47 @@ export class ProjectController {
             let availableStudents = allStudents.filter(
                 s => !studentIdsWithActiveProjects.has(s.id_persona)
             );
+
+            // If user has faculty restriction, filter students by faculty
+            if (userFacultyIds.size > 0) {
+                // Get all programs in user's faculties
+                const programsInFaculties = await prisma.programa_academico.findMany({
+                    where: {
+                        id_facultad: { in: Array.from(userFacultyIds) },
+                        estado: "activo"
+                    },
+                    select: {
+                        id_programa: true
+                    }
+                });
+
+                const programIdsInFaculties = new Set(
+                    programsInFaculties.map(p => p.id_programa)
+                );
+
+                // Get students who have projects in programs of user's faculties
+                const studentsInUserFaculties = await prisma.actores.findMany({
+                    where: {
+                        id_tipo_rol: studentRole.id_rol,
+                        trabajo_grado: {
+                            id_programa_academico: { in: Array.from(programIdsInFaculties) }
+                        }
+                    },
+                    select: {
+                        id_persona: true
+                    },
+                    distinct: ['id_persona']
+                });
+
+                const studentIdsInUserFaculties = new Set(
+                    studentsInUserFaculties.map(a => a.id_persona)
+                );
+
+                // Filter to only show students from user's faculties
+                availableStudents = availableStudents.filter(
+                    s => studentIdsInUserFaculties.has(s.id_persona)
+                );
+            }
 
             // If programId is provided, filter to only show students in that program
             if (programId && studentsInProgram.size > 0) {
