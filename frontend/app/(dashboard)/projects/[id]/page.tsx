@@ -21,11 +21,13 @@ export default function ProjectDetailPage() {
     // Upload State
     const [file, setFile] = useState<File | null>(null);
     const [description, setDescription] = useState('');
+    const [numeroResolucion, setNumeroResolucion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Review State
     const [reviewComment, setReviewComment] = useState('');
     const [newStatus, setNewStatus] = useState('');
+    const [reviewNumeroResolucion, setReviewNumeroResolucion] = useState('');
     const [statuses, setStatuses] = useState<Array<{ id_estado_tg: string; nombre_estado: string }>>([]);
     const [loadingStatuses, setLoadingStatuses] = useState(false);
 
@@ -90,11 +92,12 @@ export default function ProjectDetailPage() {
 
         try {
             setIsSubmitting(true);
-            await api.createIteration(projectId, file, description);
+            await api.createIteration(projectId, file, description, numeroResolucion || undefined);
 
             await Swal.fire('Éxito', 'Entrega subida correctamente', 'success');
             setFile(null);
             setDescription('');
+            setNumeroResolucion('');
             setActiveTab('history');
             loadData(); // Refresh history
         } catch (error) {
@@ -116,11 +119,12 @@ export default function ProjectDetailPage() {
 
         try {
             setIsSubmitting(true);
-            await api.reviewIteration(projectId, reviewComment, newStatus || undefined);
+            await api.reviewIteration(projectId, reviewComment, newStatus || undefined, reviewNumeroResolucion || undefined);
 
             await Swal.fire('Éxito', 'Revisión registrada correctamente', 'success');
             setReviewComment('');
             setNewStatus('');
+            setReviewNumeroResolucion('');
             setActiveTab('history');
             loadData(); // Refresh history
         } catch (error) {
@@ -213,6 +217,19 @@ export default function ProjectDetailPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de Resolución (Opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={numeroResolucion}
+                                    onChange={(e) => setNumeroResolucion(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Ej: RES-2024-001"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Archivo del Proyecto (PDF, DOCX, ZIP)
                                 </label>
                                 <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:bg-gray-50 transition-colors">
@@ -261,6 +278,19 @@ export default function ProjectDetailPage() {
                                     rows={6}
                                     placeholder="Escribe tus observaciones detalladas aquí..."
                                     required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de Resolución (Opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={reviewNumeroResolucion}
+                                    onChange={(e) => setReviewNumeroResolucion(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    placeholder="Ej: RES-2024-001"
                                 />
                             </div>
 

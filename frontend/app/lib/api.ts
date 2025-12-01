@@ -156,10 +156,13 @@ class ApiClient {
     });
   }
 
-  async createIteration(projectId: string, file: File, description: string): Promise<any> {
+  async createIteration(projectId: string, file: File, description: string, numero_resolucion?: string): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('description', description);
+    if (numero_resolucion) {
+      formData.append('numero_resolucion', numero_resolucion);
+    }
 
     // Custom request for FormData
     const token = this.getAuthToken();
@@ -182,11 +185,11 @@ class ApiClient {
     return response.json();
   }
 
-  async reviewIteration(projectId: string, description: string, newStatusId?: string): Promise<any> {
+  async reviewIteration(projectId: string, description: string, newStatusId?: string, numero_resolucion?: string): Promise<any> {
     return this.request<any>(`/api/projects/${projectId}/review`, {
       method: 'POST',
       requiresAuth: true,
-      body: JSON.stringify({ description, newStatusId }),
+      body: JSON.stringify({ description, newStatusId, numero_resolucion }),
     });
   }
 

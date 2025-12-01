@@ -12,6 +12,7 @@ interface HistoryItem {
     role: string;
     file: boolean;
     fileName: string | null;
+    numero_resolucion: string | null;
     statusChange: {
         from: string;
         to: string;
@@ -21,6 +22,54 @@ interface HistoryItem {
 interface ProjectHistoryProps {
     history: HistoryItem[];
 }
+
+// Helper function to get status colors
+const getStatusColor = (statusName: string) => {
+    const status = statusName.toLowerCase();
+    
+    if (status.includes('en progreso') || status.includes('progreso')) {
+        return {
+            text: 'text-blue-600',
+            dot: 'bg-blue-500'
+        };
+    }
+    if (status.includes('en revisión') || status.includes('revisión')) {
+        return {
+            text: 'text-yellow-600',
+            dot: 'bg-yellow-500'
+        };
+    }
+    if (status.includes('pendiente') || status.includes('aprobación')) {
+        return {
+            text: 'text-orange-600',
+            dot: 'bg-orange-500'
+        };
+    }
+    if (status.includes('aprobado')) {
+        return {
+            text: 'text-green-600',
+            dot: 'bg-green-500'
+        };
+    }
+    if (status.includes('rechazado')) {
+        return {
+            text: 'text-red-600',
+            dot: 'bg-red-500'
+        };
+    }
+    if (status.includes('finalizado')) {
+        return {
+            text: 'text-purple-600',
+            dot: 'bg-purple-500'
+        };
+    }
+    
+    // Default color
+    return {
+        text: 'text-gray-600',
+        dot: 'bg-gray-500'
+    };
+};
 
 export default function ProjectHistory({ history }: ProjectHistoryProps) {
     const [downloading, setDownloading] = useState<string | null>(null);
@@ -71,14 +120,47 @@ export default function ProjectHistory({ history }: ProjectHistoryProps) {
 
                         <p className="text-sm text-gray-700 mb-3 whitespace-pre-wrap">{item.description}</p>
 
-                        {/* Status Change Badge */}
-                        {item.statusChange && (
-                            <div className="flex items-center gap-2 text-xs bg-gray-50 p-2 rounded mb-3">
-                                <span className="px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">{item.statusChange.from}</span>
-                                <span>→</span>
-                                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-medium">{item.statusChange.to}</span>
+                        {/* Resolution Number */}
+                        {item.numero_resolucion && (
+                            <div className="mb-3">
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Resolución: {item.numero_resolucion}
+                                </span>
                             </div>
                         )}
+
+                        {/* Status Change Badge */}
+                        {item.statusChange && (() => {
+                            const fromColor = getStatusColor(item.statusChange.from);
+                            const toColor = getStatusColor(item.statusChange.to);
+                            
+                            return (
+                                <div className="mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2 h-2 rounded-full ${fromColor.dot}`}></div>
+                                            <span className={`text-sm font-medium ${fromColor.text}`}>
+                                                {item.statusChange.from}
+                                            </span>
+                                        </div>
+                                        
+                                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                        </svg>
+                                        
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2 h-2 rounded-full ${toColor.dot}`}></div>
+                                            <span className={`text-sm font-semibold ${toColor.text}`}>
+                                                {item.statusChange.to}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {/* File Download */}
                         {item.file && (

@@ -101,6 +101,7 @@ export class ProjectController {
                 role: item.actores.tipo_rol.nombre_rol,
                 file: item.archivo ? true : false, // Just flag if file exists
                 fileName: item.nombre_documento,
+                numero_resolucion: item.numero_resolucion,
                 statusChange: item.estado_anterior && item.estado_nuevo ? {
                     from: item.estado_anterior.nombre_estado,
                     to: item.estado_nuevo.nombre_estado
@@ -121,7 +122,7 @@ export class ProjectController {
             const { id } = req.params; // Project ID
             const userId = req.user?.id_persona;
             const file = req.file;
-            const { description } = req.body;
+            const { description, numero_resolucion } = req.body;
 
             if (!userId) return res.status(401).json({ error: "No autorizado" });
             if (!file) return res.status(400).json({ error: "Se requiere un archivo" });
@@ -153,7 +154,8 @@ export class ProjectController {
                     resumen: description || "Entrega de avance",
                     archivo: Buffer.from(file.buffer) as any, // Convert to Bytes
                     nombre_documento: file.originalname,
-                    tipo_documento: file.mimetype
+                    tipo_documento: file.mimetype,
+                    numero_resolucion: numero_resolucion || null
                 }
             });
 
@@ -170,7 +172,7 @@ export class ProjectController {
         try {
             const { id } = req.params; // Project ID
             const userId = req.user?.id_persona;
-            const { description, newStatusId } = req.body;
+            const { description, newStatusId, numero_resolucion } = req.body;
 
             if (!userId) return res.status(401).json({ error: "No autorizado" });
 
@@ -224,7 +226,8 @@ export class ProjectController {
                     id_accion: action.id_accion,
                     resumen: description || null,
                     id_estado_anterior: project.id_estado_actual || null,
-                    id_estado_nuevo: normalizedStatusId
+                    id_estado_nuevo: normalizedStatusId,
+                    numero_resolucion: numero_resolucion || null
                 }
             });
 
