@@ -462,7 +462,8 @@ export class ProjectController {
             const advisors = directorActors.map(a => ({
                 id: a.persona.id_persona,
                 name: `${a.persona.nombres} ${a.persona.apellidos}`,
-                email: a.persona.correo_electronico
+                email: a.persona.correo_electronico,
+                document: a.persona.num_doc_identidad
             }));
 
             return res.json(advisors);
