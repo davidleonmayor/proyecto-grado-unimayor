@@ -42,21 +42,50 @@ export default function NewProjectPage() {
         loadFormData();
     }, []);
 
+    useEffect(() => {
+        // When programId changes, reload students filtered by program
+        if (programId) {
+            loadStudentsByProgram(programId);
+        } else {
+            // If no program selected, load all available students
+            loadAllStudents();
+        }
+    }, [programId]);
+
     const loadFormData = async () => {
         try {
-            const [form, studentsData, advisorsData] = await Promise.all([
+            const [form, advisorsData] = await Promise.all([
                 api.getFormData(),
-                api.getAvailableStudents(),
                 api.getAvailableAdvisors()
             ]);
 
             setFormData(form);
-            setStudents(studentsData);
             setAdvisors(advisorsData);
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar los datos del formulario', 'error');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const loadAllStudents = async () => {
+        try {
+            const studentsData = await api.getAvailableStudents();
+            setStudents(studentsData);
+        } catch (error) {
+            console.error('Error loading students:', error);
+        }
+    };
+
+    const loadStudentsByProgram = async (programId: string) => {
+        try {
+            const studentsData = await api.getAvailableStudents(programId);
+            setStudents(studentsData);
+            // Clear selected students when program changes
+            setSelectedStudents([]);
+        } catch (error) {
+            console.error('Error loading students by program:', error);
+            Swal.fire('Error', 'No se pudieron cargar los estudiantes del programa', 'error');
         }
     };
 
@@ -257,9 +286,20 @@ export default function NewProjectPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Estudiantes * (Selecciona 1 o 2)
                     </label>
+                    {!programId && (
+                        <p className="text-xs text-amber-600 mb-2">
+                            ⚠️ Selecciona un programa académico para ver los estudiantes asociados
+                        </p>
+                    )}
                     <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        {students.length === 0 ? (
-                            <p className="text-gray-500 text-sm">No hay estudiantes disponibles</p>
+                        {!programId ? (
+                            <p className="text-gray-500 text-sm text-center py-4">
+                                Por favor selecciona un programa académico primero
+                            </p>
+                        ) : students.length === 0 ? (
+                            <p className="text-gray-500 text-sm text-center py-4">
+                                No hay estudiantes disponibles para este programa
+                            </p>
                         ) : (
                             <div className="space-y-2">
                                 {students.map(student => (

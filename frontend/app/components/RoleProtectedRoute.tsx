@@ -51,7 +51,7 @@ export default function RoleProtectedRoute({
 
     if (loading || isChecking) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-primary-50">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center">
                     <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
                     <p className="text-gray-600 font-medium">Verificando permisos...</p>
@@ -62,7 +62,7 @@ export default function RoleProtectedRoute({
 
     if (!role || !allowedRoles.includes(role)) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-primary-50">
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="text-center max-w-md mx-auto p-6">
                     <div className="bg-white rounded-lg shadow-lg p-8">
                         <svg className="mx-auto h-16 w-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

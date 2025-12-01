@@ -120,18 +120,58 @@ export default function Register() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-pink-50 to-blue-50 px-4 py-8">
-            <div className="w-full max-w-2xl">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600 mb-2">
-                        Crear Cuenta
-                    </h1>
-                    <p className="text-gray-600">Únete a la plataforma de gestión de proyectos</p>
+        <div className="min-h-screen flex">
+            {/* Left Panel - Logo Space */}
+            <div className="hidden lg:flex lg:w-2/3 bg-secondary-500 relative overflow-hidden">
+                {/* Decorative shapes */}
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+                    <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-white rounded-full blur-3xl"></div>
                 </div>
+                
+                {/* Content Container */}
+                <div className="relative z-10 flex flex-col justify-between w-full p-12">
+                    {/* Top Section */}
+                    <div>
+                        <div className="mb-8">
+                        </div>
+                    </div>
 
-                {/* Register Card */}
-                <div className="bg-white rounded-2xl shadow-2xl p-8 backdrop-blur-sm bg-opacity-95">
+
+                    {/* Bottom Section */}
+                    <div className="text-white">
+                        <h2 className="text-3xl font-bold mb-2">Gestión de Proyectos</h2>
+                        <p className="text-lg opacity-90">Universidad Mayor del Cauca</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Panel - Register Form */}
+            <div className="w-full lg:w-1/3 bg-white flex flex-col overflow-y-auto">
+                <div className="flex-1 flex flex-col px-8 py-12">
+                    {/* Top Right - Sign In Link */}
+                    <div className="text-right mb-8">
+                        <p className="text-sm text-gray-600">
+                            ¿Ya tienes una cuenta?{' '}
+                            <Link
+                                href="/sign-in"
+                                className="text-secondary-600 font-semibold hover:text-secondary-700 hover:underline transition-colors"
+                            >
+                                Inicia sesión
+                            </Link>
+                        </p>
+                    </div>
+
+                    {/* Form Header */}
+                    <div className="mb-8">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            Crear Cuenta
+                        </h1>
+                        <p className="text-gray-600">Únete a la plataforma de gestión de proyectos</p>
+                    </div>
+
+                    {/* Register Form */}
                     <form onSubmit={handleSubmit} className="space-y-5">
                         {/* Names Row */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -146,7 +186,7 @@ export default function Register() {
                                     value={formData.names}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="Juan Carlos"
                                 />
                             </div>
@@ -162,7 +202,7 @@ export default function Register() {
                                     value={formData.lastNames}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="Pérez García"
                                 />
                             </div>
@@ -180,7 +220,7 @@ export default function Register() {
                                     value={formData.typeOfDentityDocument}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none bg-white"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none bg-white"
                                 >
                                     <option value="">Seleccionar...</option>
                                     {DOCUMENT_TYPES.map((type) => (
@@ -202,7 +242,7 @@ export default function Register() {
                                     value={formData.idDocumentNumber}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="1234567890"
                                 />
                             </div>
@@ -221,7 +261,7 @@ export default function Register() {
                                     value={formData.phoneNumber}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="3001234567"
                                 />
                             </div>
@@ -237,7 +277,7 @@ export default function Register() {
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="tu@email.com"
                                 />
                             </div>
@@ -256,7 +296,7 @@ export default function Register() {
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="••••••••"
                                 />
                                 {formData.password && (
@@ -288,7 +328,7 @@ export default function Register() {
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     required
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 outline-none"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -298,7 +338,7 @@ export default function Register() {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-gradient-to-r from-primary-600 to-blue-600 text-white font-semibold py-3 px-4 rounded-lg hover:from-primary-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            className="w-full bg-primary-600 text-white font-semibold py-3 px-4 rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transform transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                         >
                             {isLoading ? (
                                 <span className="flex items-center justify-center">
@@ -313,19 +353,13 @@ export default function Register() {
                             )}
                         </button>
                     </form>
+                </div>
 
-                    {/* Login Link */}
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-gray-600">
-                            ¿Ya tienes una cuenta?{' '}
-                            <Link
-                                href="/sign-in"
-                                className="text-primary-600 font-semibold hover:text-primary-700 hover:underline transition-colors"
-                            >
-                                Inicia sesión aquí
-                            </Link>
-                        </p>
-                    </div>
+                {/* Footer */}
+                <div className="px-8 py-4 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 text-center">
+                        Todos los derechos reservados © Universidad Mayor del Cauca
+                    </p>
                 </div>
             </div>
         </div>

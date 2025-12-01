@@ -19,11 +19,11 @@ export default function NotFound() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-primary-50 to-blue-100 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
             <div className="max-w-2xl w-full text-center">
                 {/* 404 Number */}
                 <div className="mb-8">
-                    <h1 className="text-9xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary-600 to-blue-600 animate-pulse">
+                    <h1 className="text-9xl font-bold text-primary-600 animate-pulse">
                         404
                     </h1>
                 </div>
@@ -80,7 +80,7 @@ export default function NotFound() {
                                         {link.label}
                                     </span>
                                 </div>
-                                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-primary-500/0 to-blue-500/0 group-hover:from-primary-500/5 group-hover:to-blue-500/5 transition-all duration-300"></div>
+                                <div className="absolute inset-0 rounded-lg bg-primary-500/0 group-hover:bg-primary-500/5 transition-all duration-300"></div>
                             </Link>
                         ))}
                     </div>
@@ -90,7 +90,7 @@ export default function NotFound() {
                 <div className="mt-8">
                     <button
                         onClick={() => router.back()}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-primary-600 to-blue-600 text-white rounded-lg font-medium hover:from-primary-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
                         <svg
                             className="w-5 h-5"

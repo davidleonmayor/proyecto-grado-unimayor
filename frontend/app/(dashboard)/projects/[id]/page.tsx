@@ -6,12 +6,16 @@ import api from '../../../lib/api';
 import ProjectHistory from '../../../components/ProjectHistory';
 import Swal from 'sweetalert2';
 
+// Privileged roles that can make reviews
+const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
+
 export default function ProjectDetailPage() {
     const params = useParams();
     const projectId = params.id as string;
 
     const [history, setHistory] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPrivileged, setIsPrivileged] = useState(false);
     const [activeTab, setActiveTab] = useState<'history' | 'upload' | 'review'>('history');
 
     // Upload State
@@ -30,6 +34,18 @@ export default function ProjectDetailPage() {
             setIsLoading(true);
             const historyData = await api.getProjectHistory(projectId);
             setHistory(historyData);
+            
+            // Check if user has privileged role
+            try {
+                const projects = await api.getProjects();
+                const hasPrivilegedRole = projects.some((project: any) =>
+                    PRIVILEGED_ROLES.includes(project.role)
+                );
+                setIsPrivileged(hasPrivilegedRole);
+            } catch (err) {
+                console.error('Error checking user role:', err);
+                setIsPrivileged(false);
+            }
         } catch (error) {
             console.error(error);
             Swal.fire('Error', 'No se pudo cargar el historial', 'error');
@@ -43,6 +59,13 @@ export default function ProjectDetailPage() {
             loadData();
         }
     }, [projectId]);
+
+    // Redirect to history tab if user tries to access review tab without privileges
+    useEffect(() => {
+        if (activeTab === 'review' && !isPrivileged && !isLoading) {
+            setActiveTab('history');
+        }
+    }, [activeTab, isPrivileged, isLoading]);
 
     useEffect(() => {
         const loadStatuses = async () => {
@@ -83,6 +106,13 @@ export default function ProjectDetailPage() {
 
     const handleReview = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Additional security check
+        if (!isPrivileged) {
+            Swal.fire('Error', 'No tienes permisos para realizar revisiones', 'error');
+            setActiveTab('history');
+            return;
+        }
 
         try {
             setIsSubmitting(true);
@@ -135,15 +165,17 @@ export default function ProjectDetailPage() {
                 >
                     Nueva Entrega (Estudiante)
                 </button>
-                <button
-                    onClick={() => setActiveTab('review')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'review'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                        }`}
-                >
-                    Revisión (Director/Jurado)
-                </button>
+                {isPrivileged && (
+                    <button
+                        onClick={() => setActiveTab('review')}
+                        className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'review'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Revisión (Director/Jurado)
+                    </button>
+                )}
             </div>
 
             {/* Content */}

@@ -306,8 +306,11 @@ class ApiClient {
     });
   }
 
-  async getAvailableStudents(): Promise<any[]> {
-    return this.request<any[]>('/api/projects/students', {
+  async getAvailableStudents(programId?: string): Promise<any[]> {
+    const url = programId 
+      ? `/api/projects/students?programId=${programId}`
+      : '/api/projects/students';
+    return this.request<any[]>(url, {
       requiresAuth: true,
     });
   }

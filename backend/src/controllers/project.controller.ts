@@ -350,8 +350,11 @@ export class ProjectController {
     }
 
     // Get available students (personas without active graduation projects)
+    // Optional query parameter: programId - filters students by academic program
     async getAvailableStudents(req: Request, res: Response) {
         try {
+            const programId = req.query.programId as string | undefined;
+
             // Get student role
             const studentRole = await prisma.tipo_rol.findFirst({
                 where: { nombre_rol: "Estudiante" }
@@ -362,7 +365,7 @@ export class ProjectController {
             }
 
             // Get all students with active projects
-            const studentsWithProjects = await prisma.actores.findMany({
+            const studentsWithActiveProjects = await prisma.actores.findMany({
                 where: {
                     id_tipo_rol: studentRole.id_rol,
                     estado: "Activo"
@@ -373,9 +376,30 @@ export class ProjectController {
                 distinct: ['id_persona']
             });
 
-            const studentIdsWithProjects = new Set(
-                studentsWithProjects.map(a => a.id_persona)
+            const studentIdsWithActiveProjects = new Set(
+                studentsWithActiveProjects.map(a => a.id_persona)
             );
+
+            // If programId is provided, get students who have projects in that program
+            let studentsInProgram: Set<string> = new Set();
+            if (programId) {
+                const studentsWithProgramProjects = await prisma.actores.findMany({
+                    where: {
+                        id_tipo_rol: studentRole.id_rol,
+                        trabajo_grado: {
+                            id_programa_academico: programId
+                        }
+                    },
+                    select: {
+                        id_persona: true
+                    },
+                    distinct: ['id_persona']
+                });
+
+                studentsInProgram = new Set(
+                    studentsWithProgramProjects.map(a => a.id_persona)
+                );
+            }
 
             // Get all confirmed students
             const allStudents = await prisma.persona.findMany({
@@ -393,9 +417,16 @@ export class ProjectController {
             });
 
             // Filter out students who already have active projects
-            const availableStudents = allStudents.filter(
-                s => !studentIdsWithProjects.has(s.id_persona)
+            let availableStudents = allStudents.filter(
+                s => !studentIdsWithActiveProjects.has(s.id_persona)
             );
+
+            // If programId is provided, filter to only show students in that program
+            if (programId && studentsInProgram.size > 0) {
+                availableStudents = availableStudents.filter(
+                    s => studentsInProgram.has(s.id_persona)
+                );
+            }
 
             return res.json(availableStudents.map(s => ({
                 id: s.id_persona,
