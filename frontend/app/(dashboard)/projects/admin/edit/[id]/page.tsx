@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Swal from 'sweetalert2';
 import api from '../../../../../lib/api';
@@ -60,11 +60,14 @@ export default function EditProjectPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState<FormData | null>(null);
-    const [students, setStudents] = useState<Person[]>([]);
-    const [advisors, setAdvisors] = useState<Person[]>([]);
+    const [allStudents, setAllStudents] = useState<Person[]>([]);
+    const [allAdvisors, setAllAdvisors] = useState<Person[]>([]);
 
-    const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-    const [selectedAdvisors, setSelectedAdvisors] = useState<string[]>([]);
+    // Separate assigned and available lists
+    const [assignedStudents, setAssignedStudents] = useState<Person[]>([]);
+    const [availableStudents, setAvailableStudents] = useState<Person[]>([]);
+    const [assignedAdvisors, setAssignedAdvisors] = useState<Person[]>([]);
+    const [availableAdvisors, setAvailableAdvisors] = useState<Person[]>([]);
 
     const [title, setTitle] = useState('');
     const [summary, setSummary] = useState('');
@@ -74,6 +77,12 @@ export default function EditProjectPage() {
     const [companyId, setCompanyId] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+
+    // Search filters
+    const [studentSearch, setStudentSearch] = useState('');
+    const [advisorSearch, setAdvisorSearch] = useState('');
+    const [filteredAvailableStudents, setFilteredAvailableStudents] = useState<Person[]>([]);
+    const [filteredAvailableAdvisors, setFilteredAvailableAdvisors] = useState<Person[]>([]);
 
     useEffect(() => {
         if (!projectId) return;
@@ -91,11 +100,23 @@ export default function EditProjectPage() {
             ]);
 
             setFormData(form);
-            setStudents(mergePeopleLists(studentsData, project.students));
-            setAdvisors(mergePeopleLists(advisorsData, project.advisors));
+            
+            // Set all available people
+            const mergedStudents = mergePeopleLists(studentsData, project.students);
+            const mergedAdvisors = mergePeopleLists(advisorsData, project.advisors);
+            setAllStudents(mergedStudents);
+            setAllAdvisors(mergedAdvisors);
 
-            setSelectedStudents(project.students.map(student => student.id));
-            setSelectedAdvisors(project.advisors.map(advisor => advisor.id));
+            // Separate assigned and available
+            setAssignedStudents(project.students);
+            const availableStudentsList = mergedStudents.filter(s => !project.students.some(ps => ps.id === s.id));
+            setAvailableStudents(availableStudentsList);
+            setFilteredAvailableStudents(availableStudentsList);
+            
+            setAssignedAdvisors(project.advisors);
+            const availableAdvisorsList = mergedAdvisors.filter(a => !project.advisors.some(pa => pa.id === a.id));
+            setAvailableAdvisors(availableAdvisorsList);
+            setFilteredAvailableAdvisors(availableAdvisorsList);
 
             setTitle(project.title);
             setSummary(project.summary || '');
@@ -113,23 +134,134 @@ export default function EditProjectPage() {
         }
     };
 
-    const toggleStudent = (studentId: string) => {
-        if (selectedStudents.includes(studentId)) {
-            setSelectedStudents(selectedStudents.filter(id => id !== studentId));
-        } else if (selectedStudents.length < 2) {
-            setSelectedStudents([...selectedStudents, studentId]);
+    // Filter students by search term
+    const filterStudents = useCallback((searchTerm: string) => {
+        if (!searchTerm.trim()) {
+            setFilteredAvailableStudents(availableStudents);
+            return;
+        }
+
+        const search = searchTerm.toLowerCase().trim();
+        const filtered = availableStudents.filter(student => {
+            const documentMatch = student.document?.toLowerCase().includes(search);
+            const idMatch = student.id.toLowerCase().includes(search);
+            const nameMatch = student.name.toLowerCase().includes(search);
+            const emailMatch = student.email.toLowerCase().includes(search);
+            
+            return documentMatch || idMatch || nameMatch || emailMatch;
+        });
+        
+        setFilteredAvailableStudents(filtered);
+    }, [availableStudents]);
+
+    // Filter advisors by search term
+    const filterAdvisors = useCallback((searchTerm: string) => {
+        if (!searchTerm.trim()) {
+            setFilteredAvailableAdvisors(availableAdvisors);
+            return;
+        }
+
+        const search = searchTerm.toLowerCase().trim();
+        const filtered = availableAdvisors.filter(advisor => {
+            const documentMatch = advisor.document?.toLowerCase().includes(search);
+            const idMatch = advisor.id.toLowerCase().includes(search);
+            const nameMatch = advisor.name.toLowerCase().includes(search);
+            const emailMatch = advisor.email.toLowerCase().includes(search);
+            
+            return documentMatch || idMatch || nameMatch || emailMatch;
+        });
+        
+        setFilteredAvailableAdvisors(filtered);
+    }, [availableAdvisors]);
+
+    // Handle student search
+    useEffect(() => {
+        filterStudents(studentSearch);
+    }, [studentSearch, filterStudents]);
+
+    // Handle advisor search
+    useEffect(() => {
+        filterAdvisors(advisorSearch);
+    }, [advisorSearch, filterAdvisors]);
+
+    // Update filtered lists when available lists change
+    useEffect(() => {
+        if (!studentSearch.trim()) {
+            setFilteredAvailableStudents(availableStudents);
         } else {
+            filterStudents(studentSearch);
+        }
+    }, [availableStudents, studentSearch, filterStudents]);
+
+    useEffect(() => {
+        if (!advisorSearch.trim()) {
+            setFilteredAvailableAdvisors(availableAdvisors);
+        } else {
+            filterAdvisors(advisorSearch);
+        }
+    }, [availableAdvisors, advisorSearch, filterAdvisors]);
+
+    // Move student from available to assigned
+    const addStudent = (student: Person) => {
+        if (assignedStudents.length >= 2) {
             Swal.fire('Límite alcanzado', 'Máximo 2 estudiantes permitidos', 'warning');
+            return;
+        }
+        setAssignedStudents([...assignedStudents, student]);
+        const newAvailable = availableStudents.filter(s => s.id !== student.id);
+        setAvailableStudents(newAvailable);
+        // Update filtered list
+        if (!studentSearch.trim()) {
+            setFilteredAvailableStudents(newAvailable);
+        } else {
+            filterStudents(studentSearch);
         }
     };
 
-    const toggleAdvisor = (advisorId: string) => {
-        if (selectedAdvisors.includes(advisorId)) {
-            setSelectedAdvisors(selectedAdvisors.filter(id => id !== advisorId));
-        } else if (selectedAdvisors.length < 2) {
-            setSelectedAdvisors([...selectedAdvisors, advisorId]);
+    // Move student from assigned to available
+    const removeStudent = (student: Person) => {
+        if (assignedStudents.length <= 1) {
+            Swal.fire('Error', 'Debe mantener al menos 1 estudiante asignado', 'warning');
+            return;
+        }
+        setAssignedStudents(assignedStudents.filter(s => s.id !== student.id));
+        const newAvailable = [...availableStudents, student];
+        setAvailableStudents(newAvailable);
+        // Update filtered list
+        if (!studentSearch.trim()) {
+            setFilteredAvailableStudents(newAvailable);
         } else {
+            filterStudents(studentSearch);
+        }
+    };
+
+    // Move advisor from available to assigned
+    const addAdvisor = (advisor: Person) => {
+        if (assignedAdvisors.length >= 2) {
             Swal.fire('Límite alcanzado', 'Máximo 2 asesores permitidos', 'warning');
+            return;
+        }
+        setAssignedAdvisors([...assignedAdvisors, advisor]);
+        const newAvailable = availableAdvisors.filter(a => a.id !== advisor.id);
+        setAvailableAdvisors(newAvailable);
+        // Update filtered list
+        if (!advisorSearch.trim()) {
+            setFilteredAvailableAdvisors(newAvailable);
+        } else {
+            filterAdvisors(advisorSearch);
+        }
+    };
+
+    // Move advisor from assigned to available
+    const removeAdvisor = (advisor: Person) => {
+        setAssignedAdvisors(assignedAdvisors.filter(a => a.id !== advisor.id));
+        const newAvailable = [...availableAdvisors, advisor];
+        setAvailableAdvisors(newAvailable);
+        // Update filtered list
+        if (!advisorSearch.trim()) {
+            setFilteredAvailableAdvisors(newAvailable);
+        } else {
+            filterAdvisors(advisorSearch);
         }
     };
 
@@ -137,7 +269,7 @@ export default function EditProjectPage() {
         e.preventDefault();
         if (!projectId) return;
 
-        if (selectedStudents.length < 1) {
+        if (assignedStudents.length < 1) {
             Swal.fire('Error', 'Debe mantener al menos 1 estudiante asignado', 'error');
             return;
         }
@@ -153,8 +285,8 @@ export default function EditProjectPage() {
                 companyId: companyId || null,
                 startDate,
                 endDate: endDate || null,
-                students: selectedStudents,
-                advisors: selectedAdvisors
+                students: assignedStudents.map(s => s.id),
+                advisors: assignedAdvisors.map(a => a.id)
             });
 
             await Swal.fire('¡Actualizado!', 'Proyecto actualizado correctamente', 'success');
@@ -173,7 +305,6 @@ export default function EditProjectPage() {
             </div>
         );
     }
-
     return (
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Editar Proyecto de Grado</h1>
@@ -306,72 +437,200 @@ export default function EditProjectPage() {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Estudiantes * (Selecciona 1 o 2)
+                        Estudiantes * (Máximo 2, mínimo 1)
                     </label>
-                    <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        {students.length === 0 ? (
-                            <p className="text-gray-500 text-sm">No hay estudiantes disponibles</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {students.map(student => (
-                                    <label
-                                        key={student.id}
-                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedStudents.includes(student.id)
-                                            ? 'bg-primary-100 border-2 border-primary-500'
-                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedStudents.includes(student.id)}
-                                            onChange={() => toggleStudent(student.id)}
-                                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                        />
-                                        <div className="ml-3 flex-1">
-                                            <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                            <div className="text-xs text-gray-500">{student.email}{student.document ? ` - ${student.document}` : ''}</div>
-                                        </div>
-                                    </label>
-                                ))}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Assigned Students */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedStudents.length}/2)</span>
                             </div>
-                        )}
+                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                {assignedStudents.length === 0 ? (
+                                    <p className="text-gray-500 text-sm text-center py-4">No hay estudiantes asignados</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {assignedStudents.map(student => (
+                                            <div
+                                                key={student.id}
+                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                                                    <div className="text-xs text-gray-500">{student.email}{student.document ? ` - ${student.document}` : ''}</div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeStudent(student)}
+                                                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                                    title="Quitar estudiante"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Available Students */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-700">Disponibles</span>
+                            </div>
+                            <div className="mb-2">
+                                <input
+                                    type="text"
+                                    value={studentSearch}
+                                    onChange={(e) => setStudentSearch(e.target.value)}
+                                    placeholder="Buscar por cédula, código o nombre..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                />
+                            </div>
+                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                {filteredAvailableStudents.length === 0 ? (
+                                    <p className="text-gray-500 text-sm text-center py-4">
+                                        {studentSearch 
+                                            ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
+                                            : 'No hay estudiantes disponibles'
+                                        }
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {filteredAvailableStudents.map(student => (
+                                            <div
+                                                key={student.id}
+                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {student.document && `Cédula: ${student.document}`}
+                                                        {student.document && ' • '}
+                                                        Código: {student.id} • {student.email}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addStudent(student)}
+                                                    className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                                                    title="Agregar estudiante"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Seleccionados: {selectedStudents.length}/2</p>
                 </div>
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Asesores/Directores (Máximo 2, opcional)
+                        Asesores (Máximo 2, opcional)
                     </label>
-                    <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        {advisors.length === 0 ? (
-                            <p className="text-gray-500 text-sm">No hay asesores disponibles</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {advisors.map(advisor => (
-                                    <label
-                                        key={advisor.id}
-                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedAdvisors.includes(advisor.id)
-                                            ? 'bg-blue-100 border-2 border-blue-500'
-                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedAdvisors.includes(advisor.id)}
-                                            onChange={() => toggleAdvisor(advisor.id)}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        />
-                                        <div className="ml-3 flex-1">
-                                            <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
-                                            <div className="text-xs text-gray-500">{advisor.email}</div>
-                                        </div>
-                                    </label>
-                                ))}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Assigned Advisors */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedAdvisors.length}/2)</span>
                             </div>
-                        )}
+                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                {assignedAdvisors.length === 0 ? (
+                                    <p className="text-gray-500 text-sm text-center py-4">No hay asesores asignados</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {assignedAdvisors.map(advisor => (
+                                            <div
+                                                key={advisor.id}
+                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {advisor.document && `Cédula: ${advisor.document}`}
+                                                        {advisor.document && ' • '}
+                                                        Código: {advisor.id} • {advisor.email}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeAdvisor(advisor)}
+                                                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                                    title="Quitar asesor"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Available Advisors */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-700">Disponibles</span>
+                            </div>
+                            <div className="mb-2">
+                                <input
+                                    type="text"
+                                    value={advisorSearch}
+                                    onChange={(e) => setAdvisorSearch(e.target.value)}
+                                    placeholder="Buscar por cédula, código o nombre..."
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                />
+                            </div>
+                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                {filteredAvailableAdvisors.length === 0 ? (
+                                    <p className="text-gray-500 text-sm text-center py-4">
+                                        {advisorSearch 
+                                            ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
+                                            : 'No hay asesores disponibles'
+                                        }
+                                    </p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {filteredAvailableAdvisors.map(advisor => (
+                                            <div
+                                                key={advisor.id}
+                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                                            >
+                                                <div className="flex-1">
+                                                    <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {advisor.document && `Cédula: ${advisor.document}`}
+                                                        {advisor.document && ' • '}
+                                                        Código: {advisor.id} • {advisor.email}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => addAdvisor(advisor)}
+                                                    className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                                                    title="Agregar asesor"
+                                                >
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Seleccionados: {selectedAdvisors.length}/2</p>
                 </div>
 
                 <div className="flex justify-end gap-4 pt-4 border-t">
@@ -395,4 +654,5 @@ export default function EditProjectPage() {
         </div>
     );
 }
+
 

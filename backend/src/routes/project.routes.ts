@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { ProjectController, upload } from "../controllers/project.controller";
+import {
+    ProjectController,
+    upload,
+    excelUpload,
+} from "../controllers/project.controller";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware";
 import { RoleMiddleware } from "../common/middleware/RoleMiddleware";
 
@@ -106,6 +110,14 @@ export class ProjectRoutes {
             this.authMiddleware.isAuthenticatedUser,
             this.roleMiddleware.isPrivilegedUser,
             this.controller.createProject
+        );
+
+        // Bulk upload projects via Excel (Privileged)
+        this.router.post("/admin/bulk-upload",
+            this.authMiddleware.isAuthenticatedUser,
+            this.roleMiddleware.isPrivilegedUser,
+            excelUpload.single("file"),
+            this.controller.bulkUploadProjects
         );
 
         // Get project detail (Privileged)

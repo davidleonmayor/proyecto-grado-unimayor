@@ -1,6 +1,20 @@
 // API client utility for making requests to the backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export interface BulkUploadRowResult {
+  row: number;
+  status: 'success' | 'error';
+  title?: string;
+  messages: string[];
+}
+
+export interface BulkUploadSummary {
+  totalRows: number;
+  imported: number;
+  failed: number;
+  rows: BulkUploadRowResult[];
+}
+
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
 }
@@ -156,10 +170,13 @@ class ApiClient {
     });
   }
 
-  async createIteration(projectId: string, file: File, description: string): Promise<any> {
+  async createIteration(projectId: string, file: File, description: string, numero_resolucion?: string): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('description', description);
+    if (numero_resolucion) {
+      formData.append('numero_resolucion', numero_resolucion);
+    }
 
     // Custom request for FormData
     const token = this.getAuthToken();
@@ -182,11 +199,11 @@ class ApiClient {
     return response.json();
   }
 
-  async reviewIteration(projectId: string, description: string, newStatusId?: string): Promise<any> {
+  async reviewIteration(projectId: string, description: string, newStatusId?: string, numero_resolucion?: string): Promise<any> {
     return this.request<any>(`/api/projects/${projectId}/review`, {
       method: 'POST',
       requiresAuth: true,
-      body: JSON.stringify({ description, newStatusId }),
+      body: JSON.stringify({ description, newStatusId, numero_resolucion }),
     });
   }
 
@@ -292,6 +309,46 @@ class ApiClient {
     });
   }
 
+  async bulkUploadProjects(file: File): Promise<BulkUploadSummary> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No se encontró el token de autenticación');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/api/projects/admin/bulk-upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const looksLikeSummary =
+        data &&
+        typeof data === 'object' &&
+        'rows' in data &&
+        Array.isArray((data as any).rows);
+
+      if (looksLikeSummary) {
+        return data as BulkUploadSummary;
+      }
+
+      throw new Error(
+        typeof data === 'object' && data !== null && 'error' in data
+          ? (data as { error: string }).error
+          : 'Error al importar proyectos'
+      );
+    }
+
+    return data as BulkUploadSummary;
+  }
+
   // Get available statuses (for review form)
   async getStatuses(): Promise<Array<{ id_estado_tg: string; nombre_estado: string }>> {
     return this.request<Array<{ id_estado_tg: string; nombre_estado: string }>>('/api/projects/statuses', {
@@ -306,8 +363,11 @@ class ApiClient {
     });
   }
 
-  async getAvailableStudents(): Promise<any[]> {
-    return this.request<any[]>('/api/projects/students', {
+  async getAvailableStudents(programId?: string): Promise<any[]> {
+    const url = programId 
+      ? `/api/projects/students?programId=${programId}`
+      : '/api/projects/students';
+    return this.request<any[]>(url, {
       requiresAuth: true,
     });
   }

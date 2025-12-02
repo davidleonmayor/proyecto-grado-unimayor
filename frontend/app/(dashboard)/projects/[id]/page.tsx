@@ -6,22 +6,28 @@ import api from '../../../lib/api';
 import ProjectHistory from '../../../components/ProjectHistory';
 import Swal from 'sweetalert2';
 
+// Privileged roles that can make reviews
+const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
+
 export default function ProjectDetailPage() {
     const params = useParams();
     const projectId = params.id as string;
 
     const [history, setHistory] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPrivileged, setIsPrivileged] = useState(false);
     const [activeTab, setActiveTab] = useState<'history' | 'upload' | 'review'>('history');
 
     // Upload State
     const [file, setFile] = useState<File | null>(null);
     const [description, setDescription] = useState('');
+    const [numeroResolucion, setNumeroResolucion] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Review State
     const [reviewComment, setReviewComment] = useState('');
     const [newStatus, setNewStatus] = useState('');
+    const [reviewNumeroResolucion, setReviewNumeroResolucion] = useState('');
     const [statuses, setStatuses] = useState<Array<{ id_estado_tg: string; nombre_estado: string }>>([]);
     const [loadingStatuses, setLoadingStatuses] = useState(false);
 
@@ -30,6 +36,18 @@ export default function ProjectDetailPage() {
             setIsLoading(true);
             const historyData = await api.getProjectHistory(projectId);
             setHistory(historyData);
+            
+            // Check if user has privileged role
+            try {
+                const projects = await api.getProjects();
+                const hasPrivilegedRole = projects.some((project: any) =>
+                    PRIVILEGED_ROLES.includes(project.role)
+                );
+                setIsPrivileged(hasPrivilegedRole);
+            } catch (err) {
+                console.error('Error checking user role:', err);
+                setIsPrivileged(false);
+            }
         } catch (error) {
             console.error(error);
             Swal.fire('Error', 'No se pudo cargar el historial', 'error');
@@ -43,6 +61,13 @@ export default function ProjectDetailPage() {
             loadData();
         }
     }, [projectId]);
+
+    // Redirect to history tab if user tries to access review tab without privileges
+    useEffect(() => {
+        if (activeTab === 'review' && !isPrivileged && !isLoading) {
+            setActiveTab('history');
+        }
+    }, [activeTab, isPrivileged, isLoading]);
 
     useEffect(() => {
         const loadStatuses = async () => {
@@ -67,11 +92,12 @@ export default function ProjectDetailPage() {
 
         try {
             setIsSubmitting(true);
-            await api.createIteration(projectId, file, description);
+            await api.createIteration(projectId, file, description, numeroResolucion || undefined);
 
             await Swal.fire('Éxito', 'Entrega subida correctamente', 'success');
             setFile(null);
             setDescription('');
+            setNumeroResolucion('');
             setActiveTab('history');
             loadData(); // Refresh history
         } catch (error) {
@@ -84,13 +110,21 @@ export default function ProjectDetailPage() {
     const handleReview = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        // Additional security check
+        if (!isPrivileged) {
+            Swal.fire('Error', 'No tienes permisos para realizar revisiones', 'error');
+            setActiveTab('history');
+            return;
+        }
+
         try {
             setIsSubmitting(true);
-            await api.reviewIteration(projectId, reviewComment, newStatus || undefined);
+            await api.reviewIteration(projectId, reviewComment, newStatus || undefined, reviewNumeroResolucion || undefined);
 
             await Swal.fire('Éxito', 'Revisión registrada correctamente', 'success');
             setReviewComment('');
             setNewStatus('');
+            setReviewNumeroResolucion('');
             setActiveTab('history');
             loadData(); // Refresh history
         } catch (error) {
@@ -135,15 +169,17 @@ export default function ProjectDetailPage() {
                 >
                     Nueva Entrega (Estudiante)
                 </button>
-                <button
-                    onClick={() => setActiveTab('review')}
-                    className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'review'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700'
-                        }`}
-                >
-                    Revisión (Director/Jurado)
-                </button>
+                {isPrivileged && (
+                    <button
+                        onClick={() => setActiveTab('review')}
+                        className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'review'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Revisión (Director/Jurado)
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -176,6 +212,19 @@ export default function ProjectDetailPage() {
                                     rows={4}
                                     placeholder="Describe los cambios realizados en esta entrega..."
                                     required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de Resolución (Opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={numeroResolucion}
+                                    onChange={(e) => setNumeroResolucion(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Ej: RES-2024-001"
                                 />
                             </div>
 
@@ -229,6 +278,19 @@ export default function ProjectDetailPage() {
                                     rows={6}
                                     placeholder="Escribe tus observaciones detalladas aquí..."
                                     required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Número de Resolución (Opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={reviewNumeroResolucion}
+                                    onChange={(e) => setReviewNumeroResolucion(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    placeholder="Ej: RES-2024-001"
                                 />
                             </div>
 
