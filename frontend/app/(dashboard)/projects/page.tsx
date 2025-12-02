@@ -77,9 +77,9 @@ export default function ProjectsPage() {
                     </svg>
                     Nuevo Proyecto
                 </Link>
-                {/* TODO: implement that feature */}
+                {/* TODO: implement that functionality */}
                 <Link
-                    href="/dashboard/projects/admin/new"
+                    href="/dashboard/projects/bulk-upload"
                     className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
