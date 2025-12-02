@@ -309,6 +309,39 @@ class ApiClient {
     });
   }
 
+  async downloadBulkTemplate(): Promise<void> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No se encontró el token de autenticación');
+    }
+
+    const response = await fetch(`${this.baseURL}/api/projects/admin/bulk-template`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(
+        typeof data === 'object' && data !== null && 'error' in data
+          ? (data as { error: string }).error
+          : 'No se pudo descargar la plantilla'
+      );
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bulk-projects-sample.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
   async bulkUploadProjects(file: File): Promise<BulkUploadSummary> {
     const token = this.getAuthToken();
     if (!token) {

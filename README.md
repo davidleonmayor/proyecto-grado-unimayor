@@ -125,7 +125,7 @@ cd frontend && pnpm dev
 ## 📥 Carga masiva de proyectos
 
 1. Inicia sesión con un rol privilegiado (Decano, Coordinador, Director) y abre `Dashboard → Proyectos` y haz clic en **“Cargar Múltiples Proyectos”** (ruta `/dashboard/projects/bulk-upload`) o ingresa directamente a `Dashboard → Proyectos → Administración de Proyectos`.
-2. En la pantalla de carga masiva selecciona un archivo Excel (`.xlsx` o `.xls`) con los encabezados descritos abajo y haz clic en **Importar proyectos**.
+2. En la pantalla de carga masiva selecciona un archivo Excel (`.xlsx` o `.xls`) con los encabezados descritos abajo y haz clic en **Importar proyectos**. También puedes usar **Descargar plantilla** para obtener un archivo de ejemplo con datos válidos y columnas ordenadas.
 3. Revisa el resumen que muestra, fila por fila, si el registro fue importado o qué validaciones fallaron. Solo los proyectos válidos se crean en la base de datos.
 
 ### Columnas soportadas

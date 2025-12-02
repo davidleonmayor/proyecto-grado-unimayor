@@ -1678,6 +1678,173 @@ export class ProjectController {
         }
     }
 
+    // Generate sample Excel template for bulk uploads
+    async downloadBulkTemplate(req: Request, res: Response) {
+        try {
+            const headers = [
+                "Titulo",
+                "Resumen",
+                "Modalidad",
+                "Estado",
+                "Programa",
+                "Empresa",
+                "Fecha_inicio",
+                "Fecha_fin",
+                "Estudiantes",
+                "Asesores",
+            ];
+
+            const [modalities, statuses, programs, companies, studentRole, directorRole] =
+                await Promise.all([
+                    prisma.opcion_grado.findMany({
+                        where: { estado: "activo" },
+                        select: { nombre_opcion_grado: true },
+                        orderBy: { nombre_opcion_grado: "asc" },
+                    }),
+                    prisma.estado_tg.findMany({
+                        select: { nombre_estado: true, orden: true },
+                        orderBy: { orden: "asc" },
+                    }),
+                    prisma.programa_academico.findMany({
+                        where: { estado: "activo" },
+                        select: { nombre_programa: true },
+                        orderBy: { nombre_programa: "asc" },
+                    }),
+                    prisma.empresa.findMany({
+                        where: { estado: "activo" },
+                        select: { nombre_empresa: true },
+                        orderBy: { nombre_empresa: "asc" },
+                    }),
+                    prisma.tipo_rol.findFirst({
+                        where: { nombre_rol: "Estudiante" },
+                        select: { id_rol: true },
+                    }),
+                    prisma.tipo_rol.findFirst({
+                        where: { nombre_rol: "Director" },
+                        select: { id_rol: true },
+                    }),
+                ]);
+
+            const availableStudents = await prisma.persona.findMany({
+                where: {
+                    confirmed: true,
+                    password: { not: null },
+                    ...(studentRole
+                        ? {
+                              actores: {
+                                  none: {
+                                      id_tipo_rol: studentRole.id_rol,
+                                      estado: "Activo",
+                                  },
+                              },
+                          }
+                        : {}),
+                },
+                select: {
+                    nombres: true,
+                    apellidos: true,
+                    num_doc_identidad: true,
+                },
+                take: 2,
+            });
+
+            const studentDocs =
+                availableStudents.length > 0
+                    ? availableStudents.map((student) => student.num_doc_identidad)
+                    : ["DOCUMENTO_ESTUDIANTE_1", "DOCUMENTO_ESTUDIANTE_2"];
+
+            const advisorCandidates = await prisma.persona.findMany({
+                where: directorRole
+                    ? {
+                          actores: {
+                              some: {
+                                  id_tipo_rol: directorRole.id_rol,
+                              },
+                          },
+                      }
+                    : {},
+                select: {
+                    nombres: true,
+                    apellidos: true,
+                    num_doc_identidad: true,
+                },
+                take: 2,
+            });
+
+            const advisorDocs =
+                advisorCandidates.length > 0
+                    ? advisorCandidates.map((advisor) => advisor.num_doc_identidad)
+                    : ["DOCUMENTO_ASESOR_1"];
+
+            const firstModality =
+                modalities[0]?.nombre_opcion_grado || "Modalidad existente";
+            const firstStatus = statuses[0]?.nombre_estado || "En Progreso";
+            const firstProgram =
+                programs[0]?.nombre_programa || "Programa académico existente";
+            const firstCompany = companies[0]?.nombre_empresa || "";
+
+            const rows = [
+                {
+                    Titulo: "Sistema de monitoreo de laboratorios",
+                    Resumen:
+                        "Plataforma para registrar y supervisar el estado de los laboratorios del campus.",
+                    Modalidad: firstModality,
+                    Estado: firstStatus,
+                    Programa: firstProgram,
+                    Empresa: firstCompany,
+                    Fecha_inicio: "2025-02-17",
+                    Fecha_fin: "2025-08-30",
+                    Estudiantes: studentDocs.join(";"),
+                    Asesores: advisorDocs.join(";"),
+                },
+                {
+                    Titulo: "Reemplaza este título por tu proyecto",
+                    Resumen:
+                        "Incluye un resumen corto del objetivo principal del trabajo.",
+                    Modalidad: "Debe coincidir con una modalidad activa",
+                    Estado: "Debe existir en la tabla de estados",
+                    Programa: "Nombre exacto del programa académico",
+                    Empresa: "Opcional. Déjalo vacío si no aplica.",
+                    Fecha_inicio: "AAAA-MM-DD",
+                    Fecha_fin:
+                        "AAAA-MM-DD (Opcional, debe ser >= Fecha_inicio)",
+                    Estudiantes:
+                        "DocumentoEstudiante1;DocumentoEstudiante2 (máx. 2)",
+                    Asesores:
+                        "DocumentoDirector1;DocumentoDirector2 (máx. 2, opcional)",
+                },
+            ];
+
+            const worksheet = XLSX.utils.json_to_sheet(rows, {
+                header: headers,
+                skipHeader: false,
+            });
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos");
+
+            const buffer = XLSX.write(workbook, {
+                bookType: "xlsx",
+                type: "buffer",
+            });
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            );
+            res.setHeader(
+                "Content-Disposition",
+                'attachment; filename="bulk-projects-sample.xlsx"',
+            );
+
+            return res.send(buffer);
+        } catch (error) {
+            logger.error("Error generating bulk template:", error);
+            return res
+                .status(500)
+                .json({ error: "No se pudo generar la plantilla." });
+        }
+    }
+
     // Get dashboard statistics (Privileged only)
     async getDashboardStats(req: Request, res: Response) {
         try {

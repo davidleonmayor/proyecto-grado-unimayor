@@ -11,6 +11,7 @@ interface BulkUploadProjectsProps {
 export default function BulkUploadProjects({ onSuccessfulImport }: BulkUploadProjectsProps) {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [isImporting, setIsImporting] = useState(false);
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
     const [importSummary, setImportSummary] = useState<BulkUploadSummary | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -67,6 +68,19 @@ export default function BulkUploadProjects({ onSuccessfulImport }: BulkUploadPro
         }
     };
 
+    const handleDownloadTemplate = async () => {
+        try {
+            setIsDownloadingTemplate(true);
+            await api.downloadBulkTemplate();
+            Swal.fire('Plantilla generada', 'Revisa tu carpeta de descargas.', 'success');
+        } catch (err: any) {
+            const message = err?.message || 'No se pudo descargar la plantilla';
+            Swal.fire('Error', message, 'error');
+        } finally {
+            setIsDownloadingTemplate(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -104,18 +118,32 @@ export default function BulkUploadProjects({ onSuccessfulImport }: BulkUploadPro
                         <p className="text-xs text-gray-500 mt-2">
                             {selectedFile ? `Archivo seleccionado: ${selectedFile.name}` : 'Tamaño máximo 5MB.'}
                         </p>
-                        <button
-                            type="button"
-                            onClick={handleBulkUpload}
-                            disabled={!selectedFile || isImporting}
-                            className={`mt-4 inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold text-white transition-colors ${
-                                !selectedFile || isImporting
-                                    ? 'bg-blue-300 cursor-not-allowed'
-                                    : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
-                        >
-                            {isImporting ? 'Procesando...' : 'Importar proyectos'}
-                        </button>
+                        <div className="mt-4 flex flex-col gap-3">
+                            <button
+                                type="button"
+                                onClick={handleBulkUpload}
+                                disabled={!selectedFile || isImporting}
+                                className={`inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold text-white transition-colors ${
+                                    !selectedFile || isImporting
+                                        ? 'bg-blue-300 cursor-not-allowed'
+                                        : 'bg-blue-600 hover:bg-blue-700'
+                                }`}
+                            >
+                                {isImporting ? 'Procesando...' : 'Importar proyectos'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDownloadTemplate}
+                                disabled={isDownloadingTemplate}
+                                className={`inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold border transition-colors ${
+                                    isDownloadingTemplate
+                                        ? 'border-gray-300 text-gray-400 cursor-not-allowed'
+                                        : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                            >
+                                {isDownloadingTemplate ? 'Generando plantilla...' : 'Descargar plantilla'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>

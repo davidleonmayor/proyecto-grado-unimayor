@@ -119,6 +119,11 @@ export class ProjectRoutes {
             excelUpload.single("file"),
             this.controller.bulkUploadProjects
         );
+        this.router.get("/admin/bulk-template",
+            this.authMiddleware.isAuthenticatedUser,
+            this.roleMiddleware.isPrivilegedUser,
+            this.controller.downloadBulkTemplate
+        );
 
         // Get project detail (Privileged)
         this.router.get("/admin/:id",
