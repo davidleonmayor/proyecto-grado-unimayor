@@ -1,15 +1,117 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import multer from "multer";
+import multer, { FileFilterCallback } from "multer";
 import { logger } from "../config";
+import * as XLSX from "xlsx";
 
 const prisma = new PrismaClient();
+
+const allowedExcelMimeTypes = new Set([
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-excel",
+]);
+
+const normalizeValue = (value: string) =>
+    value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toLowerCase()
+        .trim();
+
+const normalizeKey = (value: string) =>
+    value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_");
+
+const toStringValue = (value: unknown) =>
+    value === undefined || value === null ? "" : String(value).trim();
+
+const splitList = (value: unknown) =>
+    toStringValue(value)
+        .split(/[,;|]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+const parseExcelDate = (value: unknown): Date | null => {
+    if (!value && value !== 0) {
+        return null;
+    }
+
+    if (value instanceof Date && !isNaN(value.getTime())) {
+        return value;
+    }
+
+    if (typeof value === "number") {
+        const excelDate = XLSX.SSF.parse_date_code(value);
+        if (excelDate) {
+            return new Date(Date.UTC(excelDate.y, excelDate.m - 1, excelDate.d));
+        }
+    }
+
+    const text = toStringValue(value);
+    if (!text) {
+        return null;
+    }
+
+    const normalized = text.replace(/\./g, "-").replace(/\//g, "-");
+    const isoMatch = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (isoMatch) {
+        const [, year, month, day] = isoMatch.map(Number);
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    const latinMatch = normalized.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+    if (latinMatch) {
+        const [, day, month, year] = latinMatch.map(Number);
+        const date = new Date(Date.UTC(year, month - 1, day));
+        return isNaN(date.getTime()) ? null : date;
+    }
+
+    const parsed = new Date(text);
+    if (!isNaN(parsed.getTime())) {
+        return parsed;
+    }
+
+    return null;
+};
 
 // Configure multer for memory storage (files as buffer)
 const storage = multer.memoryStorage();
 export const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
+
+const excelStorage = multer.memoryStorage();
+const excelFileFilter = (
+    _req: Request,
+    file: Express.Multer.File,
+    cb: FileFilterCallback,
+) => {
+    const isExcel =
+        allowedExcelMimeTypes.has(file.mimetype) ||
+        file.originalname.toLowerCase().endsWith(".xlsx") ||
+        file.originalname.toLowerCase().endsWith(".xls");
+
+    if (!isExcel) {
+        return cb(
+            new Error(
+                "Formato no válido. Sube un archivo Excel (.xlsx o .xls).",
+            ),
+        );
+    }
+    cb(null, true);
+};
+
+export const excelUpload = multer({
+    storage: excelStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: excelFileFilter,
 });
 
 export class ProjectController {
@@ -1151,6 +1253,428 @@ export class ProjectController {
         } catch (error) {
             logger.error("Error deleting project:", error);
             return res.status(500).json({ error: "Error al eliminar proyecto" });
+        }
+    }
+
+    // Bulk upload projects via Excel file
+    async bulkUploadProjects(req: Request, res: Response) {
+        try {
+            if (!req.file) {
+                return res
+                    .status(400)
+                    .json({ error: "Adjunta un archivo Excel (.xlsx o .xls)." });
+            }
+
+            let workbook: XLSX.WorkBook;
+            try {
+                workbook = XLSX.read(req.file.buffer, {
+                    type: "buffer",
+                    cellDates: true,
+                });
+            } catch (error) {
+                logger.error("Invalid Excel file:", error);
+                return res.status(400).json({
+                    error: "No se pudo leer el archivo. Verifica que sea un Excel válido.",
+                });
+            }
+
+            if (!workbook.SheetNames.length) {
+                return res
+                    .status(400)
+                    .json({ error: "El archivo no contiene hojas." });
+            }
+
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rawRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(
+                sheet,
+                {
+                    defval: "",
+                    raw: false,
+                    dateNF: "yyyy-mm-dd",
+                },
+            );
+
+            if (!rawRows.length) {
+                return res
+                    .status(400)
+                    .json({ error: "El archivo no contiene registros." });
+            }
+
+            const normalizedRows = rawRows.map((row) => {
+                const normalized: Record<string, unknown> = {};
+                Object.entries(row).forEach(([key, value]) => {
+                    const normalizedKey = normalizeKey(key);
+                    normalized[normalizedKey] = value;
+                });
+                return normalized;
+            });
+
+            const requiredColumns = [
+                "titulo",
+                "modalidad",
+                "estado",
+                "programa",
+                "fecha_inicio",
+                "estudiantes",
+            ];
+            const availableColumns = new Set<string>();
+            normalizedRows.forEach((row) => {
+                Object.keys(row).forEach((key) => availableColumns.add(key));
+            });
+
+            const missingColumns = requiredColumns.filter(
+                (column) => !availableColumns.has(column),
+            );
+
+            if (missingColumns.length) {
+                return res.status(400).json({
+                    error: `Faltan columnas requeridas en el encabezado: ${missingColumns.join(
+                        ", ",
+                    )}`,
+                });
+            }
+
+            const [
+                modalities,
+                statuses,
+                programs,
+                companies,
+                studentRole,
+                directorRole,
+            ] = await Promise.all([
+                prisma.opcion_grado.findMany(),
+                prisma.estado_tg.findMany(),
+                prisma.programa_academico.findMany(),
+                prisma.empresa.findMany(),
+                prisma.tipo_rol.findFirst({
+                    where: { nombre_rol: "Estudiante" },
+                }),
+                prisma.tipo_rol.findFirst({
+                    where: { nombre_rol: "Director" },
+                }),
+            ]);
+
+            if (!studentRole || !directorRole) {
+                return res.status(500).json({
+                    error: "Roles base (Estudiante o Director) no están configurados en el sistema.",
+                });
+            }
+
+            const modalityMap = new Map(
+                modalities.map((item) => [
+                    normalizeValue(item.nombre_opcion_grado),
+                    item,
+                ]),
+            );
+            const statusMap = new Map(
+                statuses.map((item) => [
+                    normalizeValue(item.nombre_estado),
+                    item,
+                ]),
+            );
+            const programMap = new Map(
+                programs.map((item) => [
+                    normalizeValue(item.nombre_programa),
+                    item,
+                ]),
+            );
+            const companyMap = new Map(
+                companies.map((item) => [
+                    normalizeValue(item.nombre_empresa),
+                    item,
+                ]),
+            );
+
+            const summary = {
+                totalRows: normalizedRows.length,
+                imported: 0,
+                failed: 0,
+                rows: [] as Array<{
+                    row: number;
+                    status: "success" | "error";
+                    title?: string;
+                    messages: string[];
+                }>,
+            };
+
+            const personaCache = new Map<
+                string,
+                Awaited<
+                    ReturnType<(typeof prisma)["persona"]["findUnique"]>
+                > | null
+            >();
+            const studentAssignmentCache = new Map<string, boolean>();
+
+            const findPersonaByDocument = async (document: string) => {
+                if (personaCache.has(document)) {
+                    return personaCache.get(document) || null;
+                }
+                const persona = await prisma.persona.findUnique({
+                    where: { num_doc_identidad: document },
+                });
+                personaCache.set(document, persona ?? null);
+                return persona ?? null;
+            };
+
+            const hasActiveProject = async (personaId: string) => {
+                if (studentAssignmentCache.has(personaId)) {
+                    return studentAssignmentCache.get(personaId) ?? false;
+                }
+                const existing = await prisma.actores.findFirst({
+                    where: {
+                        id_persona: personaId,
+                        id_tipo_rol: studentRole.id_rol,
+                        estado: "Activo",
+                    },
+                    select: { id_actor: true },
+                });
+                const value = Boolean(existing);
+                studentAssignmentCache.set(personaId, value);
+                return value;
+            };
+
+            for (let index = 0; index < normalizedRows.length; index++) {
+                const rowNumber = index + 2; // Consider header row
+                const row = normalizedRows[index];
+                const errors: string[] = [];
+
+                const title = toStringValue(row["titulo"]);
+                const summaryText = toStringValue(row["resumen"]);
+                const modalityValue = normalizeValue(
+                    toStringValue(row["modalidad"]),
+                );
+                const statusValue = normalizeValue(
+                    toStringValue(row["estado"]),
+                );
+                const programValue = normalizeValue(
+                    toStringValue(row["programa"]),
+                );
+                const companyValue = normalizeValue(
+                    toStringValue(row["empresa"]),
+                );
+
+                if (!title) {
+                    errors.push("La columna 'titulo' es obligatoria.");
+                }
+
+                const modality = modalityMap.get(modalityValue);
+                if (!modality) {
+                    errors.push("La modalidad indicada no existe en el sistema.");
+                }
+
+                const status = statusMap.get(statusValue);
+                if (!status) {
+                    errors.push("El estado indicado no existe en el sistema.");
+                }
+
+                const program = programMap.get(programValue);
+                if (!program) {
+                    errors.push("El programa académico indicado no existe.");
+                }
+
+            const company =
+                companyValue && companyMap.has(companyValue)
+                    ? companyMap.get(companyValue) ?? null
+                    : null;
+
+                const startDate = parseExcelDate(row["fecha_inicio"]);
+                if (!startDate) {
+                    errors.push(
+                        "La fecha de inicio es obligatoria y debe tener un formato válido (YYYY-MM-DD).",
+                    );
+                }
+
+                const endDateRaw = row["fecha_fin"];
+                const endDate = endDateRaw
+                    ? parseExcelDate(endDateRaw)
+                    : null;
+                if (endDateRaw && !endDate) {
+                    errors.push(
+                        "La fecha de fin no tiene un formato válido (usa YYYY-MM-DD).",
+                    );
+                }
+
+                if (startDate && endDate && endDate < startDate) {
+                    errors.push(
+                        "La fecha de fin no puede ser anterior a la fecha de inicio.",
+                    );
+                }
+
+                const studentDocuments = splitList(row["estudiantes"]);
+                if (!studentDocuments.length) {
+                    errors.push(
+                        "Debe incluir al menos un documento en la columna 'estudiantes'.",
+                    );
+                }
+                if (studentDocuments.length > 2) {
+                    errors.push(
+                        "Solo se permiten máximo 2 estudiantes por proyecto.",
+                    );
+                }
+                if (
+                    new Set(studentDocuments).size !== studentDocuments.length
+                ) {
+                    errors.push(
+                        "Hay documentos de estudiantes duplicados en la misma fila.",
+                    );
+                }
+
+                const advisorDocuments = splitList(row["asesores"]);
+                if (advisorDocuments.length > 2) {
+                    errors.push(
+                        "Solo se permiten máximo 2 asesores/directores por proyecto.",
+                    );
+                }
+                if (
+                    advisorDocuments.length &&
+                    new Set(advisorDocuments).size !==
+                        advisorDocuments.length
+                ) {
+                    errors.push(
+                        "Hay documentos de asesores duplicados en la misma fila.",
+                    );
+                }
+
+                const studentPersonas = [];
+                for (const document of studentDocuments) {
+                    const persona = await findPersonaByDocument(document);
+                    if (!persona) {
+                        errors.push(
+                            `No existe un estudiante registrado con el documento ${document}.`,
+                        );
+                        continue;
+                    }
+                    studentPersonas.push(persona);
+                }
+
+                const advisorPersonas = [];
+                for (const document of advisorDocuments) {
+                    const persona = await findPersonaByDocument(document);
+                    if (!persona) {
+                        errors.push(
+                            `No existe un asesor/director registrado con el documento ${document}.`,
+                        );
+                        continue;
+                    }
+                    advisorPersonas.push(persona);
+                }
+
+                if (!errors.length) {
+                    for (const persona of studentPersonas) {
+                        const alreadyAssigned = await hasActiveProject(
+                            persona.id_persona,
+                        );
+                        if (alreadyAssigned) {
+                            errors.push(
+                                `El estudiante ${persona.nombres} ${persona.apellidos} ya tiene un proyecto activo.`,
+                            );
+                        }
+                    }
+                }
+
+                if (companyValue && !company) {
+                    errors.push(
+                        "La empresa indicada no existe. Déjala vacía si no aplica.",
+                    );
+                }
+
+                if (errors.length) {
+                    summary.failed += 1;
+                    summary.rows.push({
+                        row: rowNumber,
+                        status: "error",
+                        title,
+                        messages: errors,
+                    });
+                    continue;
+                }
+
+                try {
+                    await prisma.$transaction(async (tx) => {
+                        const project = await tx.trabajo_grado.create({
+                            data: {
+                                titulo_trabajo: title,
+                                resumen: summaryText || null,
+                                id_opcion_grado: modality!.id_opcion_grado,
+                                id_estado_actual: status!.id_estado_tg,
+                                id_programa_academico:
+                                    program!.id_programa,
+                                id_empresa_practica: company
+                                    ? company.id_empresa
+                                    : null,
+                                fecha_inicio: startDate!,
+                                fecha_fin_estima: endDate,
+                            },
+                        });
+
+                        for (const persona of studentPersonas) {
+                            await tx.actores.create({
+                                data: {
+                                    id_persona: persona.id_persona,
+                                    id_trabajo_grado:
+                                        project.id_trabajo_grado,
+                                    id_tipo_rol: studentRole.id_rol,
+                                    fecha_asignacion: new Date(),
+                                    estado: "Activo",
+                                },
+                            });
+                        }
+
+                        for (const persona of advisorPersonas) {
+                            await tx.actores.create({
+                                data: {
+                                    id_persona: persona.id_persona,
+                                    id_trabajo_grado:
+                                        project.id_trabajo_grado,
+                                    id_tipo_rol: directorRole.id_rol,
+                                    fecha_asignacion: new Date(),
+                                    estado: "Activo",
+                                },
+                            });
+                        }
+                    });
+
+                    studentPersonas.forEach((persona) => {
+                        studentAssignmentCache.set(persona.id_persona, true);
+                    });
+
+                    summary.imported += 1;
+                    summary.rows.push({
+                        row: rowNumber,
+                        status: "success",
+                        title,
+                        messages: ["Proyecto creado correctamente."],
+                    });
+                } catch (error) {
+                    logger.error(
+                        "Error creating project from bulk upload:",
+                        error,
+                    );
+                    summary.failed += 1;
+                    summary.rows.push({
+                        row: rowNumber,
+                        status: "error",
+                        title,
+                        messages: [
+                            "No se pudo crear el proyecto por un error interno.",
+                        ],
+                    });
+                }
+            }
+
+            const statusCode =
+                summary.imported && summary.failed ? 207 : summary.failed ? 400 : 201;
+
+            logger.info(
+                `Bulk upload processed. Success: ${summary.imported}, Failed: ${summary.failed}`,
+            );
+
+            return res.status(statusCode).json(summary);
+        } catch (error) {
+            logger.error("Error bulk uploading projects:", error);
+            return res
+                .status(500)
+                .json({ error: "Error al procesar el archivo." });
         }
     }
 

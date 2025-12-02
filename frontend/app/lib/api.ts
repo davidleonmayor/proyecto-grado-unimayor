@@ -1,6 +1,20 @@
 // API client utility for making requests to the backend
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
 
+export interface BulkUploadRowResult {
+  row: number;
+  status: 'success' | 'error';
+  title?: string;
+  messages: string[];
+}
+
+export interface BulkUploadSummary {
+  totalRows: number;
+  imported: number;
+  failed: number;
+  rows: BulkUploadRowResult[];
+}
+
 interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
 }
@@ -293,6 +307,46 @@ class ApiClient {
       method: 'DELETE',
       requiresAuth: true,
     });
+  }
+
+  async bulkUploadProjects(file: File): Promise<BulkUploadSummary> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No se encontró el token de autenticación');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseURL}/api/projects/admin/bulk-upload`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const looksLikeSummary =
+        data &&
+        typeof data === 'object' &&
+        'rows' in data &&
+        Array.isArray((data as any).rows);
+
+      if (looksLikeSummary) {
+        return data as BulkUploadSummary;
+      }
+
+      throw new Error(
+        typeof data === 'object' && data !== null && 'error' in data
+          ? (data as { error: string }).error
+          : 'Error al importar proyectos'
+      );
+    }
+
+    return data as BulkUploadSummary;
   }
 
   // Get available statuses (for review form)
