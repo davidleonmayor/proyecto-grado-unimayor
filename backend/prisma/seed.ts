@@ -500,6 +500,8 @@ async function main() {
             data: {
                 titulo_trabajo:
                     "Sistema de información para gestión académica universitaria",
+                objetivos:
+                    "Automatizar seguimiento académico y generar reportes operativos.",
                 fecha_inicio: new Date("2024-02-01"),
                 fecha_fin_estima: new Date("2024-11-30"),
                 resumen:
@@ -513,6 +515,8 @@ async function main() {
             data: {
                 titulo_trabajo:
                     "Análisis del impacto de redes sociales en marketing digital",
+                objetivos:
+                    "Evaluar estrategias digitales y proponer lineamientos de marketing.",
                 fecha_inicio: new Date("2024-03-01"),
                 fecha_fin_estima: new Date("2024-12-15"),
                 resumen:
@@ -526,6 +530,8 @@ async function main() {
             data: {
                 titulo_trabajo:
                     "Desarrollo de aplicación móvil para gestión empresarial",
+                objetivos:
+                    "Construir una app móvil para controlar inventarios y ventas.",
                 fecha_inicio: new Date("2024-01-15"),
                 fecha_fin_estima: new Date("2024-10-15"),
                 resumen: "Aplicación móvil multiplataforma para PYMES",

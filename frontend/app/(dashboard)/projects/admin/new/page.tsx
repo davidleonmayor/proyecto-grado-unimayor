@@ -33,6 +33,7 @@ export default function NewProjectPage() {
 
     const [title, setTitle] = useState('');
     const [summary, setSummary] = useState('');
+    const [objectives, setObjectives] = useState('');
     const [modalityId, setModalityId] = useState('');
     const [statusId, setStatusId] = useState('');
     const [programId, setProgramId] = useState('');
@@ -186,6 +187,7 @@ export default function NewProjectPage() {
             await api.createProject({
                 title,
                 summary,
+                objectives,
                 modalityId,
                 statusId,
                 programId,
@@ -242,6 +244,20 @@ export default function NewProjectPage() {
                         rows={4}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Descripción breve del proyecto..."
+                    />
+                </div>
+
+                {/* Objetivos */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Objetivos del Proyecto
+                    </label>
+                    <textarea
+                        value={objectives}
+                        onChange={(e) => setObjectives(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Describe los objetivos principales del proyecto..."
                     />
                 </div>
 

@@ -141,6 +141,7 @@ cd frontend && pnpm dev
 | `Fecha_inicio` | Sí          | Formato `AAAA-MM-DD`.                                                        |
 | `Fecha_fin`    | No          | Formato `AAAA-MM-DD`. Debe ser ≥ a `Fecha_inicio`.                           |
 | `Estudiantes`  | Sí          | Documentos de identidad separados por `;` (máx. 2 por fila).                |
+| `Objetivos`    | No          | Texto libre con los objetivos principales del trabajo.                      |
 | `Asesores`     | No          | Documentos de identidad separados por `;` (máx. 2 por fila).                |
 
 **Validaciones principales**

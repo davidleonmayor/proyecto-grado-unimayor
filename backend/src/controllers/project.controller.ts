@@ -153,6 +153,7 @@ export class ProjectController {
             const projects = user.actores.map(actor => ({
                 id: actor.trabajo_grado.id_trabajo_grado,
                 title: actor.trabajo_grado.titulo_trabajo,
+                objectives: actor.trabajo_grado.objetivos,
                 status: actor.trabajo_grado.estado_tg.nombre_estado,
                 role: actor.tipo_rol.nombre_rol,
                 modality: actor.trabajo_grado.opcion_grado.nombre_opcion_grado,
@@ -756,6 +757,7 @@ export class ProjectController {
                 id: project.id_trabajo_grado,
                 title: project.titulo_trabajo,
                 summary: project.resumen,
+                objectives: project.objetivos,
                 status: project.estado_tg.nombre_estado,
                 modality: project.opcion_grado.nombre_opcion_grado,
                 program: project.programa_academico.nombre_programa,
@@ -828,6 +830,7 @@ export class ProjectController {
                 id: project.id_trabajo_grado,
                 title: project.titulo_trabajo,
                 summary: project.resumen,
+                objectives: project.objetivos,
                 modalityId: project.id_opcion_grado,
                 statusId: project.id_estado_actual,
                 programId: project.id_programa_academico,
@@ -856,6 +859,7 @@ export class ProjectController {
             const {
                 title,
                 summary,
+                objectives,
                 modalityId,
                 statusId,
                 programId,
@@ -926,6 +930,7 @@ export class ProjectController {
                 data: {
                     titulo_trabajo: title,
                     resumen: summary,
+                    objetivos: objectives || null,
                     id_opcion_grado: modalityId,
                     id_estado_actual: statusId,
                     id_programa_academico: programId,
@@ -996,6 +1001,7 @@ export class ProjectController {
             const {
                 title,
                 summary,
+                objectives,
                 modalityId,
                 statusId,
                 programId,
@@ -1089,6 +1095,7 @@ export class ProjectController {
                     data: {
                         ...(title !== undefined && { titulo_trabajo: title }),
                         ...(summary !== undefined && { resumen: summary }),
+                        ...(objectives !== undefined && { objetivos: objectives }),
                         ...(modalityId !== undefined && { id_opcion_grado: modalityId }),
                         ...(statusId !== undefined && { id_estado_actual: statusId }),
                         ...(programId !== undefined && { id_programa_academico: programId }),
@@ -1440,6 +1447,7 @@ export class ProjectController {
 
                 const title = toStringValue(row["titulo"]);
                 const summaryText = toStringValue(row["resumen"]);
+                const objectivesText = toStringValue(row["objetivos"]);
                 const modalityValue = normalizeValue(
                     toStringValue(row["modalidad"]),
                 );
@@ -1602,6 +1610,7 @@ export class ProjectController {
                                 id_empresa_practica: company
                                     ? company.id_empresa
                                     : null,
+                                objetivos: objectivesText || null,
                                 fecha_inicio: startDate!,
                                 fecha_fin_estima: endDate,
                             },
@@ -1684,6 +1693,7 @@ export class ProjectController {
             const headers = [
                 "Titulo",
                 "Resumen",
+                "Objetivos",
                 "Modalidad",
                 "Estado",
                 "Programa",
@@ -1788,6 +1798,8 @@ export class ProjectController {
                     Titulo: "Sistema de monitoreo de laboratorios",
                     Resumen:
                         "Plataforma para registrar y supervisar el estado de los laboratorios del campus.",
+                    Objetivos:
+                        "Automatizar monitoreo y generar alertas tempranas.",
                     Modalidad: firstModality,
                     Estado: firstStatus,
                     Programa: firstProgram,
@@ -1801,6 +1813,8 @@ export class ProjectController {
                     Titulo: "Reemplaza este título por tu proyecto",
                     Resumen:
                         "Incluye un resumen corto del objetivo principal del trabajo.",
+                    Objetivos:
+                        "Describe las metas principales del trabajo.",
                     Modalidad: "Debe coincidir con una modalidad activa",
                     Estado: "Debe existir en la tabla de estados",
                     Programa: "Nombre exacto del programa académico",

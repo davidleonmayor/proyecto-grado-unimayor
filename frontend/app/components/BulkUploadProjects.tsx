@@ -96,7 +96,7 @@ export default function BulkUploadProjects({ onSuccessfulImport }: BulkUploadPro
                                 <span className="font-semibold">Columnas obligatorias:</span> Titulo, Modalidad, Estado, Programa, Fecha_inicio, Estudiantes.
                             </li>
                             <li>
-                                <span className="font-semibold">Columnas opcionales:</span> Resumen, Empresa, Fecha_fin, Asesores.
+                                <span className="font-semibold">Columnas opcionales:</span> Resumen, Objetivos, Empresa, Fecha_fin, Asesores.
                             </li>
                             <li>Utiliza formato de fecha AAAA-MM-DD. Las listas (estudiantes/asesores) se separan con punto y coma (;).</li>
                             <li>Máximo 2 estudiantes y 2 asesores por fila. Un estudiante no puede repetirse en varios proyectos.</li>

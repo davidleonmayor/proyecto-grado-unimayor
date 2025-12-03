@@ -138,6 +138,7 @@ model estado_tg {
 model trabajo_grado {
   id_trabajo_grado      String             @id @default(cuid())
   titulo_trabajo        String             @db.VarChar(500)
+  objetivos             String?            @db.Text
   fecha_fin_estima      DateTime?          @db.Date
   fecha_inicio          DateTime           @db.Date
   resumen               String?            @db.Text
