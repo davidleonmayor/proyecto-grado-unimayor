@@ -454,6 +454,33 @@ class ApiClient {
       requiresAuth: true,
     });
   }
+
+  // Persons (Teachers/Students)
+  async getTeachers(page: number = 1, limit: number = 10, search?: string, role?: string, faculty?: string): Promise<{ teachers: any[]; pagination: any }> {
+    let url = `/api/persons/teachers?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (role && role !== 'all') url += `&role=${encodeURIComponent(role)}`;
+    if (faculty && faculty !== 'all') url += `&faculty=${encodeURIComponent(faculty)}`;
+    return this.request<{ teachers: any[]; pagination: any }>(url, {
+      requiresAuth: true,
+    });
+  }
+
+  async getStudents(page: number = 1, limit: number = 10, search?: string, program?: string, faculty?: string): Promise<{ students: any[]; pagination: any }> {
+    let url = `/api/persons/students?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (program && program !== 'all') url += `&program=${encodeURIComponent(program)}`;
+    if (faculty && faculty !== 'all') url += `&faculty=${encodeURIComponent(faculty)}`;
+    return this.request<{ students: any[]; pagination: any }>(url, {
+      requiresAuth: true,
+    });
+  }
+
+  async getPersonById(id: string): Promise<any> {
+    return this.request<any>(`/api/persons/${id}`, {
+      requiresAuth: true,
+    });
+  }
 }
 
 export const api = new ApiClient(API_URL);

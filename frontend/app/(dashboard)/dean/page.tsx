@@ -5,7 +5,7 @@ import CountCharts from "@/app/components/CountCharts";
 import UserCard from "@/app/components/UserCard";
 import ProjectStatusChart from "@/app/components/ProjectStatusChart";
 import FinanceChart from "@/app/components/FinanceChart";
-import { EventCalendar } from "@/app/components/EventCalendar";
+import EventCalendar from "@/app/components/EventCalendar";
 import api from "@/app/lib/api";
 
 export default function DeanPage() {

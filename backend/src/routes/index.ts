@@ -3,6 +3,7 @@ import { AuthRoutes } from "../auth/auth.routes";
 import { ExampleRoutes } from "../example/example.routes";
 import { ProjectRoutes } from "./project.routes";
 import { EventRoutes } from "./event.routes";
+import { PersonRoutes } from "./person.routes";
 
 /**
  * Este archivo centraliza todas las rutas de la aplicación.
@@ -31,6 +32,7 @@ export class Routes {
 
         const projectRoutes = new ProjectRoutes();
         const eventRoutes = new EventRoutes();
+        const personRoutes = new PersonRoutes();
 
         app.get("/api", (req, res) => {
             res.send("Hello World!");
@@ -39,5 +41,6 @@ export class Routes {
         app.use("/api/example", exampleRoutes.router);
         app.use("/api/projects", projectRoutes.router);
         app.use("/api/events", eventRoutes.router);
+        app.use("/api/persons", personRoutes.router);
     }
 }

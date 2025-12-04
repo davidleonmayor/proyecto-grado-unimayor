@@ -26,7 +26,7 @@ interface Event {
     borderColor: string;
 }
 
-export const EventCalendar = () => {
+const EventCalendar = () => {
     const router = useRouter();
     const [value, onChange] = useState<Value>(new Date());
     const [events, setEvents] = useState<Event[]>([]);
@@ -180,3 +180,5 @@ export const EventCalendar = () => {
         </div>
     )
 }
+
+export default EventCalendar;

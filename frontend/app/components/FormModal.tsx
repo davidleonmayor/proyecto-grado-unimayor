@@ -28,12 +28,16 @@ const forms:{[key: string]:(type:"create"|"update", data?:any)=> JSX.Element;
     event: (type, data) => <EventForm type={type} data={data} />,
 };
 
-const DeleteForm = ({ table, id, onClose }: { table: string; id: number | string; onClose: () => void }) => {
+const DeleteForm = ({ table, id, onClose }: { table: string; id: number | string | undefined; onClose: () => void }) => {
     const handleDelete = async () => {
         try {
             if (table === "event") {
                 await api.deleteEvent(String(id));
                 Swal.fire('Éxito', 'Evento eliminado correctamente', 'success');
+            } else if (table === "teacher" || table === "student") {
+                // TODO: Implement delete person endpoint
+                Swal.fire('Info', 'La eliminación de personas está en desarrollo. Por favor, contacte al administrador.', 'info');
+                return;
             } else {
                 Swal.fire('Error', 'Función de eliminación no implementada para este tipo', 'error');
                 return;
@@ -73,7 +77,7 @@ const FormModal = ({ table, type, data, id }:
         table: "teacher" | "student" | "project" | "advisor" | "degreeOption" | "evaluation" | "document" | "career" | "event";
         type: "create" | "update" | "delete";
         data?: any;
-        id?: number;
+        id?: number | string;
     }
 ) => {
 
@@ -100,10 +104,10 @@ const FormModal = ({ table, type, data, id }:
                 <Image src={`/${type}.png`} alt="" width={16} height={16} />
             </button>
             {open && (
-                <div className="w-screen h-screen absolute left-0 top-0 bg-black/60 z-50 flex items-center justify-center">
-                    <div className="bg-white p-4 rounded-md relative w-[90%] md:w-[70%] lg:w-[60%] xl:w-[50%] 2xl:w-[40%]">
+                <div className="fixed inset-0 w-screen h-screen bg-black/60 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white p-4 sm:p-6 rounded-md relative w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <Form />
-                        <div className="absolute top-4 right-4 cursor-pointer" onClick={() => setOpen(false)}>
+                        <div className="absolute top-4 right-4 cursor-pointer hover:opacity-70 transition-opacity" onClick={() => setOpen(false)}>
                             <Image src="/close.png" alt="close image" width={14} height={14} />
                         </div>
                     </div>
