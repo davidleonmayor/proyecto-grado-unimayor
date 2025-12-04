@@ -880,6 +880,81 @@ async function main() {
     }
     await Promise.all(seguimientosPromises);
 
+    // 15. EVENTOS PARA CADA PROYECTO DE GRADO
+    console.log("📅 Creando eventos para proyectos de grado...");
+    const eventosPromises: Promise<any>[] = [];
+    
+    const tiposEventos = [
+        { nombre: "Inicio del proyecto", prioridad: "alta", diasDespues: 0 },
+        { nombre: "Primera revisión", prioridad: "media", diasDespues: 30 },
+        { nombre: "Segunda revisión", prioridad: "media", diasDespues: 60 },
+        { nombre: "Entrega de avances", prioridad: "alta", diasDespues: 90 },
+        { nombre: "Revisión final", prioridad: "alta", diasDespues: 120 },
+        { nombre: "Sustentación", prioridad: "alta", diasDespues: 150 },
+        { nombre: "Entrega de versión final", prioridad: "alta", diasDespues: 180 },
+    ];
+
+    for (const trabajo of trabajos) {
+        // Crear eventos relacionados con el proyecto (TODOS, incluso pasados)
+        for (const tipoEvento of tiposEventos) {
+            const fechaEvento = new Date(trabajo.fecha_inicio);
+            fechaEvento.setDate(fechaEvento.getDate() + tipoEvento.diasDespues);
+            
+            const horaInicio = Math.floor(Math.random() * 8) + 8; // Entre 8 AM y 4 PM
+            const horaFin = horaInicio + 2; // Duración de 2 horas
+            
+            eventosPromises.push(
+                (prisma as any).evento.create({
+                    data: {
+                        titulo: `${tipoEvento.nombre}: ${trabajo.titulo_trabajo.substring(0, 50)}${trabajo.titulo_trabajo.length > 50 ? '...' : ''}`,
+                        descripcion: `Evento relacionado con el proyecto de grado "${trabajo.titulo_trabajo}"`,
+                        fecha_inicio: fechaEvento,
+                        fecha_fin: fechaEvento,
+                        hora_inicio: `${String(horaInicio).padStart(2, '0')}:00`,
+                        hora_fin: `${String(horaFin).padStart(2, '0')}:00`,
+                        prioridad: tipoEvento.prioridad,
+                        todo_el_dia: false,
+                    },
+                })
+            );
+        }
+    }
+
+    // Agregar eventos de prueba adicionales con fechas variadas (pasados, presentes y futuros)
+    const hoy = new Date();
+    const eventosPrueba = [
+        { titulo: "Reunión de coordinación - Enero", prioridad: "alta", dias: -60, hora: 9 },
+        { titulo: "Entrega de documentación - Febrero", prioridad: "media", dias: -30, hora: 10 },
+        { titulo: "Revisión de proyectos - Marzo", prioridad: "alta", dias: -15, hora: 14 },
+        { titulo: "Evento de prueba - Hoy", prioridad: "alta", dias: 0, hora: 11 },
+        { titulo: "Sustentaciones programadas", prioridad: "alta", dias: 5, hora: 8 },
+        { titulo: "Reunión de seguimiento", prioridad: "media", dias: 10, hora: 15 },
+        { titulo: "Entrega de calificaciones", prioridad: "baja", dias: 20, hora: 13 },
+        { titulo: "Ceremonia de graduación", prioridad: "alta", dias: 45, hora: 10 },
+    ];
+
+    for (const eventoPrueba of eventosPrueba) {
+        const fechaEvento = new Date(hoy);
+        fechaEvento.setDate(fechaEvento.getDate() + eventoPrueba.dias);
+        
+        eventosPromises.push(
+            (prisma as any).evento.create({
+                data: {
+                    titulo: eventoPrueba.titulo,
+                    descripcion: `Evento de prueba para demostración del sistema`,
+                    fecha_inicio: fechaEvento,
+                    fecha_fin: fechaEvento,
+                    hora_inicio: `${String(eventoPrueba.hora).padStart(2, '0')}:00`,
+                    hora_fin: `${String(eventoPrueba.hora + 2).padStart(2, '0')}:00`,
+                    prioridad: eventoPrueba.prioridad,
+                    todo_el_dia: false,
+                },
+            })
+        );
+    }
+
+    const eventos = await Promise.all(eventosPromises);
+
     console.log("✅ Seed completado exitosamente!");
     console.log(`
 📊 Resumen de datos creados:
@@ -898,6 +973,7 @@ async function main() {
 - ${trabajos.length} trabajos de grado
 - ${actores.length} asignaciones de actores
 - 100+ seguimientos registrados
+- ${eventos.length} eventos creados
 
 🔐 AUTENTICACIÓN:
 - ${personas.filter((p) => p.password && p.confirmed).length} usuarios con acceso (password: Password123!)

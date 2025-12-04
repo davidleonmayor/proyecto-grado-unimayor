@@ -258,3 +258,21 @@ model distincion_tg {
   @@map("DISTINCION_TG")
 }
 
+model evento {
+  id_evento      String   @id @default(cuid())
+  titulo         String   @db.VarChar(200)
+  descripcion    String?  @db.Text
+  fecha_inicio   DateTime @db.DateTime(0)
+  fecha_fin     DateTime @db.DateTime(0)
+  hora_inicio   String?  @db.VarChar(10)
+  hora_fin      String?  @db.VarChar(10)
+  prioridad     String   @db.VarChar(20) // "alta", "media", "baja"
+  todo_el_dia    Boolean  @default(false)
+  fecha_creacion DateTime @default(now()) @db.DateTime(0)
+  activo         Boolean  @default(true)
+
+  @@index([fecha_inicio])
+  @@index([prioridad])
+  @@map("EVENTO")
+}
+

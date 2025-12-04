@@ -424,6 +424,36 @@ class ApiClient {
       requiresAuth: true,
     });
   }
+
+  // Events
+  async getEvents(page: number = 1, limit: number = 10): Promise<{ events: any[]; pagination: any }> {
+    return this.request<{ events: any[]; pagination: any }>(`/api/events?page=${page}&limit=${limit}`, {
+      requiresAuth: true,
+    });
+  }
+
+  async createEvent(eventData: any): Promise<any> {
+    return this.request<any>('/api/events', {
+      method: 'POST',
+      requiresAuth: true,
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  async updateEvent(id: string, eventData: any): Promise<any> {
+    return this.request<any>(`/api/events/${id}`, {
+      method: 'PUT',
+      requiresAuth: true,
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  async deleteEvent(id: string): Promise<any> {
+    return this.request<any>(`/api/events/${id}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
 }
 
 export const api = new ApiClient(API_URL);

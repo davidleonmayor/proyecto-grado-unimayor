@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { JSX, useState } from "react";
+import api from "@/app/lib/api";
+import Swal from "sweetalert2";
 // import TeacherForm from "./forms/TeacherForm";
 // import StudentForm from "./forms/StudentForm";
 
@@ -14,13 +16,57 @@ const StudentForm = dynamic(() => import("./forms/StudentForm"), {
     loading: () => <p>cargando...</p>,
 });
 
+const EventForm = dynamic(() => import("./forms/EventForm"), {
+    loading: () => <p>cargando...</p>,
+});
+
 const forms:{[key: string]:(type:"create"|"update", data?:any)=> JSX.Element;
 
 } = {
     teacher: (type, data) => <TeacherForm type={type} data={data} />,
     student: (type, data) => <StudentForm type={type} data={data} />,
+    event: (type, data) => <EventForm type={type} data={data} />,
 };
 
+const DeleteForm = ({ table, id, onClose }: { table: string; id: number | string; onClose: () => void }) => {
+    const handleDelete = async () => {
+        try {
+            if (table === "event") {
+                await api.deleteEvent(String(id));
+                Swal.fire('Éxito', 'Evento eliminado correctamente', 'success');
+            } else {
+                Swal.fire('Error', 'Función de eliminación no implementada para este tipo', 'error');
+                return;
+            }
+            onClose();
+            window.location.reload();
+        } catch (error: any) {
+            Swal.fire('Error', error.message || 'Error al eliminar', 'error');
+        }
+    };
+
+    return (
+        <div className="p-4 flex flex-col gap-4">
+            <span className="text-center font-medium">
+                Todos los datos se perderán. ¿Estás seguro que deseas eliminar este {table}?
+            </span>
+            <div className="flex gap-4 justify-center">
+                <button
+                    onClick={onClose}
+                    className="bg-gray-400 text-white py-2 px-4 rounded-md hover:bg-gray-500"
+                >
+                    Cancelar
+                </button>
+                <button
+                    onClick={handleDelete}
+                    className="bg-red-700 text-white py-2 px-4 rounded-md hover:bg-red-800"
+                >
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    );
+};
 
 const FormModal = ({ table, type, data, id }:
     {
@@ -38,17 +84,9 @@ const FormModal = ({ table, type, data, id }:
 
     const Form = () => {
         return type === "delete" && id ? (
-            <form action="" className="p-4 flex flex-col gap-4">
-                <span className="text-center font-medium">Todos los datos se perderan. Estas seguro que deseas eliminar {table}?</span>
-                <button className="bg-red-700 text-white py-2 px-4 rounded-md border-none w-max self-center">Eliminar</button>
-            </form>
+            <DeleteForm table={table} id={id} onClose={() => setOpen(false)} />
         ) : (type === "create" || type === "update") ? (
-
             forms[table](type, data)
-            // <TeacherForm type="create"/>
-            // <TeacherForm type="update" data={data}/>
-            // <StudentForm type="create" />
-            // <StudentForm type="update" data={data}/>
         ) : (
             "Formulario no disponible"
         );

@@ -6,7 +6,6 @@ import UserCard from "@/app/components/UserCard";
 import ProjectStatusChart from "@/app/components/ProjectStatusChart";
 import FinanceChart from "@/app/components/FinanceChart";
 import { EventCalendar } from "@/app/components/EventCalendar";
-import Announcement from "@/app/components/Announcement";
 import api from "@/app/lib/api";
 
 export default function AdminPage() {
@@ -72,7 +71,6 @@ export default function AdminPage() {
       {/* RIGHT */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
         <EventCalendar />
-        <Announcement />
       </div>
     </div>
   )
