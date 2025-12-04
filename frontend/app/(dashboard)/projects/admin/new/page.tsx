@@ -27,6 +27,8 @@ export default function NewProjectPage() {
     const [advisors, setAdvisors] = useState<Person[]>([]);
     const [allStudents, setAllStudents] = useState<Person[]>([]);
     const [allAdvisors, setAllAdvisors] = useState<Person[]>([]);
+    const [companies, setCompanies] = useState<Array<{ id: string; name: string }>>([]);
+    const [allCompanies, setAllCompanies] = useState<Array<{ id: string; name: string }>>([]);
 
     const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
     const [selectedAdvisors, setSelectedAdvisors] = useState<string[]>([]);
@@ -44,6 +46,7 @@ export default function NewProjectPage() {
     // Search filters
     const [studentSearch, setStudentSearch] = useState('');
     const [advisorSearch, setAdvisorSearch] = useState('');
+    const [companySearch, setCompanySearch] = useState('');
 
     useEffect(() => {
         loadFormData();
@@ -70,6 +73,8 @@ export default function NewProjectPage() {
             setFormData(form);
             setAllAdvisors(advisorsData);
             setAdvisors(advisorsData);
+            setAllCompanies(form.companies || []);
+            setCompanies(form.companies || []);
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar los datos del formulario', 'error');
         } finally {
@@ -141,6 +146,24 @@ export default function NewProjectPage() {
         setAdvisors(filtered);
     }, []);
 
+    // Filter companies by search term (id or name)
+    const filterCompanies = useCallback((companiesList: Array<{ id: string; name: string }>, searchTerm: string) => {
+        if (!searchTerm.trim()) {
+            setCompanies(companiesList);
+            return;
+        }
+
+        const search = searchTerm.toLowerCase().trim();
+        const filtered = companiesList.filter(company => {
+            const idMatch = company.id.toLowerCase().includes(search);
+            const nameMatch = company.name.toLowerCase().includes(search);
+            
+            return idMatch || nameMatch;
+        });
+        
+        setCompanies(filtered);
+    }, []);
+
     // Handle student search
     useEffect(() => {
         if (allStudents.length > 0) {
@@ -154,6 +177,13 @@ export default function NewProjectPage() {
             filterAdvisors(allAdvisors, advisorSearch);
         }
     }, [advisorSearch, allAdvisors, filterAdvisors]);
+
+    // Handle company search
+    useEffect(() => {
+        if (allCompanies.length > 0) {
+            filterCompanies(allCompanies, companySearch);
+        }
+    }, [companySearch, allCompanies, filterCompanies]);
 
     const toggleStudent = (studentId: string) => {
         if (selectedStudents.includes(studentId)) {
@@ -321,16 +351,73 @@ export default function NewProjectPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Empresa (Opcional)
                         </label>
-                        <select
-                            value={companyId}
-                            onChange={(e) => setCompanyId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300  rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        >
-                            <option value="">Ninguna</option>
-                            {formData?.companies.map(c => (
-                                <option key={c.id} value={c.id}>{c.name}</option>
-                            ))}
-                        </select>
+                        <div className="mb-3">
+                            <input
+                                type="text"
+                                value={companySearch}
+                                onChange={(e) => setCompanySearch(e.target.value)}
+                                placeholder="Buscar por nombre o ID..."
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                            />
+                        </div>
+                        <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                            {companies.length === 0 ? (
+                                <p className="text-gray-500 text-sm text-center py-4">
+                                    {companySearch 
+                                        ? `No se encontraron empresas que coincidan con "${companySearch}"`
+                                        : 'No hay empresas disponibles'
+                                    }
+                                </p>
+                            ) : (
+                                <div className="space-y-2">
+                                    <label
+                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === ''
+                                                ? 'bg-primary-100 border-2 border-primary-500'
+                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="company"
+                                            checked={companyId === ''}
+                                            onChange={() => setCompanyId('')}
+                                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                        />
+                                        <div className="ml-3 flex-1">
+                                            <div className="text-sm font-medium text-gray-900">Ninguna</div>
+                                        </div>
+                                    </label>
+                                    {companies.map(company => (
+                                        <label
+                                            key={company.id}
+                                            className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === company.id
+                                                    ? 'bg-primary-100 border-2 border-primary-500'
+                                                    : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="company"
+                                                checked={companyId === company.id}
+                                                onChange={() => setCompanyId(company.id)}
+                                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                            />
+                                            <div className="ml-3 flex-1">
+                                                <div className="text-sm font-medium text-gray-900">{company.name}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    ID: {company.id}
+                                                </div>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                        {companySearch && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                {companies.length} resultado{companies.length !== 1 ? 's' : ''} encontrado{companies.length !== 1 ? 's' : ''}
+                            </p>
+                        )}
                     </div>
                 </div>
 
