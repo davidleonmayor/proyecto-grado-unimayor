@@ -1,8 +1,11 @@
+'use client';
+
 import BigCalendar from "@/app/components/BigCalendar";
 import EventCalendar from "@/app/components/EventCalendar";
+import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
-export default function StudentPage(){
+function StudentPageContent(){
   return (
     <div className="p-4 flex gap-4 flex-col xl:flex-row">
         {/* LEFT */}
@@ -18,4 +21,12 @@ export default function StudentPage(){
         </div>
     </div>
   )
+}
+
+export default function StudentPage() {
+  return (
+    <RoleProtectedRoute allowedRoles={['student']} redirectTo="/teacher">
+      <StudentPageContent />
+    </RoleProtectedRoute>
+  );
 }

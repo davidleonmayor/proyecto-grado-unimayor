@@ -4,24 +4,131 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class EventController {
-    // Get all events (notifications) with pagination
+    // Get all events (notifications) with pagination, filtered by user role
     getEvents = async (req: Request, res: Response) => {
         try {
+            const userId = req.user?.id_persona;
+            if (!userId) {
+                return res.status(401).json({ message: 'Usuario no autenticado' });
+            }
+
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
             const skip = (page - 1) * limit;
 
+            // Get user's roles and determine their type
+            const userActors = await prisma.actores.findMany({
+                where: {
+                    id_persona: userId,
+                    estado: 'Activo'
+                },
+                include: {
+                    tipo_rol: true,
+                    trabajo_grado: {
+                        include: {
+                            programa_academico: {
+                                include: {
+                                    facultad: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Determine user role type
+            const studentRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: 'Estudiante' }
+            });
+            const coordinatorRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: 'Coordinador de Carrera' }
+            });
+            const teacherRoles = await prisma.tipo_rol.findMany({
+                where: {
+                    nombre_rol: { in: ['Director', 'Asesor', 'Asesor Externo'] }
+                }
+            });
+            const teacherRoleIds = teacherRoles.map(r => r.id_rol);
+
+            const isStudent = userActors.some(a => a.id_tipo_rol === studentRole?.id_rol);
+            const isCoordinator = userActors.some(a => a.id_tipo_rol === coordinatorRole?.id_rol);
+            const isTeacher = userActors.some(a => teacherRoleIds.includes(a.id_tipo_rol));
+
+            // Build where clause based on user role
+            let whereClause: any = {
+                activo: true,
+            };
+
+            if (isCoordinator) {
+                // Coordinators see all events from projects in their faculty
+                const coordinatorPersona = await prisma.persona.findUnique({
+                    where: { id_persona: userId },
+                    select: { id_facultad: true }
+                });
+
+                if (coordinatorPersona?.id_facultad) {
+                    whereClause.trabajo_grado = {
+                        programa_academico: {
+                            id_facultad: coordinatorPersona.id_facultad
+                        }
+                    };
+                } else {
+                    // If coordinator has no faculty assigned, show no events
+                    // Use a condition that will never match
+                    whereClause.AND = [
+                        { id_trabajo_grado: { not: null } },
+                        { id_trabajo_grado: null }
+                    ];
+                }
+            } else if (isStudent) {
+                // Students see only events from their projects
+                const studentProjectIds = userActors
+                    .filter(a => a.id_tipo_rol === studentRole?.id_rol)
+                    .map(a => a.id_trabajo_grado);
+                
+                if (studentProjectIds.length > 0) {
+                    whereClause.id_trabajo_grado = {
+                        in: studentProjectIds
+                    };
+                } else {
+                    // No projects, no events - use condition that never matches
+                    whereClause.AND = [
+                        { id_trabajo_grado: { not: null } },
+                        { id_trabajo_grado: null }
+                    ];
+                }
+            } else if (isTeacher) {
+                // Teachers/Directors see only events from projects they direct/advise
+                const teacherProjectIds = userActors
+                    .filter(a => teacherRoleIds.includes(a.id_tipo_rol))
+                    .map(a => a.id_trabajo_grado);
+                
+                if (teacherProjectIds.length > 0) {
+                    whereClause.id_trabajo_grado = {
+                        in: teacherProjectIds
+                    };
+                } else {
+                    // No projects, no events - use condition that never matches
+                    whereClause.AND = [
+                        { id_trabajo_grado: { not: null } },
+                        { id_trabajo_grado: null }
+                    ];
+                }
+            } else {
+                // Unknown role, show no events
+                whereClause.AND = [
+                    { id_trabajo_grado: { not: null } },
+                    { id_trabajo_grado: null }
+                ];
+            }
+
             // Get total count for pagination
             const total = await prisma.evento.count({
-                where: {
-                    activo: true,
-                },
+                where: whereClause,
             });
 
             const events = await prisma.evento.findMany({
-                where: {
-                    activo: true,
-                },
+                where: whereClause,
                 skip,
                 take: limit,
             });
@@ -135,10 +242,10 @@ export class EventController {
         }
     };
 
-    // Create event (admin only)
+    // Create event (coordinator only)
     createEvent = async (req: Request, res: Response) => {
         try {
-            const { titulo, descripcion, fecha_inicio, fecha_fin, hora_inicio, hora_fin, prioridad, todo_el_dia } = req.body;
+            const { titulo, descripcion, fecha_inicio, fecha_fin, hora_inicio, hora_fin, prioridad, todo_el_dia, id_trabajo_grado } = req.body;
 
             if (!titulo || !fecha_inicio || !fecha_fin || !prioridad) {
                 return res.status(400).json({ message: 'Faltan campos requeridos' });
@@ -154,6 +261,7 @@ export class EventController {
                     hora_fin: hora_fin || null,
                     prioridad: prioridad.toLowerCase(),
                     todo_el_dia: todo_el_dia || false,
+                    id_trabajo_grado: id_trabajo_grado || null,
                 },
             });
 
@@ -164,11 +272,11 @@ export class EventController {
         }
     };
 
-    // Update event (admin only)
+    // Update event (coordinator only)
     updateEvent = async (req: Request, res: Response) => {
         try {
             const { id } = req.params;
-            const { titulo, descripcion, fecha_inicio, fecha_fin, hora_inicio, hora_fin, prioridad, todo_el_dia } = req.body;
+            const { titulo, descripcion, fecha_inicio, fecha_fin, hora_inicio, hora_fin, prioridad, todo_el_dia, id_trabajo_grado } = req.body;
 
             const event = await prisma.evento.update({
                 where: { id_evento: id },
@@ -181,6 +289,7 @@ export class EventController {
                     ...(hora_fin !== undefined && { hora_fin }),
                     ...(prioridad && { prioridad: prioridad.toLowerCase() }),
                     ...(todo_el_dia !== undefined && { todo_el_dia }),
+                    ...(id_trabajo_grado !== undefined && { id_trabajo_grado: id_trabajo_grado || null }),
                 },
             });
 

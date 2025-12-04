@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '../../../lib/api';
 import Swal from 'sweetalert2';
+import RoleProtectedRoute from '../../../components/RoleProtectedRoute';
 import BulkUploadProjects from '../../../components/BulkUploadProjects';
 interface Project {
     id: string;
@@ -20,7 +21,7 @@ interface Project {
     actors: Array<{ name: string; role: string }>;
 }
 
-export default function AdminProjectsPage() {
+function AdminProjectsPageContent() {
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -179,5 +180,13 @@ export default function AdminProjectsPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function AdminProjectsPage() {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+            <AdminProjectsPageContent />
+        </RoleProtectedRoute>
     );
 }

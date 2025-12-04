@@ -162,6 +162,7 @@ model trabajo_grado {
   actores               actores[]
   seguimiento_tg        seguimiento_tg[]
   distincion_tg         distincion_tg[]
+  eventos               evento[]
 
   @@index([id_opcion_grado])
   @@index([id_estado_actual])
@@ -259,20 +260,23 @@ model distincion_tg {
 }
 
 model evento {
-  id_evento      String   @id @default(cuid())
-  titulo         String   @db.VarChar(200)
-  descripcion    String?  @db.Text
-  fecha_inicio   DateTime @db.DateTime(0)
-  fecha_fin     DateTime @db.DateTime(0)
-  hora_inicio   String?  @db.VarChar(10)
-  hora_fin      String?  @db.VarChar(10)
-  prioridad     String   @db.VarChar(20) // "alta", "media", "baja"
-  todo_el_dia    Boolean  @default(false)
-  fecha_creacion DateTime @default(now()) @db.DateTime(0)
-  activo         Boolean  @default(true)
+  id_evento       String        @id @default(cuid())
+  titulo          String        @db.VarChar(200)
+  descripcion     String?       @db.Text
+  fecha_inicio    DateTime      @db.DateTime(0)
+  fecha_fin       DateTime      @db.DateTime(0)
+  hora_inicio     String?       @db.VarChar(10)
+  hora_fin        String?       @db.VarChar(10)
+  prioridad       String        @db.VarChar(20) // "alta", "media", "baja"
+  todo_el_dia     Boolean       @default(false)
+  fecha_creacion  DateTime      @default(now()) @db.DateTime(0)
+  activo          Boolean       @default(true)
+  id_trabajo_grado String?
+  trabajo_grado   trabajo_grado? @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
 
   @@index([fecha_inicio])
   @@index([prioridad])
+  @@index([id_trabajo_grado])
   @@map("EVENTO")
 }
 

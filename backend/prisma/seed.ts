@@ -914,6 +914,7 @@ async function main() {
                         hora_fin: `${String(horaFin).padStart(2, '0')}:00`,
                         prioridad: tipoEvento.prioridad,
                         todo_el_dia: false,
+                        id_trabajo_grado: trabajo.id_trabajo_grado,
                     },
                 })
             );

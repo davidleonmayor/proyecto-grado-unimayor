@@ -6,9 +6,10 @@ import UserCard from "@/app/components/UserCard";
 import ProjectStatusChart from "@/app/components/ProjectStatusChart";
 import FinanceChart from "@/app/components/FinanceChart";
 import EventCalendar from "@/app/components/EventCalendar";
+import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
 import api from "@/app/lib/api";
 
-export default function TeacherPage() {
+function TeacherPageContent() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -74,4 +75,12 @@ export default function TeacherPage() {
       </div>
     </div>
   )
+}
+
+export default function TeacherPage() {
+  return (
+    <RoleProtectedRoute allowedRoles={['teacher', 'admin', 'dean']} redirectTo="/student">
+      <TeacherPageContent />
+    </RoleProtectedRoute>
+  );
 }

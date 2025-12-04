@@ -35,19 +35,28 @@ export default function Home() {
         );
 
         if (hasPrivilegedRole) {
-          // Try to access admin dashboard first
-          try {
-            await api.getDashboardStats();
-            router.push('/admin');
-          } catch {
-            // If not admin privileges, use teacher dashboard
-            router.push('/teacher');
+          // Check if user is a dean first
+          const isDean = projects.some((project: any) =>
+            project.role === 'Decano'
+          );
+          
+          if (isDean) {
+            router.push('/dean');
+          } else {
+            // For other privileged roles, check if they have admin access
+            try {
+              await api.getDashboardStats();
+              router.push('/admin');
+            } catch {
+              // If not admin privileges, use teacher dashboard
+              router.push('/teacher');
+            }
           }
         } else if (isStudentOnly) {
           router.push('/student');
         } else {
-          // Default to teacher dashboard for other roles or no projects
-          router.push('/teacher');
+          // Default to student dashboard if no clear role
+          router.push('/student');
         }
       } catch (error) {
         console.error('Error determining route:', error);

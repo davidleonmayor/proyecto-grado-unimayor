@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Swal from 'sweetalert2';
+import RoleProtectedRoute from '../../../../../components/RoleProtectedRoute';
 import api from '../../../../../lib/api';
 
 interface FormData {
@@ -50,7 +51,7 @@ const mergePeopleLists = (base: Person[], required: Person[]) => {
     return Array.from(merged.values());
 };
 
-export default function EditProjectPage() {
+function EditProjectPageContent() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const projectId = useMemo(() => {
@@ -757,4 +758,11 @@ export default function EditProjectPage() {
     );
 }
 
+export default function EditProjectPage() {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+            <EditProjectPageContent />
+        </RoleProtectedRoute>
+    );
+}
 

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../../lib/api';
 import Swal from 'sweetalert2';
+import RoleProtectedRoute from '../../../../components/RoleProtectedRoute';
 
 interface FormData {
     modalities: Array<{ id: string; name: string }>;
@@ -19,7 +20,7 @@ interface Person {
     document?: string;
 }
 
-export default function NewProjectPage() {
+function NewProjectPageContent() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [formData, setFormData] = useState<FormData | null>(null);
@@ -600,5 +601,13 @@ export default function NewProjectPage() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function NewProjectPage() {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+            <NewProjectPageContent />
+        </RoleProtectedRoute>
     );
 }
