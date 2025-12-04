@@ -153,6 +153,7 @@ export class ProjectController {
             const projects = user.actores.map(actor => ({
                 id: actor.trabajo_grado.id_trabajo_grado,
                 title: actor.trabajo_grado.titulo_trabajo,
+                objectives: actor.trabajo_grado.objetivos,
                 status: actor.trabajo_grado.estado_tg.nombre_estado,
                 role: actor.tipo_rol.nombre_rol,
                 modality: actor.trabajo_grado.opcion_grado.nombre_opcion_grado,
@@ -414,34 +415,45 @@ export class ProjectController {
 
             const privilegedRoleIds = privilegedRoles.map(r => r.id_rol);
 
-            // Determine user's faculty if they are a professor/director
+            // Determine user's faculty if they are a professor/director/coordinator
             let userFacultyIds: Set<string> = new Set();
             if (userId) {
-                // Check if user has privileged roles
-                const userActors = await prisma.actores.findMany({
-                    where: {
-                        id_persona: userId,
-                        id_tipo_rol: { in: privilegedRoleIds }
-                    },
-                    include: {
-                        trabajo_grado: {
-                            include: {
-                                programa_academico: {
-                                    select: {
-                                        id_facultad: true
+                // Get user's persona with faculty
+                const userPersona = await prisma.persona.findUnique({
+                    where: { id_persona: userId },
+                    select: { id_facultad: true }
+                });
+
+                // If user has a faculty assigned directly, use it
+                if (userPersona?.id_facultad) {
+                    userFacultyIds.add(userPersona.id_facultad);
+                } else {
+                    // Fallback: Check if user has privileged roles and get faculty from their projects
+                    const userActors = await prisma.actores.findMany({
+                        where: {
+                            id_persona: userId,
+                            id_tipo_rol: { in: privilegedRoleIds }
+                        },
+                        include: {
+                            trabajo_grado: {
+                                include: {
+                                    programa_academico: {
+                                        select: {
+                                            id_facultad: true
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
 
-                // Get unique faculty IDs from projects where user is director/professor
-                userActors.forEach(actor => {
-                    if (actor.trabajo_grado?.programa_academico?.id_facultad) {
-                        userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
-                    }
-                });
+                    // Get unique faculty IDs from projects where user is director/professor
+                    userActors.forEach(actor => {
+                        if (actor.trabajo_grado?.programa_academico?.id_facultad) {
+                            userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
+                        }
+                    });
+                }
             }
 
             // Build programs query - filter by faculty if user has restriction
@@ -527,34 +539,45 @@ export class ProjectController {
 
             const privilegedRoleIds = privilegedRoles.map(r => r.id_rol);
 
-            // Determine user's faculty if they are a professor/director
+            // Determine user's faculty if they are a professor/director/coordinator
             let userFacultyIds: Set<string> = new Set();
             if (userId) {
-                // Check if user has privileged roles
-                const userActors = await prisma.actores.findMany({
-                    where: {
-                        id_persona: userId,
-                        id_tipo_rol: { in: privilegedRoleIds }
-                    },
-                    include: {
-                        trabajo_grado: {
-                            include: {
-                                programa_academico: {
-                                    select: {
-                                        id_facultad: true
+                // Get user's persona with faculty
+                const userPersona = await prisma.persona.findUnique({
+                    where: { id_persona: userId },
+                    select: { id_facultad: true }
+                });
+
+                // If user has a faculty assigned directly, use it
+                if (userPersona?.id_facultad) {
+                    userFacultyIds.add(userPersona.id_facultad);
+                } else {
+                    // Fallback: Check if user has privileged roles and get faculty from their projects
+                    const userActors = await prisma.actores.findMany({
+                        where: {
+                            id_persona: userId,
+                            id_tipo_rol: { in: privilegedRoleIds }
+                        },
+                        include: {
+                            trabajo_grado: {
+                                include: {
+                                    programa_academico: {
+                                        select: {
+                                            id_facultad: true
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                });
+                    });
 
-                // Get unique faculty IDs from projects where user is director/professor
-                userActors.forEach(actor => {
-                    if (actor.trabajo_grado?.programa_academico?.id_facultad) {
-                        userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
-                    }
-                });
+                    // Get unique faculty IDs from projects where user is director/professor
+                    userActors.forEach(actor => {
+                        if (actor.trabajo_grado?.programa_academico?.id_facultad) {
+                            userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
+                        }
+                    });
+                }
             }
 
             // Get all students with active projects
@@ -573,10 +596,13 @@ export class ProjectController {
                 studentsWithActiveProjects.map(a => a.id_persona)
             );
 
-            // If programId is provided, get students who have projects in that program
-            let studentsInProgram: Set<string> = new Set();
-            let programFacultyId: string | null = null;
-            
+            // Build query for students
+            let studentsWhere: any = {
+                confirmed: true,
+                password: { not: null }
+            };
+
+            // If programId is provided, filter by program
             if (programId) {
                 // Get program info to check faculty
                 const program = await prisma.programa_academico.findUnique({
@@ -585,8 +611,6 @@ export class ProjectController {
                 });
 
                 if (program) {
-                    programFacultyId = program.id_facultad;
-                    
                     // If user has faculty restriction, verify program belongs to their faculty
                     if (userFacultyIds.size > 0 && !userFacultyIds.has(program.id_facultad)) {
                         return res.status(403).json({ 
@@ -594,31 +618,34 @@ export class ProjectController {
                         });
                     }
 
-                    const studentsWithProgramProjects = await prisma.actores.findMany({
-                        where: {
-                            id_tipo_rol: studentRole.id_rol,
-                            trabajo_grado: {
-                                id_programa_academico: programId
-                            }
-                        },
-                        select: {
-                            id_persona: true
-                        },
-                        distinct: ['id_persona']
-                    });
+                    // Filter students by program (using direct association)
+                    studentsWhere.id_programa_academico = programId;
+                }
+            } else if (userFacultyIds.size > 0) {
+                // If no program selected but user has faculty restriction, filter by programs in their faculties
+                const programsInFaculties = await prisma.programa_academico.findMany({
+                    where: {
+                        id_facultad: { in: Array.from(userFacultyIds) },
+                        estado: "activo"
+                    },
+                    select: {
+                        id_programa: true
+                    }
+                });
 
-                    studentsInProgram = new Set(
-                        studentsWithProgramProjects.map(a => a.id_persona)
-                    );
+                const programIdsInFaculties = programsInFaculties.map(p => p.id_programa);
+                
+                if (programIdsInFaculties.length > 0) {
+                    studentsWhere.id_programa_academico = { in: programIdsInFaculties };
+                } else {
+                    // No programs in user's faculties, return empty
+                    return res.json([]);
                 }
             }
 
-            // Get all confirmed students
+            // Get all confirmed students matching the criteria
             const allStudents = await prisma.persona.findMany({
-                where: {
-                    confirmed: true,
-                    password: { not: null }
-                },
+                where: studentsWhere,
                 select: {
                     id_persona: true,
                     nombres: true,
@@ -632,54 +659,6 @@ export class ProjectController {
             let availableStudents = allStudents.filter(
                 s => !studentIdsWithActiveProjects.has(s.id_persona)
             );
-
-            // If user has faculty restriction, filter students by faculty
-            if (userFacultyIds.size > 0) {
-                // Get all programs in user's faculties
-                const programsInFaculties = await prisma.programa_academico.findMany({
-                    where: {
-                        id_facultad: { in: Array.from(userFacultyIds) },
-                        estado: "activo"
-                    },
-                    select: {
-                        id_programa: true
-                    }
-                });
-
-                const programIdsInFaculties = new Set(
-                    programsInFaculties.map(p => p.id_programa)
-                );
-
-                // Get students who have projects in programs of user's faculties
-                const studentsInUserFaculties = await prisma.actores.findMany({
-                    where: {
-                        id_tipo_rol: studentRole.id_rol,
-                        trabajo_grado: {
-                            id_programa_academico: { in: Array.from(programIdsInFaculties) }
-                        }
-                    },
-                    select: {
-                        id_persona: true
-                    },
-                    distinct: ['id_persona']
-                });
-
-                const studentIdsInUserFaculties = new Set(
-                    studentsInUserFaculties.map(a => a.id_persona)
-                );
-
-                // Filter to only show students from user's faculties
-                availableStudents = availableStudents.filter(
-                    s => studentIdsInUserFaculties.has(s.id_persona)
-                );
-            }
-
-            // If programId is provided, filter to only show students in that program
-            if (programId && studentsInProgram.size > 0) {
-                availableStudents = availableStudents.filter(
-                    s => studentsInProgram.has(s.id_persona)
-                );
-            }
 
             return res.json(availableStudents.map(s => ({
                 id: s.id_persona,
@@ -756,6 +735,7 @@ export class ProjectController {
                 id: project.id_trabajo_grado,
                 title: project.titulo_trabajo,
                 summary: project.resumen,
+                objectives: project.objetivos,
                 status: project.estado_tg.nombre_estado,
                 modality: project.opcion_grado.nombre_opcion_grado,
                 program: project.programa_academico.nombre_programa,
@@ -828,6 +808,7 @@ export class ProjectController {
                 id: project.id_trabajo_grado,
                 title: project.titulo_trabajo,
                 summary: project.resumen,
+                objectives: project.objetivos,
                 modalityId: project.id_opcion_grado,
                 statusId: project.id_estado_actual,
                 programId: project.id_programa_academico,
@@ -856,6 +837,7 @@ export class ProjectController {
             const {
                 title,
                 summary,
+                objectives,
                 modalityId,
                 statusId,
                 programId,
@@ -926,6 +908,7 @@ export class ProjectController {
                 data: {
                     titulo_trabajo: title,
                     resumen: summary,
+                    objetivos: objectives || null,
                     id_opcion_grado: modalityId,
                     id_estado_actual: statusId,
                     id_programa_academico: programId,
@@ -996,6 +979,7 @@ export class ProjectController {
             const {
                 title,
                 summary,
+                objectives,
                 modalityId,
                 statusId,
                 programId,
@@ -1089,6 +1073,7 @@ export class ProjectController {
                     data: {
                         ...(title !== undefined && { titulo_trabajo: title }),
                         ...(summary !== undefined && { resumen: summary }),
+                        ...(objectives !== undefined && { objetivos: objectives }),
                         ...(modalityId !== undefined && { id_opcion_grado: modalityId }),
                         ...(statusId !== undefined && { id_estado_actual: statusId }),
                         ...(programId !== undefined && { id_programa_academico: programId }),
@@ -1341,6 +1326,9 @@ export class ProjectController {
                 companies,
                 studentRole,
                 directorRole,
+                defaultTipoDoc,
+                defaultFacultad,
+                defaultNivel,
             ] = await Promise.all([
                 prisma.opcion_grado.findMany(),
                 prisma.estado_tg.findMany(),
@@ -1352,11 +1340,30 @@ export class ProjectController {
                 prisma.tipo_rol.findFirst({
                     where: { nombre_rol: "Director" },
                 }),
+                prisma.tipo_documento.findFirst({
+                    where: { documento: "CC" },
+                }),
+                prisma.facultad.findFirst(),
+                prisma.nivel_formacion.findFirst({
+                    where: { nombre_nivel: "Pregrado" },
+                }),
             ]);
 
             if (!studentRole || !directorRole) {
                 return res.status(500).json({
                     error: "Roles base (Estudiante o Director) no están configurados en el sistema.",
+                });
+            }
+
+            if (!defaultTipoDoc) {
+                return res.status(500).json({
+                    error: "Tipo de documento 'CC' no está configurado en el sistema.",
+                });
+            }
+
+            if (!defaultFacultad || !defaultNivel) {
+                return res.status(500).json({
+                    error: "No hay facultad o nivel de formación disponible para crear programas académicos.",
                 });
             }
 
@@ -1404,6 +1411,10 @@ export class ProjectController {
                 > | null
             >();
             const studentAssignmentCache = new Map<string, boolean>();
+            const createdStatusesCache = new Map<string, Awaited<ReturnType<(typeof prisma)["estado_tg"]["create"]>>>();
+            const createdProgramsCache = new Map<string, Awaited<ReturnType<(typeof prisma)["programa_academico"]["create"]>>>();
+            const createdCompaniesCache = new Map<string, Awaited<ReturnType<(typeof prisma)["empresa"]["create"]>>>();
+            const createdPersonasCache = new Map<string, Awaited<ReturnType<(typeof prisma)["persona"]["create"]>>>();
 
             const findPersonaByDocument = async (document: string) => {
                 if (personaCache.has(document)) {
@@ -1414,6 +1425,142 @@ export class ProjectController {
                 });
                 personaCache.set(document, persona ?? null);
                 return persona ?? null;
+            };
+
+            // Helper function to create or get status
+            const getOrCreateStatus = async (statusName: string): Promise<Awaited<ReturnType<(typeof prisma)["estado_tg"]["create"]>>> => {
+                // Normalize the status name for comparison
+                const normalizedName = normalizeValue(statusName);
+                
+                // Check if already exists in the map
+                if (statusMap.has(normalizedName)) {
+                    return statusMap.get(normalizedName)!;
+                }
+                if (createdStatusesCache.has(normalizedName)) {
+                    return createdStatusesCache.get(normalizedName)!;
+                }
+                
+                // Normalize common status names to standard format
+                let finalStatusName = statusName;
+                if (normalizedName === "encurso") {
+                    finalStatusName = "En curso";
+                } else if (normalizedName === "enprogreso") {
+                    finalStatusName = "En Progreso";
+                } else if (normalizedName === "enrevision") {
+                    finalStatusName = "En Revisión";
+                } else if (normalizedName === "pendientedeaprobacion") {
+                    finalStatusName = "Pendiente de Aprobación";
+                }
+                
+                // Get max orden to add new status at the end
+                const maxOrden = await prisma.estado_tg.aggregate({
+                    _max: { orden: true }
+                });
+                const newOrden = (maxOrden._max.orden ?? 0) + 1;
+
+                const newStatus = await prisma.estado_tg.create({
+                    data: {
+                        nombre_estado: finalStatusName,
+                        descripcion: `Estado creado automáticamente desde importación Excel`,
+                        orden: newOrden,
+                    },
+                });
+                statusMap.set(normalizedName, newStatus);
+                createdStatusesCache.set(normalizedName, newStatus);
+                return newStatus;
+            };
+
+            // Helper function to create or get program
+            const getOrCreateProgram = async (programName: string): Promise<Awaited<ReturnType<(typeof prisma)["programa_academico"]["create"]>>> => {
+                const normalizedName = normalizeValue(programName);
+                if (programMap.has(normalizedName)) {
+                    return programMap.get(normalizedName)!;
+                }
+                if (createdProgramsCache.has(normalizedName)) {
+                    return createdProgramsCache.get(normalizedName)!;
+                }
+
+                const newProgram = await prisma.programa_academico.create({
+                    data: {
+                        nombre_programa: programName,
+                        id_facultad: defaultFacultad.id_facultad,
+                        id_nivel_formacion: defaultNivel.id_nivel,
+                        estado: "Activo",
+                    },
+                });
+                programMap.set(normalizedName, newProgram);
+                createdProgramsCache.set(normalizedName, newProgram);
+                return newProgram;
+            };
+
+            // Helper function to create or get company
+            const getOrCreateCompany = async (companyName: string): Promise<Awaited<ReturnType<(typeof prisma)["empresa"]["create"]>>> => {
+                const normalizedName = normalizeValue(companyName);
+                if (companyMap.has(normalizedName)) {
+                    return companyMap.get(normalizedName)!;
+                }
+                if (createdCompaniesCache.has(normalizedName)) {
+                    return createdCompaniesCache.get(normalizedName)!;
+                }
+
+                // Generate a NIT from company name (simple hash-like approach)
+                const nit = `NIT-${companyName.replace(/\s+/g, '').substring(0, 9).toUpperCase()}-${Math.floor(Math.random() * 10)}`;
+
+                const newCompany = await prisma.empresa.create({
+                    data: {
+                        nombre_empresa: companyName,
+                        nit_empresa: nit,
+                        estado: "Activo",
+                        direccion: null,
+                        email: null,
+                        telefono: null,
+                    },
+                });
+                companyMap.set(normalizedName, newCompany);
+                createdCompaniesCache.set(normalizedName, newCompany);
+                return newCompany;
+            };
+
+            // Helper function to create or get persona (student/advisor)
+            const getOrCreatePersona = async (document: string, isStudent: boolean): Promise<Awaited<ReturnType<(typeof prisma)["persona"]["create"]>>> => {
+                if (personaCache.has(document)) {
+                    const cached = personaCache.get(document);
+                    if (cached) return cached;
+                }
+                if (createdPersonasCache.has(document)) {
+                    return createdPersonasCache.get(document)!;
+                }
+
+                // Generate email from document (ensure uniqueness)
+                const docNumbers = document.replace(/[^0-9]/g, '');
+                let email = `${docNumbers}@unimayor.edu.co`;
+                let emailCounter = 1;
+                
+                // Check if email already exists and make it unique
+                while (await prisma.persona.findUnique({ where: { correo_electronico: email } })) {
+                    email = `${docNumbers}${emailCounter}@unimayor.edu.co`;
+                    emailCounter++;
+                }
+                
+                // Generate names (placeholder - in real scenario, Excel should have these)
+                const nombres = `Usuario`;
+                const apellidos = `Documento ${document}`;
+
+                // Prisma will auto-generate id_persona with cuid()
+                const newPersona = await prisma.persona.create({
+                    data: {
+                        nombres: nombres,
+                        apellidos: apellidos,
+                        num_doc_identidad: document,
+                        id_tipo_doc_identidad: defaultTipoDoc.id_tipo_documento,
+                        correo_electronico: email,
+                        numero_celular: "0000000000",
+                        confirmed: false,
+                    },
+                });
+                personaCache.set(document, newPersona);
+                createdPersonasCache.set(document, newPersona);
+                return newPersona;
             };
 
             const hasActiveProject = async (personaId: string) => {
@@ -1440,6 +1587,7 @@ export class ProjectController {
 
                 const title = toStringValue(row["titulo"]);
                 const summaryText = toStringValue(row["resumen"]);
+                const objectivesText = toStringValue(row["objetivos"]);
                 const modalityValue = normalizeValue(
                     toStringValue(row["modalidad"]),
                 );
@@ -1462,20 +1610,41 @@ export class ProjectController {
                     errors.push("La modalidad indicada no existe en el sistema.");
                 }
 
-                const status = statusMap.get(statusValue);
-                if (!status) {
-                    errors.push("El estado indicado no existe en el sistema.");
+                // Auto-create status if it doesn't exist
+                let status = statusMap.get(normalizeValue(statusValue));
+                if (!status && statusValue) {
+                    try {
+                        status = await getOrCreateStatus(statusValue);
+                    } catch (error) {
+                        logger.error(`Error creating status ${statusValue}:`, error);
+                        errors.push(`Error al crear el estado '${statusValue}'.`);
+                    }
                 }
 
-                const program = programMap.get(programValue);
-                if (!program) {
-                    errors.push("El programa académico indicado no existe.");
+                // Auto-create program if it doesn't exist
+                let program = programMap.get(normalizeValue(programValue));
+                if (!program && programValue) {
+                    try {
+                        program = await getOrCreateProgram(programValue);
+                    } catch (error) {
+                        logger.error(`Error creating program ${programValue}:`, error);
+                        errors.push(`Error al crear el programa académico '${programValue}'.`);
+                    }
                 }
 
-            const company =
-                companyValue && companyMap.has(companyValue)
-                    ? companyMap.get(companyValue) ?? null
-                    : null;
+                // Auto-create company if it doesn't exist
+                let company =
+                    companyValue && companyMap.has(normalizeValue(companyValue))
+                        ? companyMap.get(normalizeValue(companyValue)) ?? null
+                        : null;
+                if (!company && companyValue) {
+                    try {
+                        company = await getOrCreateCompany(companyValue);
+                    } catch (error) {
+                        logger.error(`Error creating company ${companyValue}:`, error);
+                        errors.push(`Error al crear la empresa '${companyValue}'.`);
+                    }
+                }
 
                 const startDate = parseExcelDate(row["fecha_inicio"]);
                 if (!startDate) {
@@ -1537,24 +1706,36 @@ export class ProjectController {
 
                 const studentPersonas = [];
                 for (const document of studentDocuments) {
-                    const persona = await findPersonaByDocument(document);
+                    let persona = await findPersonaByDocument(document);
                     if (!persona) {
-                        errors.push(
-                            `No existe un estudiante registrado con el documento ${document}.`,
-                        );
-                        continue;
+                        // Auto-create student if it doesn't exist
+                        try {
+                            persona = await getOrCreatePersona(document, true);
+                        } catch (error) {
+                            logger.error(`Error creating student with document ${document}:`, error);
+                            errors.push(
+                                `Error al crear el estudiante con documento ${document}.`,
+                            );
+                            continue;
+                        }
                     }
                     studentPersonas.push(persona);
                 }
 
                 const advisorPersonas = [];
                 for (const document of advisorDocuments) {
-                    const persona = await findPersonaByDocument(document);
+                    let persona = await findPersonaByDocument(document);
                     if (!persona) {
-                        errors.push(
-                            `No existe un asesor/director registrado con el documento ${document}.`,
-                        );
-                        continue;
+                        // Auto-create advisor if it doesn't exist
+                        try {
+                            persona = await getOrCreatePersona(document, false);
+                        } catch (error) {
+                            logger.error(`Error creating advisor with document ${document}:`, error);
+                            errors.push(
+                                `Error al crear el asesor/director con documento ${document}.`,
+                            );
+                            continue;
+                        }
                     }
                     advisorPersonas.push(persona);
                 }
@@ -1572,11 +1753,7 @@ export class ProjectController {
                     }
                 }
 
-                if (companyValue && !company) {
-                    errors.push(
-                        "La empresa indicada no existe. Déjala vacía si no aplica.",
-                    );
-                }
+                // Company is now auto-created if needed, so we don't need this error check
 
                 if (errors.length) {
                     summary.failed += 1;
@@ -1602,6 +1779,7 @@ export class ProjectController {
                                 id_empresa_practica: company
                                     ? company.id_empresa
                                     : null,
+                                objetivos: objectivesText || null,
                                 fecha_inicio: startDate!,
                                 fecha_fin_estima: endDate,
                             },
@@ -1675,6 +1853,178 @@ export class ProjectController {
             return res
                 .status(500)
                 .json({ error: "Error al procesar el archivo." });
+        }
+    }
+
+    // Generate sample Excel template for bulk uploads
+    async downloadBulkTemplate(req: Request, res: Response) {
+        try {
+            const headers = [
+                "Titulo",
+                "Resumen",
+                "Objetivos",
+                "Modalidad",
+                "Estado",
+                "Programa",
+                "Empresa",
+                "Fecha_inicio",
+                "Fecha_fin",
+                "Estudiantes",
+                "Asesores",
+            ];
+
+            const [modalities, statuses, programs, companies, studentRole, directorRole] =
+                await Promise.all([
+                    prisma.opcion_grado.findMany({
+                        where: { estado: "activo" },
+                        select: { nombre_opcion_grado: true },
+                        orderBy: { nombre_opcion_grado: "asc" },
+                    }),
+                    prisma.estado_tg.findMany({
+                        select: { nombre_estado: true, orden: true },
+                        orderBy: { orden: "asc" },
+                    }),
+                    prisma.programa_academico.findMany({
+                        where: { estado: "activo" },
+                        select: { nombre_programa: true },
+                        orderBy: { nombre_programa: "asc" },
+                    }),
+                    prisma.empresa.findMany({
+                        where: { estado: "activo" },
+                        select: { nombre_empresa: true },
+                        orderBy: { nombre_empresa: "asc" },
+                    }),
+                    prisma.tipo_rol.findFirst({
+                        where: { nombre_rol: "Estudiante" },
+                        select: { id_rol: true },
+                    }),
+                    prisma.tipo_rol.findFirst({
+                        where: { nombre_rol: "Director" },
+                        select: { id_rol: true },
+                    }),
+                ]);
+
+            const availableStudents = await prisma.persona.findMany({
+                where: {
+                    confirmed: true,
+                    password: { not: null },
+                    ...(studentRole
+                        ? {
+                              actores: {
+                                  none: {
+                                      id_tipo_rol: studentRole.id_rol,
+                                      estado: "Activo",
+                                  },
+                              },
+                          }
+                        : {}),
+                },
+                select: {
+                    nombres: true,
+                    apellidos: true,
+                    num_doc_identidad: true,
+                },
+                take: 2,
+            });
+
+            const studentDocs =
+                availableStudents.length > 0
+                    ? availableStudents.map((student) => student.num_doc_identidad)
+                    : ["DOCUMENTO_ESTUDIANTE_1", "DOCUMENTO_ESTUDIANTE_2"];
+
+            const advisorCandidates = await prisma.persona.findMany({
+                where: directorRole
+                    ? {
+                          actores: {
+                              some: {
+                                  id_tipo_rol: directorRole.id_rol,
+                              },
+                          },
+                      }
+                    : {},
+                select: {
+                    nombres: true,
+                    apellidos: true,
+                    num_doc_identidad: true,
+                },
+                take: 2,
+            });
+
+            const advisorDocs =
+                advisorCandidates.length > 0
+                    ? advisorCandidates.map((advisor) => advisor.num_doc_identidad)
+                    : ["DOCUMENTO_ASESOR_1"];
+
+            const firstModality =
+                modalities[0]?.nombre_opcion_grado || "Modalidad existente";
+            const firstStatus = statuses[0]?.nombre_estado || "En Progreso";
+            const firstProgram =
+                programs[0]?.nombre_programa || "Programa académico existente";
+            const firstCompany = companies[0]?.nombre_empresa || "";
+
+            const rows = [
+                {
+                    Titulo: "Sistema de monitoreo de laboratorios",
+                    Resumen:
+                        "Plataforma para registrar y supervisar el estado de los laboratorios del campus.",
+                    Objetivos:
+                        "Automatizar monitoreo y generar alertas tempranas.",
+                    Modalidad: firstModality,
+                    Estado: firstStatus,
+                    Programa: firstProgram,
+                    Empresa: firstCompany,
+                    Fecha_inicio: "2025-02-17",
+                    Fecha_fin: "2025-08-30",
+                    Estudiantes: studentDocs.join(";"),
+                    Asesores: advisorDocs.join(";"),
+                },
+                {
+                    Titulo: "Reemplaza este título por tu proyecto",
+                    Resumen:
+                        "Incluye un resumen corto del objetivo principal del trabajo.",
+                    Objetivos:
+                        "Describe las metas principales del trabajo.",
+                    Modalidad: "Debe coincidir con una modalidad activa",
+                    Estado: "Debe existir en la tabla de estados",
+                    Programa: "Nombre exacto del programa académico",
+                    Empresa: "Opcional. Déjalo vacío si no aplica.",
+                    Fecha_inicio: "AAAA-MM-DD",
+                    Fecha_fin:
+                        "AAAA-MM-DD (Opcional, debe ser >= Fecha_inicio)",
+                    Estudiantes:
+                        "DocumentoEstudiante1;DocumentoEstudiante2 (máx. 2)",
+                    Asesores:
+                        "DocumentoDirector1;DocumentoDirector2 (máx. 2, opcional)",
+                },
+            ];
+
+            const worksheet = XLSX.utils.json_to_sheet(rows, {
+                header: headers,
+                skipHeader: false,
+            });
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Proyectos");
+
+            const buffer = XLSX.write(workbook, {
+                bookType: "xlsx",
+                type: "buffer",
+            });
+
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            );
+            res.setHeader(
+                "Content-Disposition",
+                'attachment; filename="bulk-projects-sample.xlsx"',
+            );
+
+            return res.send(buffer);
+        } catch (error) {
+            logger.error("Error generating bulk template:", error);
+            return res
+                .status(500)
+                .json({ error: "No se pudo generar la plantilla." });
         }
     }
 

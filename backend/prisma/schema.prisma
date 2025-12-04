@@ -30,13 +30,19 @@ model persona {
   ultimo_acceso         DateTime? @db.DateTime(0)
   intentos_fallidos     Int       @default(0)
   bloqueado_hasta       DateTime? @db.DateTime(0)
+  id_facultad           String?   @db.VarChar(191)
+  id_programa_academico String?   @db.VarChar(191)
 
-  tipo_documento tipo_documento @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
-  actores        actores[]
+  tipo_documento     tipo_documento     @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
+  facultad            facultad?          @relation(fields: [id_facultad], references: [id_facultad])
+  programa_academico programa_academico? @relation(fields: [id_programa_academico], references: [id_programa])
+  actores            actores[]
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])
   @@index([token])
+  @@index([id_facultad])
+  @@index([id_programa_academico])
   @@map("PERSONA")
 }
 
@@ -56,6 +62,7 @@ model facultad {
   nombre_facultad    String               @db.VarChar(200)
   codigo_facultad    String               @db.VarChar(20)
   programa_academico programa_academico[]
+  persona            persona[]
 
   @@map("FACULTAD")
 }
@@ -79,6 +86,7 @@ model programa_academico {
   nivel_formacion    nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
   facultad           facultad        @relation(fields: [id_facultad], references: [id_facultad])
   trabajo_grado      trabajo_grado[]
+  persona            persona[]
 
   @@index([id_nivel_formacion])
   @@index([id_facultad])
@@ -138,6 +146,7 @@ model estado_tg {
 model trabajo_grado {
   id_trabajo_grado      String             @id @default(cuid())
   titulo_trabajo        String             @db.VarChar(500)
+  objetivos             String?            @db.Text
   fecha_fin_estima      DateTime?          @db.Date
   fecha_inicio          DateTime           @db.Date
   resumen               String?            @db.Text
@@ -247,5 +256,23 @@ model distincion_tg {
   @@index([id_trabajo_grado])
   @@index([id_seguimiento])
   @@map("DISTINCION_TG")
+}
+
+model evento {
+  id_evento      String   @id @default(cuid())
+  titulo         String   @db.VarChar(200)
+  descripcion    String?  @db.Text
+  fecha_inicio   DateTime @db.DateTime(0)
+  fecha_fin     DateTime @db.DateTime(0)
+  hora_inicio   String?  @db.VarChar(10)
+  hora_fin      String?  @db.VarChar(10)
+  prioridad     String   @db.VarChar(20) // "alta", "media", "baja"
+  todo_el_dia    Boolean  @default(false)
+  fecha_creacion DateTime @default(now()) @db.DateTime(0)
+  activo         Boolean  @default(true)
+
+  @@index([fecha_inicio])
+  @@index([prioridad])
+  @@map("EVENTO")
 }
 

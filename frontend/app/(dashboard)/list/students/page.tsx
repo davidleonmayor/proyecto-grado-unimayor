@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import TableSearch from "@/app/components/TableSearch";
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
@@ -10,19 +11,21 @@ import Table from "@/app/components/Table";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import { studentsData } from "@/app/lib/data";
 import FormModal from "@/app/components/FormModal";
 import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
 import { useUserRole } from "@/app/hooks/useUserRole";
+import api from "@/app/lib/api";
 
 type Student = {
-  id: number;
+  id: string;
   nombre: string;
   email: string;
-  img: string;
   carrera: string;
   opcionGrado: string;
   estado: string;
+  documento: string;
+  programaId?: string;
+  facultad?: string;
 };
 
 const columns = [
@@ -34,6 +37,94 @@ const columns = [
 
 const StudentListPageContent = () => {
   const { role } = useUserRole();
+  const [students, setStudents] = useState<Student[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [filterProgram, setFilterProgram] = useState<string>('all');
+  const [filterFaculty, setFilterFaculty] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('name');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false,
+  });
+  const [programs, setPrograms] = useState<Array<{ id: string; name: string; faculty: string }>>([]);
+  const [faculties, setFaculties] = useState<Array<{ id: string; name: string }>>([]);
+
+  useEffect(() => {
+    loadStudents();
+    loadFormData();
+  }, [currentPage, searchTerm, filterProgram, filterFaculty]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterProgram, filterFaculty]);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.filter-menu-container') && !target.closest('.sort-menu-container')) {
+        setShowFilterMenu(false);
+        setShowSortMenu(false);
+      }
+    };
+
+    if (showFilterMenu || showSortMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showFilterMenu, showSortMenu]);
+
+  const loadFormData = async () => {
+    try {
+      const formData = await api.getFormData();
+      setPrograms(formData.programs || []);
+      const uniqueFaculties = new Map<string, string>();
+      formData.programs.forEach((p: any) => {
+        if (p.faculty && !uniqueFaculties.has(p.faculty)) {
+          uniqueFaculties.set(p.faculty, p.faculty);
+        }
+      });
+      setFaculties(Array.from(uniqueFaculties.entries()).map(([id, name]) => ({ id, name })));
+    } catch (error) {
+      console.error('Error loading form data:', error);
+    }
+  };
+
+  const loadStudents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.getStudents(currentPage, 10, searchTerm || undefined, filterProgram !== 'all' ? filterProgram : undefined, filterFaculty !== 'all' ? filterFaculty : undefined);
+      
+      let sortedStudents = [...response.students];
+      
+      // Apply sorting
+      if (sortBy === 'name') {
+        sortedStudents.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      } else if (sortBy === 'email') {
+        sortedStudents.sort((a, b) => a.email.localeCompare(b.email));
+      } else if (sortBy === 'carrera') {
+        sortedStudents.sort((a, b) => a.carrera.localeCompare(b.carrera));
+      } else if (sortBy === 'estado') {
+        sortedStudents.sort((a, b) => a.estado.localeCompare(b.estado));
+      }
+
+      setStudents(sortedStudents);
+      setPagination(response.pagination);
+    } catch (error) {
+      console.error('Error loading students:', error);
+      setStudents([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const renderRow = (item: Student) => (
     <tr
@@ -41,13 +132,15 @@ const StudentListPageContent = () => {
       className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe]"
     >
       <td className="flex items-center gap-4 p-4">
-        <Image
-          src={item.img}
-          alt={item.nombre}
-          width={40}
-          height={40}
-          className="md:hidden xl:block w-10 h-10 rounded-full object-cover"
-        />
+        <div className="md:hidden xl:block relative w-10 h-10 rounded-full overflow-hidden bg-primary-200">
+          <Image
+            src="/avatar.png"
+            alt={item.nombre}
+            width={40}
+            height={40}
+            className="w-full h-full object-cover"
+          />
+        </div>
         <div className="flex flex-col">
           <h3 className="font-semibold">{item.nombre}</h3>
           <p className="text-xs text-gray-500">{item.email}</p>
@@ -64,10 +157,10 @@ const StudentListPageContent = () => {
             </button>
           </Link>
           {role === 'admin' && (
-            // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-            //     <Image src={deleteImage} alt="" width={16} height={16} />
-            // </button>
-            <FormModal table="student" type="delete" id={item.id} />
+            <>
+              <FormModal table="student" type="update" data={item} />
+              <FormModal table="student" type="delete" id={item.id} />
+            </>
           )}
         </div>
       </td>
@@ -82,27 +175,151 @@ const StudentListPageContent = () => {
           Todos los estudiantes
         </h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal cursor-pointer hover:bg-principalDark">
-              <Image src={filterImage} alt="" width={14} height={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-principal cursor-pointer hover:bg-principalDark">
-              <Image src={sortImage} alt="" width={14} height={14} />
-            </button>
+          <TableSearch onSearch={setSearchTerm} />
+          <div className="flex items-center gap-4 self-end relative">
+            {/* Filter Button */}
+            <div className="relative filter-menu-container">
+              <button 
+                onClick={() => {
+                  setShowFilterMenu(!showFilterMenu);
+                  setShowSortMenu(false);
+                }}
+                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal cursor-pointer hover:bg-principalDark ${showFilterMenu ? 'ring-2 ring-primary-500' : ''}`}
+              >
+                <Image src={filterImage} alt="Filtrar" width={14} height={14} />
+              </button>
+              {showFilterMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="p-2">
+                    <div className="mb-2">
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Programa</label>
+                      <select
+                        value={filterProgram}
+                        onChange={(e) => setFilterProgram(e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="all">Todos</option>
+                        {programs.map(p => (
+                          <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Facultad</label>
+                      <select
+                        value={filterFaculty}
+                        onChange={(e) => setFilterFaculty(e.target.value)}
+                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                      >
+                        <option value="all">Todas</option>
+                        {faculties.map(f => (
+                          <option key={f.id} value={f.id}>{f.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setFilterProgram('all');
+                        setFilterFaculty('all');
+                        setShowFilterMenu(false);
+                      }}
+                      className="mt-2 w-full px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                    >
+                      Limpiar filtros
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sort Button */}
+            <div className="relative sort-menu-container">
+              <button 
+                onClick={() => {
+                  setShowSortMenu(!showSortMenu);
+                  setShowFilterMenu(false);
+                }}
+                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal cursor-pointer hover:bg-principalDark ${showSortMenu ? 'ring-2 ring-primary-500' : ''}`}
+              >
+                <Image src={sortImage} alt="Ordenar" width={14} height={14} />
+              </button>
+              {showSortMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                  <div className="p-2">
+                    <button
+                      onClick={() => {
+                        setSortBy('name');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'name' ? 'bg-primary-50 text-primary-700' : ''}`}
+                    >
+                      Por nombre
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortBy('email');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'email' ? 'bg-primary-50 text-primary-700' : ''}`}
+                    >
+                      Por email
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortBy('carrera');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'carrera' ? 'bg-primary-50 text-primary-700' : ''}`}
+                    >
+                      Por carrera
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSortBy('estado');
+                        setShowSortMenu(false);
+                      }}
+                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'estado' ? 'bg-primary-50 text-primary-700' : ''}`}
+                    >
+                      Por estado
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {role === 'admin' && (
-              // <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EEEFFB]">
-              //     <Image src={deleteImage} alt="" width={16} height={16} />
-              // </button>
-              <FormModal table="teacher" type="create"/>
+              <FormModal table="student" type="create" />
             )}
           </div>
         </div>
       </div>
       {/* LIST */}
-      <Table columns={columns} renderRow={renderRow} data={studentsData} />
-      {/* PAGINATION */}
-      <Pagination />
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+        </div>
+      ) : students.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-500">
+            {searchTerm || filterProgram !== 'all' || filterFaculty !== 'all' 
+              ? 'No se encontraron estudiantes que coincidan con los filtros' 
+              : 'No hay estudiantes disponibles'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <Table columns={columns} renderRow={renderRow} data={students} />
+          {pagination.totalPages > 1 && (
+            <Pagination
+              currentPage={pagination.page}
+              totalPages={pagination.totalPages}
+              onPageChange={setCurrentPage}
+              hasNextPage={pagination.hasNextPage}
+              hasPrevPage={pagination.hasPrevPage}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `TRABAJO_GRADO` ADD COLUMN `objetivos` TEXT NULL;

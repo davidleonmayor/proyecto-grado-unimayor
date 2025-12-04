@@ -47,12 +47,19 @@ const StudentForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = handleSubmit((data) => {
-    console.log(data);
+  const onSubmit = handleSubmit(async (data) => {
+    try {
+      // TODO: Implement API call to create/update student
+      console.log('Student form data:', data);
+      alert('La creación de estudiantes está en desarrollo. Por favor, contacte al administrador.');
+    } catch (error: any) {
+      console.error('Error submitting student form:', error);
+      alert('Error al guardar: ' + (error.message || 'Error desconocido'));
+    }
   });
 
   return (
-    <form className="flex flex-col gap-8" onSubmit={onSubmit}>
+    <form className="flex flex-col gap-6 sm:gap-8 max-w-full" onSubmit={onSubmit}>
       <h1 className="text-xl font-semibold">
         {type === "create" ? "Crear nuevo estudiante" : "Actualizar estudiante"}
       </h1>

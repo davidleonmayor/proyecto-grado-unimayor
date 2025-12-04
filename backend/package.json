@@ -13,6 +13,8 @@
         "db:migrate": "prisma migrate dev --name init",
         "db:studio": "prisma studio",
         "db:seed": "ts-node prisma/seed.ts",
+        "db:clear": "ts-node prisma/clear.ts",
+        "db:fix": "ts-node prisma/fix-data.ts",
         "test": "dotenv -e .env.test -- pnpm db:generate && dotenv -e .env.test -- jest",
         "test:coverage": "npm run pretest && jest --coverage"
     },

@@ -1,6 +1,5 @@
-import Announcement from "@/app/components/Announcement";
 import BigCalendar from "@/app/components/BigCalendar";
-import { EventCalendar } from "@/app/components/EventCalendar";
+import EventCalendar from "@/app/components/EventCalendar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 export default function StudentPage(){
@@ -16,7 +15,6 @@ export default function StudentPage(){
         {/* RIGHT */}
         <div className="w-full xl:w-1/3 flex flex-col gap-8">
             <EventCalendar />
-            <Announcement />
         </div>
     </div>
   )

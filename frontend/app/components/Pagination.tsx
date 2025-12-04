@@ -1,15 +1,90 @@
-const Pagination = () => {
+interface PaginationProps {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+}
+
+const Pagination = ({ currentPage, totalPages, onPageChange, hasNextPage, hasPrevPage }: PaginationProps) => {
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const maxVisible = 5;
+        
+        if (totalPages <= maxVisible) {
+            // Show all pages if total is less than max visible
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Always show first page
+            pages.push(1);
+            
+            if (currentPage > 3) {
+                pages.push('...');
+            }
+            
+            // Show pages around current page
+            const start = Math.max(2, currentPage - 1);
+            const end = Math.min(totalPages - 1, currentPage + 1);
+            
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+            
+            if (currentPage < totalPages - 2) {
+                pages.push('...');
+            }
+            
+            // Always show last page
+            if (totalPages > 1) {
+                pages.push(totalPages);
+            }
+        }
+        
+        return pages;
+    };
+
     return (
         <div className="p-4 flex items-center justify-between text-gray-800">
-            <button disabled className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Prev</button>
+            <button
+                onClick={() => onPageChange(currentPage - 1)}
+                disabled={!hasPrevPage}
+                className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-300 transition-colors"
+            >
+                Prev
+            </button>
             <div className="flex items-center gap-2 text-sm">
-                <button className="px-2 rounded-sm bg-secondary">1</button>    
-                <button className="px-2 rounded-sm ">2</button>    
-                <button className="px-2 rounded-sm ">3</button>
-                ...
-                <button className="px-2 rounded-sm ">10</button>    
-            </div>    
-            <button className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Sig</button>    
+                {getPageNumbers().map((page, index) => {
+                    if (page === '...') {
+                        return (
+                            <span key={`ellipsis-${index}`} className="px-2">
+                                ...
+                            </span>
+                        );
+                    }
+                    return (
+                        <button
+                            key={page}
+                            onClick={() => onPageChange(page as number)}
+                            className={`px-2 rounded-sm transition-colors ${
+                                currentPage === page
+                                    ? 'bg-secondary text-white'
+                                    : 'hover:bg-gray-200'
+                            }`}
+                        >
+                            {page}
+                        </button>
+                    );
+                })}
+            </div>
+            <button
+                onClick={() => onPageChange(currentPage + 1)}
+                disabled={!hasNextPage}
+                className="py-2 px-4 rounded-md bg-slate-200 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-300 transition-colors"
+            >
+                Sig
+            </button>
         </div>
     );
 };

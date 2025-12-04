@@ -55,12 +55,19 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
         resolver: zodResolver(schema),
     });
 
-    const onSubmit = handleSubmit(data => {
-        console.log(data);
+    const onSubmit = handleSubmit(async (data) => {
+        try {
+            // TODO: Implement API call to create/update teacher
+            console.log('Teacher form data:', data);
+            alert('La creación de profesores está en desarrollo. Por favor, contacte al administrador.');
+        } catch (error: any) {
+            console.error('Error submitting teacher form:', error);
+            alert('Error al guardar: ' + (error.message || 'Error desconocido'));
+        }
     });
 
     return (
-        <form className="flex flex-col gap-8" onSubmit={onSubmit}>
+        <form className="flex flex-col gap-6 sm:gap-8 max-w-full" onSubmit={onSubmit}>
             <h1 className="text-xl font-semibold">
                 {type === "create" ? "Crear nuevo profesor" : "Actualizar profesor"}
             </h1>

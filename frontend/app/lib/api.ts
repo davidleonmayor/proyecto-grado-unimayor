@@ -309,6 +309,39 @@ class ApiClient {
     });
   }
 
+  async downloadBulkTemplate(): Promise<void> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No se encontró el token de autenticación');
+    }
+
+    const response = await fetch(`${this.baseURL}/api/projects/admin/bulk-template`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(
+        typeof data === 'object' && data !== null && 'error' in data
+          ? (data as { error: string }).error
+          : 'No se pudo descargar la plantilla'
+      );
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bulk-projects-sample.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
   async bulkUploadProjects(file: File): Promise<BulkUploadSummary> {
     const token = this.getAuthToken();
     if (!token) {
@@ -388,6 +421,63 @@ class ApiClient {
   // Teacher/Director dashboard statistics
   async getTeacherDashboardStats(): Promise<any> {
     return this.request<any>('/api/projects/stats/teacher-dashboard', {
+      requiresAuth: true,
+    });
+  }
+
+  // Events
+  async getEvents(page: number = 1, limit: number = 10): Promise<{ events: any[]; pagination: any }> {
+    return this.request<{ events: any[]; pagination: any }>(`/api/events?page=${page}&limit=${limit}`, {
+      requiresAuth: true,
+    });
+  }
+
+  async createEvent(eventData: any): Promise<any> {
+    return this.request<any>('/api/events', {
+      method: 'POST',
+      requiresAuth: true,
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  async updateEvent(id: string, eventData: any): Promise<any> {
+    return this.request<any>(`/api/events/${id}`, {
+      method: 'PUT',
+      requiresAuth: true,
+      body: JSON.stringify(eventData),
+    });
+  }
+
+  async deleteEvent(id: string): Promise<any> {
+    return this.request<any>(`/api/events/${id}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
+
+  // Persons (Teachers/Students)
+  async getTeachers(page: number = 1, limit: number = 10, search?: string, role?: string, faculty?: string): Promise<{ teachers: any[]; pagination: any }> {
+    let url = `/api/persons/teachers?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (role && role !== 'all') url += `&role=${encodeURIComponent(role)}`;
+    if (faculty && faculty !== 'all') url += `&faculty=${encodeURIComponent(faculty)}`;
+    return this.request<{ teachers: any[]; pagination: any }>(url, {
+      requiresAuth: true,
+    });
+  }
+
+  async getStudents(page: number = 1, limit: number = 10, search?: string, program?: string, faculty?: string): Promise<{ students: any[]; pagination: any }> {
+    let url = `/api/persons/students?page=${page}&limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (program && program !== 'all') url += `&program=${encodeURIComponent(program)}`;
+    if (faculty && faculty !== 'all') url += `&faculty=${encodeURIComponent(faculty)}`;
+    return this.request<{ students: any[]; pagination: any }>(url, {
+      requiresAuth: true,
+    });
+  }
+
+  async getPersonById(id: string): Promise<any> {
+    return this.request<any>(`/api/persons/${id}`, {
       requiresAuth: true,
     });
   }
