@@ -78,7 +78,8 @@ export default function ProjectsPage() {
                     Nuevo Proyecto
                 </Link>
                 {/* TODO: implement that functionality */}
-                <Link
+                {/* Funcionalidad de carga masiva comentada - No es necesaria por el momento */}
+                {/* <Link
                     href="/dashboard/projects/bulk-upload"
                     className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2"
                 >
@@ -86,7 +87,7 @@ export default function ProjectsPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     Cargar Múltiples Proyectos
-                </Link>
+                </Link> */}
                     <Link
                         href="/dashboard/projects/admin"
                         className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-all font-medium flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
