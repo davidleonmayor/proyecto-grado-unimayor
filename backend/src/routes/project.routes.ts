@@ -105,10 +105,10 @@ export class ProjectRoutes {
             this.controller.getAllProjects
         );
 
-        // Create project (Privileged)
+        // Create project (Only Directors/Professors)
         this.router.post("/admin",
             this.authMiddleware.isAuthenticatedUser,
-            this.roleMiddleware.isPrivilegedUser,
+            this.roleMiddleware.isDirectorOrProfessor,
             this.controller.createProject
         );
 

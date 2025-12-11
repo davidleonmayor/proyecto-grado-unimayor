@@ -443,30 +443,23 @@ async function main() {
         }),
         prisma.estado_tg.create({
             data: {
-                nombre_estado: "Pendiente de Aprobación",
-                descripcion: "Esperando aprobación",
-                orden: 4,
-            },
-        }),
-        prisma.estado_tg.create({
-            data: {
                 nombre_estado: "Aprobado",
                 descripcion: "Trabajo aprobado",
-                orden: 5,
+                orden: 4,
             },
         }),
         prisma.estado_tg.create({
             data: {
                 nombre_estado: "Rechazado",
                 descripcion: "Trabajo rechazado",
-                orden: 6,
+                orden: 5,
             },
         }),
         prisma.estado_tg.create({
             data: {
                 nombre_estado: "Finalizado",
                 descripcion: "Trabajo finalizado",
-                orden: 7,
+                orden: 6,
             },
         }),
     ]);
