@@ -275,7 +275,8 @@ export class ProjectController {
         try {
             const { id } = req.params; // Project ID
             const userId = req.user?.id_persona;
-            const { description, newStatusId, numero_resolucion } = req.body;
+            const { description, newStatusId, numero_resolucion, actionType } = req.body;
+            const file = req.file; // File is optional for reviews
 
             if (!userId) return res.status(401).json({ error: "No autorizado" });
 
@@ -311,9 +312,17 @@ export class ProjectController {
             }
 
             // Determine action type
-            let actionName = "Revisión de Avance";
-            if (normalizedStatusId) {
-                actionName = "Cambio de Estado";
+            let actionName: string;
+            
+            // If actionType is provided, use it; otherwise use default logic
+            if (actionType && typeof actionType === 'string' && actionType.trim() !== '') {
+                actionName = actionType.trim();
+            } else {
+                // Default logic: determine based on status change
+                actionName = "Revisión de Avance";
+                if (normalizedStatusId) {
+                    actionName = "Cambio de Estado";
+                }
             }
 
             let action = await prisma.accion_seg.findFirst({ where: { tipo_accion: actionName } });
@@ -321,7 +330,7 @@ export class ProjectController {
                 action = await prisma.accion_seg.create({ data: { tipo_accion: actionName } });
             }
 
-            // Create tracking record
+            // Create tracking record with optional file
             await prisma.seguimiento_tg.create({
                 data: {
                     id_trabajo_grado: id,
@@ -330,7 +339,13 @@ export class ProjectController {
                     resumen: description || null,
                     id_estado_anterior: project.id_estado_actual || null,
                     id_estado_nuevo: normalizedStatusId,
-                    numero_resolucion: numero_resolucion || null
+                    numero_resolucion: numero_resolucion || null,
+                    // Include file data if provided
+                    ...(file && {
+                        archivo: Buffer.from(file.buffer) as any,
+                        nombre_documento: file.originalname,
+                        tipo_documento: file.mimetype
+                    })
                 }
             });
 

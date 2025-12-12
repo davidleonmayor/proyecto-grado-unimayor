@@ -199,12 +199,47 @@ class ApiClient {
     return response.json();
   }
 
-  async reviewIteration(projectId: string, description: string, newStatusId?: string, numero_resolucion?: string): Promise<any> {
-    return this.request<any>(`/api/projects/${projectId}/review`, {
-      method: 'POST',
-      requiresAuth: true,
-      body: JSON.stringify({ description, newStatusId, numero_resolucion }),
-    });
+  async reviewIteration(projectId: string, description: string, newStatusId?: string, numero_resolucion?: string, file?: File, actionType?: string): Promise<any> {
+    const token = this.getAuthToken();
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // If file is provided, use FormData, otherwise use JSON
+    if (file) {
+      const formData = new FormData();
+      formData.append('description', description);
+      if (newStatusId) {
+        formData.append('newStatusId', newStatusId);
+      }
+      if (numero_resolucion) {
+        formData.append('numero_resolucion', numero_resolucion);
+      }
+      if (actionType) {
+        formData.append('actionType', actionType);
+      }
+      formData.append('file', file);
+
+      const response = await fetch(`${this.baseURL}/api/projects/${projectId}/review`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al registrar revisión');
+      }
+
+      return response.json();
+    } else {
+      return this.request<any>(`/api/projects/${projectId}/review`, {
+        method: 'POST',
+        requiresAuth: true,
+        body: JSON.stringify({ description, newStatusId, numero_resolucion, actionType }),
+      });
+    }
   }
 
   // Download file with authentication

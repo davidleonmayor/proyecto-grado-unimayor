@@ -23,6 +23,7 @@ export default function ProjectDetailPage() {
     const [reviewComment, setReviewComment] = useState('');
     const [newStatus, setNewStatus] = useState('');
     const [reviewNumeroResolucion, setReviewNumeroResolucion] = useState('');
+    const [reviewFile, setReviewFile] = useState<File | null>(null);
     const [statuses, setStatuses] = useState<Array<{ id_estado_tg: string; nombre_estado: string }>>([]);
     const [loadingStatuses, setLoadingStatuses] = useState(false);
 
@@ -93,12 +94,22 @@ export default function ProjectDetailPage() {
 
         try {
             setIsSubmitting(true);
-            await api.reviewIteration(projectId, reviewComment, newStatus || undefined, reviewNumeroResolucion || undefined);
+            // Check if "Información General" is selected (special value)
+            const isInfoGeneral = newStatus === 'INFO_GENERAL';
+            await api.reviewIteration(
+                projectId, 
+                reviewComment, 
+                isInfoGeneral ? undefined : (newStatus || undefined), 
+                reviewNumeroResolucion || undefined, 
+                reviewFile || undefined,
+                isInfoGeneral ? 'Información General' : undefined
+            );
 
             await Swal.fire('Éxito', 'Revisión registrada correctamente', 'success');
             setReviewComment('');
             setNewStatus('');
             setReviewNumeroResolucion('');
+            setReviewFile(null);
             setActiveTab('history');
             loadData(); // Refresh history
         } catch (error) {
@@ -195,6 +206,29 @@ export default function ProjectDetailPage() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Subir Documento (Opcional)
+                                </label>
+                                <input
+                                    type="file"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0] || null;
+                                        setReviewFile(file);
+                                    }}
+                                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                                />
+                                {reviewFile && (
+                                    <p className="text-xs text-gray-600 mt-1">
+                                        Archivo seleccionado: {reviewFile.name}
+                                    </p>
+                                )}
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Puedes subir un documento relacionado con la revisión (PDF, Word, Excel). Tamaño máximo 10MB.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Cambiar Estado del Proyecto (Opcional)
                                 </label>
                                 {loadingStatuses ? (
@@ -208,6 +242,7 @@ export default function ProjectDetailPage() {
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white"
                                     >
                                         <option value="">-- Mantener estado actual --</option>
+                                        <option value="INFO_GENERAL">Información General</option>
                                         {statuses.map((status) => (
                                             <option key={status.id_estado_tg} value={status.id_estado_tg}>
                                                 {status.nombre_estado}
@@ -216,7 +251,7 @@ export default function ProjectDetailPage() {
                                     </select>
                                 )}
                                 <p className="text-xs text-gray-500 mt-1">
-                                    Selecciona un nuevo estado solo si deseas actualizar el estado general del proyecto.
+                                    Selecciona un nuevo estado para actualizar el estado del proyecto, o "Información General" para registrar cambios administrativos (ej: estudiante abandona, cambio de director, etc.) sin cambiar el estado.
                                 </p>
                             </div>
 
