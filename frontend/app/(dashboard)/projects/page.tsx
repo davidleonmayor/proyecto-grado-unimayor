@@ -2,16 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import api from '../../lib/api';
+import { projectsService } from '@/modules/projects/services/projects.service';
+import type { Project } from '@/modules/projects/types';
 
-interface Project {
-    id: string;
-    title: string;
-    status: string;
-    role: string;
-    modality: string;
-    lastUpdate: string;
-}
 
 // Privileged roles that can access admin panel
 const PRIVILEGED_ROLES = ['Director'];
@@ -25,7 +18,7 @@ export default function ProjectsPage() {
     useEffect(() => {
         const fetchProjects = async () => {
             try {
-                const data = await api.getProjects();
+                const data = await projectsService.getProjects();
                 setProjects(data);
 
                 // Check if user has any privileged role
