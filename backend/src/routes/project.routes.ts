@@ -42,9 +42,10 @@ export class ProjectRoutes {
             this.controller.createIteration
         );
 
-        // Privileged: Review iteration (Protected)
+        // Privileged: Review iteration (Protected) - with optional file upload
         this.router.post("/:id/review",
             this.authMiddleware.isAuthenticatedUser,
+            upload.single("file"), // File is optional for reviews
             this.controller.reviewIteration
         );
 
@@ -105,10 +106,10 @@ export class ProjectRoutes {
             this.controller.getAllProjects
         );
 
-        // Create project (Privileged)
+        // Create project (Only Directors/Professors)
         this.router.post("/admin",
             this.authMiddleware.isAuthenticatedUser,
-            this.roleMiddleware.isPrivilegedUser,
+            this.roleMiddleware.isDirectorOrProfessor,
             this.controller.createProject
         );
 

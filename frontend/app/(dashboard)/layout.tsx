@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/public/logo.webp";
-import Menu from "../components/Menu";
-import Navbar from "../components/Navbar";
-import ProtectedRoute from "../components/ProtectedRoute";
+import { Menu } from "@/shared/components/layout/Menu";
+import { Navbar } from "@/shared/components/layout/Navbar";
+import { ProtectedRoute } from "@/shared/components/layout/ProtectedRoute";
 
 export default function DashboardLayout({
   children,

@@ -34,22 +34,27 @@ export const useUserRole = (): { role: UserRole; loading: boolean } => {
                 );
 
                 if (hasPrivilegedRole) {
-                    // Try to check if user has admin access
-                    try {
-                        await api.getDashboardStats();
-                        setRole('admin');
-                    } catch {
-                        // Check if user is a dean
-                        const isDean = projects.some((project: any) =>
-                            project.role === 'Decano'
-                        );
-                        setRole(isDean ? 'dean' : 'teacher');
+                    // Check if user is a dean first
+                    const isDean = projects.some((project: any) =>
+                        project.role === 'Decano'
+                    );
+                    
+                    if (isDean) {
+                        setRole('dean');
+                    } else {
+                        // For other privileged roles (Director, Jurado, Coordinador), check if they have admin access
+                        // Admin access is determined by being able to access getDashboardStats
+                        try {
+                            await api.getDashboardStats();
+                            setRole('admin');
+                        } catch {
+                            // If can't access admin stats, they are a teacher/director
+                            setRole('teacher');
+                        }
                     }
                 } else if (isStudentOnly || projects.length === 0) {
                     // If student only or no projects (likely a student), assign student role
                     setRole('student');
-                } else if (projects.length > 0) {
-                    setRole('teacher');
                 } else {
                     // Default to student if user is authenticated but has no clear role
                     setRole('student');

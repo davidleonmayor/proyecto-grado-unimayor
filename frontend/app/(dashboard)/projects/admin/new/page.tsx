@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../../../../lib/api';
 import Swal from 'sweetalert2';
+import RoleProtectedRoute from '../../../../components/RoleProtectedRoute';
 
 interface FormData {
     modalities: Array<{ id: string; name: string }>;
@@ -19,9 +20,10 @@ interface Person {
     document?: string;
 }
 
-export default function NewProjectPage() {
+function NewProjectPageContent() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState<Person | null>(null);
     const [formData, setFormData] = useState<FormData | null>(null);
     const [students, setStudents] = useState<Person[]>([]);
     const [advisors, setAdvisors] = useState<Person[]>([]);
@@ -49,7 +51,7 @@ export default function NewProjectPage() {
     const [companySearch, setCompanySearch] = useState('');
 
     useEffect(() => {
-        loadFormData();
+        loadInitialData();
     }, []);
 
     useEffect(() => {
@@ -63,11 +65,12 @@ export default function NewProjectPage() {
         }
     }, [programId]);
 
-    const loadFormData = async () => {
+    const loadInitialData = async () => {
         try {
-            const [form, advisorsData] = await Promise.all([
+            const [form, advisorsData, userData] = await Promise.all([
                 api.getFormData(),
-                api.getAvailableAdvisors()
+                api.getAvailableAdvisors(),
+                api.getCurrentUser()
             ]);
 
             setFormData(form);
@@ -75,6 +78,17 @@ export default function NewProjectPage() {
             setAdvisors(advisorsData);
             setAllCompanies(form.companies || []);
             setCompanies(form.companies || []);
+
+            if (userData) {
+                const mappedUser: Person = {
+                    id: userData.id_persona,
+                    name: `${userData.nombres} ${userData.apellidos}`,
+                    email: userData.correo_electronico,
+                    document: userData.num_doc_identidad,
+                };
+                setCurrentUser(mappedUser);
+                setSelectedAdvisors([mappedUser.id]);
+            }
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar los datos del formulario', 'error');
         } finally {
@@ -196,6 +210,9 @@ export default function NewProjectPage() {
     };
 
     const toggleAdvisor = (advisorId: string) => {
+        // Creator is always selected and cannot be removed
+        if (currentUser && advisorId === currentUser.id) return;
+
         if (selectedAdvisors.includes(advisorId)) {
             setSelectedAdvisors(selectedAdvisors.filter(id => id !== advisorId));
         } else if (selectedAdvisors.length < 2) {
@@ -526,6 +543,28 @@ export default function NewProjectPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Asesores/Directores (Máximo 2, opcional)
                     </label>
+                    {currentUser && (
+                        <div className="mb-3 border border-blue-200 bg-blue-50 rounded-lg p-3 flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                checked
+                                disabled
+                                className="h-4 w-4 text-blue-600 border-blue-300 rounded cursor-not-allowed"
+                            />
+                            <div>
+                                <div className="text-sm font-semibold text-blue-800">
+                                    {currentUser.name} (Tú)
+                                </div>
+                                <div className="text-xs text-blue-700">
+                                    {currentUser.document && `Cédula: ${currentUser.document} • `}
+                                    Código: {currentUser.id} • {currentUser.email}
+                                </div>
+                                <p className="text-xs text-blue-700 mt-1">
+                                    Seleccionado automáticamente como Director. No se puede deseleccionar.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     <div className="mb-3">
                         <input
                             type="text"
@@ -536,7 +575,7 @@ export default function NewProjectPage() {
                         />
                     </div>
                     <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        {advisors.length === 0 ? (
+                        {advisors.filter(a => a.id !== currentUser?.id).length === 0 ? (
                             <p className="text-gray-500 text-sm text-center py-4">
                                 {advisorSearch 
                                     ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
@@ -545,7 +584,9 @@ export default function NewProjectPage() {
                             </p>
                         ) : (
                             <div className="space-y-2">
-                                {advisors.map(advisor => (
+                                {advisors
+                                    .filter(advisor => advisor.id !== currentUser?.id)
+                                    .map(advisor => (
                                     <label
                                         key={advisor.id}
                                         className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedAdvisors.includes(advisor.id)
@@ -600,5 +641,13 @@ export default function NewProjectPage() {
                 </div>
             </form>
         </div>
+    );
+}
+
+export default function NewProjectPage() {
+    return (
+        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+            <NewProjectPageContent />
+        </RoleProtectedRoute>
     );
 }

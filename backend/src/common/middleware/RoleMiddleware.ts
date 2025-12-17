@@ -152,4 +152,62 @@ export class RoleMiddleware {
             });
         }
     }
+
+    /**
+     * Verifies if the authenticated user is a Director/Professor
+     * Only Directors can create degree projects
+     */
+    public async isDirectorOrProfessor(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) {
+        try {
+            const userId = req.user?.id_persona;
+
+            if (!userId) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Usuario no autenticado"
+                });
+            }
+
+            // Get Director role
+            const directorRole = await prisma.tipo_rol.findFirst({
+                where: { nombre_rol: "Director" }
+            });
+
+            if (!directorRole) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Configuración del sistema incorrecta: Rol Director no encontrado"
+                });
+            }
+
+            // Check if user has been a director at least once
+            const hasDirectorRole = await prisma.actores.findFirst({
+                where: {
+                    id_persona: userId,
+                    id_tipo_rol: directorRole.id_rol
+                }
+            });
+
+            if (!hasDirectorRole) {
+                logger.warn(`Access denied for user ${userId}: Not a Director/Professor`);
+                return res.status(403).json({
+                    success: false,
+                    message: "Solo los profesores/directores pueden crear proyectos de grado"
+                });
+            }
+
+            logger.debug(`Director access granted for user ${userId}`);
+            next();
+        } catch (error: any) {
+            logger.error(`Error in RoleMiddleware: ${error.message}`);
+            return res.status(500).json({
+                success: false,
+                message: "Error verificando permisos"
+            });
+        }
+    }
 }

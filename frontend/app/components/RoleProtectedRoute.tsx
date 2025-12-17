@@ -39,6 +39,7 @@ export default function RoleProtectedRoute({
 
             if (role && !allowedRoles.includes(role)) {
                 // User doesn't have required role, redirect
+                setIsChecking(false);
                 router.push(redirectTo);
                 return;
             }

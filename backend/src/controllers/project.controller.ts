@@ -275,7 +275,8 @@ export class ProjectController {
         try {
             const { id } = req.params; // Project ID
             const userId = req.user?.id_persona;
-            const { description, newStatusId, numero_resolucion } = req.body;
+            const { description, newStatusId, numero_resolucion, actionType } = req.body;
+            const file = req.file; // File is optional for reviews
 
             if (!userId) return res.status(401).json({ error: "No autorizado" });
 
@@ -311,9 +312,17 @@ export class ProjectController {
             }
 
             // Determine action type
-            let actionName = "Revisión de Avance";
-            if (normalizedStatusId) {
-                actionName = "Cambio de Estado";
+            let actionName: string;
+            
+            // If actionType is provided, use it; otherwise use default logic
+            if (actionType && typeof actionType === 'string' && actionType.trim() !== '') {
+                actionName = actionType.trim();
+            } else {
+                // Default logic: determine based on status change
+                actionName = "Revisión de Avance";
+                if (normalizedStatusId) {
+                    actionName = "Cambio de Estado";
+                }
             }
 
             let action = await prisma.accion_seg.findFirst({ where: { tipo_accion: actionName } });
@@ -321,7 +330,7 @@ export class ProjectController {
                 action = await prisma.accion_seg.create({ data: { tipo_accion: actionName } });
             }
 
-            // Create tracking record
+            // Create tracking record with optional file
             await prisma.seguimiento_tg.create({
                 data: {
                     id_trabajo_grado: id,
@@ -330,7 +339,13 @@ export class ProjectController {
                     resumen: description || null,
                     id_estado_anterior: project.id_estado_actual || null,
                     id_estado_nuevo: normalizedStatusId,
-                    numero_resolucion: numero_resolucion || null
+                    numero_resolucion: numero_resolucion || null,
+                    // Include file data if provided
+                    ...(file && {
+                        archivo: Buffer.from(file.buffer) as any,
+                        nombre_documento: file.originalname,
+                        tipo_documento: file.mimetype
+                    })
                 }
             });
 
@@ -346,7 +361,7 @@ export class ProjectController {
 
         } catch (error) {
             console.error("Error reviewing iteration:", error);
-            
+
             // Handle Prisma foreign key constraint errors
             if (error && typeof error === 'object' && 'code' in error && error.code === 'P2003') {
                 return res.status(400).json({ error: "Error de validación: el estado especificado no es válido" });
@@ -383,6 +398,9 @@ export class ProjectController {
     async getStatuses(req: Request, res: Response) {
         try {
             const statuses = await prisma.estado_tg.findMany({
+                where: {
+                    nombre_estado: { not: "Pendiente de Aprobación" },
+                },
                 select: {
                     id_estado_tg: true,
                     nombre_estado: true
@@ -471,6 +489,9 @@ export class ProjectController {
                     }
                 }),
                 prisma.estado_tg.findMany({
+                    where: {
+                        nombre_estado: { not: "Pendiente de Aprobación" },
+                    },
                     select: {
                         id_estado_tg: true,
                         nombre_estado: true
@@ -613,8 +634,8 @@ export class ProjectController {
                 if (program) {
                     // If user has faculty restriction, verify program belongs to their faculty
                     if (userFacultyIds.size > 0 && !userFacultyIds.has(program.id_facultad)) {
-                        return res.status(403).json({ 
-                            error: "No tienes permiso para acceder a estudiantes de este programa" 
+                        return res.status(403).json({
+                            error: "No tienes permiso para acceder a estudiantes de este programa"
                         });
                     }
 
@@ -634,7 +655,7 @@ export class ProjectController {
                 });
 
                 const programIdsInFaculties = programsInFaculties.map(p => p.id_programa);
-                
+
                 if (programIdsInFaculties.length > 0) {
                     studentsWhere.id_programa_academico = { in: programIdsInFaculties };
                 } else {
@@ -673,8 +694,11 @@ export class ProjectController {
     }
 
     // Get available advisors (professors/directors)
+    // Excludes the current user since they will be automatically assigned as director
     async getAvailableAdvisors(req: Request, res: Response) {
         try {
+            const userId = req.user?.id_persona;
+
             // Get Director role
             const directorRole = await prisma.tipo_rol.findFirst({
                 where: { nombre_rol: "Director" }
@@ -686,7 +710,10 @@ export class ProjectController {
 
             // Get all people who have been directors at some point
             const directorActors = await prisma.actores.findMany({
-                where: { id_tipo_rol: directorRole.id_rol },
+                where: {
+                    id_tipo_rol: directorRole.id_rol,
+                    id_persona: userId ? { not: userId } : undefined // Exclude current user
+                },
                 include: { persona: true },
                 distinct: ['id_persona']
             });
@@ -831,9 +858,15 @@ export class ProjectController {
         }
     }
 
-    // Create new project (Privileged only)
+    // Create new project (Directors/Professors only)
     async createProject(req: Request, res: Response) {
         try {
+            const userId = req.user?.id_persona;
+
+            if (!userId) {
+                return res.status(401).json({ error: "No autorizado" });
+            }
+
             const {
                 title,
                 summary,
@@ -845,7 +878,7 @@ export class ProjectController {
                 startDate,
                 endDate,
                 students, // Array of student IDs (1-2)
-                advisors  // Array of advisor IDs (max 2)
+                advisors  // Array of additional advisor IDs (max 1, since creator is already one)
             } = req.body;
 
             // Validate required fields
@@ -862,10 +895,16 @@ export class ProjectController {
                 });
             }
 
-            // Validate advisors (max 2)
-            if (advisors && Array.isArray(advisors) && advisors.length > 2) {
+            // Prepare directors list: creator + only one extra person (max 2 total)
+            const additionalAdvisors = Array.isArray(advisors)
+                ? advisors.filter((id: string) => id && id !== userId)
+                : [];
+            const allDirectors = Array.from(new Set([userId, ...additionalAdvisors]));
+
+            // Validate max 2 directors total (including creator) after deduplication
+            if (allDirectors.length > 2) {
                 return res.status(400).json({
-                    error: "Máximo 2 asesores permitidos"
+                    error: "Máximo 2 directores permitidos por proyecto (incluyéndote a ti como creador)"
                 });
             }
 
@@ -946,24 +985,22 @@ export class ProjectController {
                 });
             }
 
-            // Assign advisors
-            if (advisors && advisors.length > 0) {
-                for (const advisorId of advisors) {
-                    await prisma.actores.create({
-                        data: {
-                            id_persona: advisorId,
-                            id_trabajo_grado: project.id_trabajo_grado,
-                            id_tipo_rol: directorRole.id_rol,
-                            fecha_asignacion: new Date(),
-                            estado: "Activo"
-                        }
-                    });
-                }
+            // Assign directors (including creator)
+            for (const directorId of allDirectors) {
+                await prisma.actores.create({
+                    data: {
+                        id_persona: directorId,
+                        id_trabajo_grado: project.id_trabajo_grado,
+                        id_tipo_rol: directorRole.id_rol,
+                        fecha_asignacion: new Date(),
+                        estado: "Activo"
+                    }
+                });
             }
 
-            logger.info(`Project created: ${project.id_trabajo_grado} with ${students.length} students and ${advisors?.length || 0} advisors`);
+            logger.info(`Project created: ${project.id_trabajo_grado} by user ${userId} with ${students.length} students and ${allDirectors.length} directors`);
             return res.status(201).json({
-                message: "Proyecto creado exitosamente",
+                message: "Proyecto creado exitosamente. Has sido asignado automáticamente como director.",
                 projectId: project.id_trabajo_grado
             });
         } catch (error) {
@@ -1331,7 +1368,9 @@ export class ProjectController {
                 defaultNivel,
             ] = await Promise.all([
                 prisma.opcion_grado.findMany(),
-                prisma.estado_tg.findMany(),
+                prisma.estado_tg.findMany({
+                    where: { nombre_estado: { not: "Pendiente de Aprobación" } },
+                }),
                 prisma.programa_academico.findMany(),
                 prisma.empresa.findMany(),
                 prisma.tipo_rol.findFirst({
@@ -1431,7 +1470,7 @@ export class ProjectController {
             const getOrCreateStatus = async (statusName: string): Promise<Awaited<ReturnType<(typeof prisma)["estado_tg"]["create"]>>> => {
                 // Normalize the status name for comparison
                 const normalizedName = normalizeValue(statusName);
-                
+
                 // Check if already exists in the map
                 if (statusMap.has(normalizedName)) {
                     return statusMap.get(normalizedName)!;
@@ -1439,7 +1478,7 @@ export class ProjectController {
                 if (createdStatusesCache.has(normalizedName)) {
                     return createdStatusesCache.get(normalizedName)!;
                 }
-                
+
                 // Normalize common status names to standard format
                 let finalStatusName = statusName;
                 if (normalizedName === "encurso") {
@@ -1449,9 +1488,9 @@ export class ProjectController {
                 } else if (normalizedName === "enrevision") {
                     finalStatusName = "En Revisión";
                 } else if (normalizedName === "pendientedeaprobacion") {
-                    finalStatusName = "Pendiente de Aprobación";
+                    throw new Error("El estado 'Pendiente de Aprobación' no está permitido");
                 }
-                
+
                 // Get max orden to add new status at the end
                 const maxOrden = await prisma.estado_tg.aggregate({
                     _max: { orden: true }
@@ -1535,13 +1574,13 @@ export class ProjectController {
                 const docNumbers = document.replace(/[^0-9]/g, '');
                 let email = `${docNumbers}@unimayor.edu.co`;
                 let emailCounter = 1;
-                
+
                 // Check if email already exists and make it unique
                 while (await prisma.persona.findUnique({ where: { correo_electronico: email } })) {
                     email = `${docNumbers}${emailCounter}@unimayor.edu.co`;
                     emailCounter++;
                 }
-                
+
                 // Generate names (placeholder - in real scenario, Excel should have these)
                 const nombres = `Usuario`;
                 const apellidos = `Documento ${document}`;
@@ -1697,7 +1736,7 @@ export class ProjectController {
                 if (
                     advisorDocuments.length &&
                     new Set(advisorDocuments).size !==
-                        advisorDocuments.length
+                    advisorDocuments.length
                 ) {
                     errors.push(
                         "Hay documentos de asesores duplicados en la misma fila.",
@@ -1910,13 +1949,13 @@ export class ProjectController {
                     password: { not: null },
                     ...(studentRole
                         ? {
-                              actores: {
-                                  none: {
-                                      id_tipo_rol: studentRole.id_rol,
-                                      estado: "Activo",
-                                  },
-                              },
-                          }
+                            actores: {
+                                none: {
+                                    id_tipo_rol: studentRole.id_rol,
+                                    estado: "Activo",
+                                },
+                            },
+                        }
                         : {}),
                 },
                 select: {
@@ -1935,12 +1974,12 @@ export class ProjectController {
             const advisorCandidates = await prisma.persona.findMany({
                 where: directorRole
                     ? {
-                          actores: {
-                              some: {
-                                  id_tipo_rol: directorRole.id_rol,
-                              },
-                          },
-                      }
+                        actores: {
+                            some: {
+                                id_tipo_rol: directorRole.id_rol,
+                            },
+                        },
+                    }
                     : {},
                 select: {
                     nombres: true,
@@ -2179,14 +2218,14 @@ export class ProjectController {
             proyectosPorSemana.forEach(proyecto => {
                 const fecha = new Date(proyecto.fecha_registro);
                 fecha.setHours(0, 0, 0, 0);
-                
+
                 // Calculate days difference
                 const diffTime = hoy.getTime() - fecha.getTime();
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                
+
                 // Determine which week (1-4)
                 let semanaNum = Math.ceil(diffDays / 7);
-                
+
                 // Only count if within last 4 weeks
                 if (semanaNum >= 1 && semanaNum <= 4) {
                     const nombreSemana = `Semana ${semanaNum}`;
@@ -2322,7 +2361,7 @@ export class ProjectController {
             }
 
             // Filter only non-student roles (Director, Jurado, etc.)
-            const teacherActors = user.actores.filter(actor => 
+            const teacherActors = user.actores.filter(actor =>
                 actor.tipo_rol.nombre_rol !== "Estudiante"
             );
 
@@ -2334,7 +2373,7 @@ export class ProjectController {
 
             // Count projects by status
             const totalProyectos = proyectosUnicos.length;
-            
+
             const estadosTerminados = await prisma.estado_tg.findMany({
                 where: {
                     OR: [
@@ -2349,11 +2388,11 @@ export class ProjectController {
             });
             const estadosTerminadosIds = estadosTerminados.map(e => e.id_estado_tg);
 
-            const proyectosEnCurso = proyectosUnicos.filter(p => 
+            const proyectosEnCurso = proyectosUnicos.filter(p =>
                 !estadosTerminadosIds.includes(p.id_estado_actual)
             ).length;
 
-            const proyectosFinalizados = proyectosUnicos.filter(p => 
+            const proyectosFinalizados = proyectosUnicos.filter(p =>
                 estadosTerminadosIds.includes(p.id_estado_actual)
             ).length;
 
@@ -2443,11 +2482,11 @@ export class ProjectController {
             proyectosPorSemana.forEach(proyecto => {
                 const fecha = new Date(proyecto.fecha_registro);
                 fecha.setHours(0, 0, 0, 0);
-                
+
                 const diffTime = hoy.getTime() - fecha.getTime();
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 let semanaNum = Math.ceil(diffDays / 7);
-                
+
                 if (semanaNum >= 1 && semanaNum <= 4) {
                     const nombreSemana = `Semana ${semanaNum}`;
 
