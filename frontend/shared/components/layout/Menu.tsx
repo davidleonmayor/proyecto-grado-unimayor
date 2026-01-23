@@ -57,6 +57,19 @@ const menuItems: MenuSection[] = [
       },
     ],
   },
+
+  {
+    title: 'PROYECCIÓN SOCIAL',
+    items: [
+      {
+        icon: '/calendar.png',
+        label: 'Primer .xslx',
+        href: '/social-outreach',
+        visible: ['teacher', 'dean', 'admin'],
+      },
+    ],
+  },
+
   {
     title: 'CONFIGURACIÓN',
     items: [],
