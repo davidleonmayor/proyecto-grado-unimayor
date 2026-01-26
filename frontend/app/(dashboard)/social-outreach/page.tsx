@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import {
   FileUp,
   Download,
@@ -43,10 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import * as XLSX from "xlsx"
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist"
-
-
-GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js"
+import type { TextItem } from "pdfjs-dist/types/src/display/api"
 
 type LineaAccion = {
   educacion: boolean
@@ -79,67 +76,150 @@ export default function SocialOutreachGenerator() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files).filter(
-        (file) => file.type === "application/pdf"
-      )
-      setFiles((prev) => [...prev, ...newFiles])
-      processNewFiles(newFiles)
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0]
+      // Solo permitir archivos PDF
+      if (file.type !== "application/pdf") {
+        alert("Solo se permiten archivos PDF")
+        return
+      }
+      // Reemplazar cualquier archivo existente (solo un archivo a la vez)
+      setFiles([file])
+      setExtractedData([])
+      processNewFiles([file])
+    }
+    // Reset input para permitir seleccionar el mismo archivo de nuevo
+    if (e.target) {
+      e.target.value = ""
     }
   }
 
-  const removeFile = (index: number) => {
-    const fileToRemove = files[index]
-    setFiles((prev) => prev.filter((_, i) => i !== index))
-    setExtractedData((prev) =>
-      prev.filter((d) => d.fileName !== fileToRemove.name)
-    )
+  const removeFile = () => {
+    setFiles([])
+    setExtractedData([])
+    setExpandedIds(new Set())
   }
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
+    // Importar pdfjs-dist dinámicamente para evitar errores de SSR
+    const pdfjs = await import("pdfjs-dist")
+
+    // Configurar el worker de PDF.js usando archivo local
+    pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
+
     const arrayBuffer = await file.arrayBuffer()
-    const pdf = await getDocument({ data: arrayBuffer }).promise
+    const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
 
     let fullText = ""
 
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
-      fullText += textContent.items.map((i: any) => i.str).join(" ") + "\n"
+      const pageText = textContent.items
+        .filter((item): item is TextItem => "str" in item)
+        .map((item) => item.str)
+        .join(" ")
+      fullText += pageText + "\n"
     }
 
     return fullText
   }
 
   const parseExtractedText = (text: string, fileName: string): ExtractedData => {
+    // Debug: log del texto extraído para análisis
+    console.log("=== TEXTO EXTRAÍDO DEL PDF ===")
+    console.log(text)
+    console.log("=== FIN TEXTO ===")
+
+    // Extraer título - buscar texto entre comillas después de TÍTULO DEL PROYECTO
     let titulo = ""
-    const tituloMatch = text.match(/TÍTULO DEL PROYECTO[^\n]*[\s\S]*?"([^"]+)"/i)
-    if (tituloMatch) {
-      titulo = tituloMatch[1].trim()
-    } else {
-      const altMatch = text.match(/TÍTULO DEL PROYECTO[^"]*"([^"]+)"/i)
+    // Patrón 1: Buscar el título con comillas tipográficas o normales
+    const tituloPatterns = [
+      /TÍTULO DEL PROYECTO[\s\S]*?[""]([^""]+)[""]|[""]([^""]+)[""][\s\S]*?LÍNEA DE ACCIÓN/i,
+      /TÍTULO DEL PROYECTO[\s\S]*?"([^"]+)"/i,
+      /ACCIÓN POR EL PLANETA[\s\n]*[""]([^""]+)[""]|[""]([^""]+)[""]/i,
+    ]
+
+    for (const pattern of tituloPatterns) {
+      const match = text.match(pattern)
+      if (match) {
+        titulo = (match[1] || match[2] || "").trim()
+        if (titulo) break
+      }
+    }
+
+    // Si no encontró título entre comillas, buscar después de "ACCIÓN POR EL PLANETA" o línea siguiente
+    if (!titulo) {
+      const altMatch = text.match(/ACCIÓN POR EL PLANETA\s*["""]?([^"""\n]+)/i)
       if (altMatch) {
         titulo = altMatch[1].trim()
       }
     }
 
+    // Extraer descripción del RESUMEN DEL PROYECTO
     let descripcion = ""
-    const resumenMatch = text.match(
-      /1\.\s*RESUMEN DEL PROYECTO\s*([\s\S]*?)(?=2\.\s*PALABRAS|$)/i
-    )
-    if (resumenMatch) {
-      descripcion = resumenMatch[1].replace(/\s+/g, " ").trim().substring(0, 500)
+    const resumenPatterns = [
+      /1\.\s*(?:1\.\s*)?RESUMEN DEL PROYECTO\s*([\s\S]*?)(?=2\.\s*PALABRAS|PALABRAS CLAVE|$)/i,
+      /RESUMEN DEL PROYECTO\s*([\s\S]*?)(?=PALABRAS|$)/i,
+    ]
+
+    for (const pattern of resumenPatterns) {
+      const match = text.match(pattern)
+      if (match) {
+        descripcion = match[1]
+          .replace(/\s+/g, " ")
+          .trim()
+          .substring(0, 1000) // Permitir descripciones más largas
+        if (descripcion) break
+      }
     }
 
+    // Extraer líneas de acción - buscar X después de cada opción
+    // El formato es: SERVICIO SOCIAL__X__ MEDIO AMBIENTE _X_
     const lineasAccion: LineaAccion = {
-      educacion: /EDUCACI[OÓ]N\s*[_\s]*X/i.test(text),
-      convivenciaCultura: /CONVIVENCIA\s*(Y|E)\s*CULTURA\s*[_\s]*X/i.test(text),
-      medioAmbiente: /MEDIO\s*AMBIENTE\s*[_\s]*X/i.test(text),
-      emprendimiento: /EMPRENDIMIENTO\s*[_\s]*X/i.test(text),
-      servicioSocial: /SERVICIO\s*SOCIAL\s*[_\s]*X/i.test(text),
+      educacion: /EDUCACI[OÓ]N\s*[_\s]*X[_\s]*/i.test(text),
+      convivenciaCultura: /CONVIVENCIA\s*(Y|E)\s*CULTURA\s*[_\s]*X[_\s]*/i.test(text),
+      medioAmbiente: /MEDIO\s*AMBIENTE\s*[_\s]*X[_\s]*/i.test(text),
+      emprendimiento: /EMPRENDIMIENTO\s*[_\s]*X[_\s]*/i.test(text),
+      servicioSocial: /SERVICIO\s*SOCIAL\s*[_\s]*X[_\s]*/i.test(text),
     }
 
-    const estudiantes: Estudiante[] = [{ nombre: "", codigo: "", cedula: "" }]
+    // Extraer estudiantes - buscar en la tabla de NOMBRE(S) DEL (LOS) PROPONENTE(S)
+    const estudiantes: Estudiante[] = []
+
+    // Intentar extraer datos de estudiantes de la tabla
+    // Buscar patrones como: NOMBRE CODIGO CEDULA
+    // Los datos suelen estar después de "NOMBRE(S) DEL (LOS) PROPONENTE(S)"
+
+    // Patrón para nombres con formato: Nombre Apellido seguido de números
+    const estudianteRegex = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})\s+(\d{7,10})\s+(\d{8,12})/g
+    let estudianteMatch
+
+    while ((estudianteMatch = estudianteRegex.exec(text)) !== null) {
+      const nombre = estudianteMatch[1].trim()
+      const codigo = estudianteMatch[2].trim()
+      const cedula = estudianteMatch[3].trim()
+
+      // Evitar duplicados y valores placeholder
+      if (nombre && !nombre.includes("TODOS") && codigo && cedula) {
+        // Verificar que no sea un duplicado
+        const exists = estudiantes.some(e => e.codigo === codigo || e.cedula === cedula)
+        if (!exists) {
+          estudiantes.push({ nombre, codigo, cedula })
+        }
+      }
+    }
+
+    // Si no se encontraron estudiantes, agregar uno vacío para que el usuario lo llene
+    if (estudiantes.length === 0) {
+      estudiantes.push({ nombre: "", codigo: "", cedula: "" })
+    }
+
+    console.log("=== DATOS EXTRAÍDOS ===")
+    console.log("Título:", titulo)
+    console.log("Descripción:", descripcion.substring(0, 100) + "...")
+    console.log("Líneas de acción:", lineasAccion)
+    console.log("Estudiantes:", estudiantes)
 
     return {
       id: crypto.randomUUID(),
@@ -336,7 +416,7 @@ export default function SocialOutreachGenerator() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-background">
+      <div className="flex h-[calc(100vh-5rem)] bg-background">
         {/* Left Panel - PDF Files */}
         <Card className="w-80 rounded-none border-y-0 border-l-0 flex flex-col">
           <CardHeader className="pb-3">
@@ -389,7 +469,7 @@ export default function SocialOutreachGenerator() {
                               className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                removeFile(index)
+                                removeFile()
                               }}
                             >
                               <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
@@ -417,7 +497,6 @@ export default function SocialOutreachGenerator() {
                 ref={fileInputRef}
                 type="file"
                 accept=".pdf"
-                multiple
                 onChange={handleFileInput}
                 className="hidden"
               />
