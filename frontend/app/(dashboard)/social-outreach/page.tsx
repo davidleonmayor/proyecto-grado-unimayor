@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/tooltip"
 import * as XLSX from "xlsx"
 import type { TextItem } from "pdfjs-dist/types/src/display/api"
+import Swal from "sweetalert2"
 
 type LineaAccion = {
   educacion: boolean
@@ -68,33 +69,90 @@ type ExtractedData = {
   estudiantes: Estudiante[]
 }
 
+type FileEntry = {
+  id: string
+  file: File
+}
+
+const MAX_FILES = 5
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+
 export default function SocialOutreachGenerator() {
-  const [files, setFiles] = useState<File[]>([])
+  const [files, setFiles] = useState<FileEntry[]>([])
   const [extractedData, setExtractedData] = useState<ExtractedData[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0]
-      // Solo permitir archivos PDF
-      if (file.type !== "application/pdf") {
-        alert("Solo se permiten archivos PDF")
-        return
-      }
-      // Reemplazar cualquier archivo existente (solo un archivo a la vez)
-      setFiles([file])
-      setExtractedData([])
-      processNewFiles([file])
+    const selectedFiles = Array.from(e.target.files || [])
+    if (selectedFiles.length === 0) {
+      return
     }
+
+    if (files.length >= MAX_FILES) {
+      Swal.fire({
+        icon: "warning",
+        title: "Limite de archivos",
+        text: `Solo se permiten hasta ${MAX_FILES} archivos`,
+      })
+      e.target.value = ""
+      return
+    }
+
+    const availableSlots = MAX_FILES - files.length
+    const candidates = selectedFiles.slice(0, availableSlots)
+
+    const validFiles: FileEntry[] = []
+    for (const file of candidates) {
+      const isPdfType = file.type === "application/pdf"
+      const isPdfName = file.name.toLowerCase().endsWith(".pdf")
+
+      if (!isPdfType || !isPdfName) {
+        Swal.fire({
+          icon: "error",
+          title: "Archivo no valido",
+          text: `El archivo "${file.name}" no es un PDF valido`,
+        })
+        continue
+      }
+
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        Swal.fire({
+          icon: "error",
+          title: "Archivo demasiado grande",
+          text: `El archivo "${file.name}" supera el maximo de ${Math.round(
+            MAX_FILE_SIZE_BYTES / (1024 * 1024)
+          )} MB`,
+        })
+        continue
+      }
+
+      validFiles.push({ id: crypto.randomUUID(), file })
+    }
+
+    if (validFiles.length > 0) {
+      setFiles((prev) => [...prev, ...validFiles])
+      processNewFiles(validFiles)
+    }
+
     // Reset input para permitir seleccionar el mismo archivo de nuevo
     if (e.target) {
       e.target.value = ""
     }
   }
 
-  const removeFile = () => {
+  const removeFile = (fileId: string) => {
+    setFiles((prev) => prev.filter((entry) => entry.id !== fileId))
+    setExtractedData((prev) => prev.filter((item) => item.id !== fileId))
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(fileId)
+      return next
+    })
+  }
+
+  const removeAllFiles = () => {
     setFiles([])
     setExtractedData([])
     setExpandedIds(new Set())
@@ -102,10 +160,13 @@ export default function SocialOutreachGenerator() {
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
     // Importar pdfjs-dist dinámicamente para evitar errores de SSR
-    const pdfjs = await import("pdfjs-dist")
+    const pdfjs = await import("pdfjs-dist/build/pdf.mjs")
 
-    // Configurar el worker de PDF.js usando archivo local
-    pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs"
+    // Configurar el worker de PDF.js usando el bundle del paquete
+    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+      "pdfjs-dist/build/pdf.worker.min.mjs",
+      import.meta.url
+    ).toString()
 
     const arrayBuffer = await file.arrayBuffer()
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
@@ -125,11 +186,11 @@ export default function SocialOutreachGenerator() {
     return fullText
   }
 
-  const parseExtractedText = (text: string, fileName: string): ExtractedData => {
-    // Debug: log del texto extraído para análisis
-    console.log("=== TEXTO EXTRAÍDO DEL PDF ===")
-    console.log(text)
-    console.log("=== FIN TEXTO ===")
+  const parseExtractedText = (
+    text: string,
+    fileName: string,
+    fileId: string
+  ): ExtractedData => {
 
     // Extraer título - buscar texto entre comillas después de TÍTULO DEL PROYECTO
     let titulo = ""
@@ -215,14 +276,8 @@ export default function SocialOutreachGenerator() {
       estudiantes.push({ nombre: "", codigo: "", cedula: "" })
     }
 
-    console.log("=== DATOS EXTRAÍDOS ===")
-    console.log("Título:", titulo)
-    console.log("Descripción:", descripcion.substring(0, 100) + "...")
-    console.log("Líneas de acción:", lineasAccion)
-    console.log("Estudiantes:", estudiantes)
-
     return {
-      id: crypto.randomUUID(),
+      id: fileId,
       fileName,
       titulo,
       descripcion,
@@ -231,19 +286,19 @@ export default function SocialOutreachGenerator() {
     }
   }
 
-  const processNewFiles = async (newFiles: File[]) => {
+  const processNewFiles = async (newFiles: FileEntry[]) => {
     if (newFiles.length === 0) return
 
     setIsProcessing(true)
     const results: ExtractedData[] = []
 
-    for (const file of newFiles) {
+    for (const entry of newFiles) {
       try {
-        const text = await extractTextFromPDF(file)
-        const data = parseExtractedText(text, file.name)
+        const text = await extractTextFromPDF(entry.file)
+        const data = parseExtractedText(text, entry.file.name, entry.id)
         results.push(data)
       } catch (error) {
-        console.error(`Error processing ${file.name}:`, error)
+        console.error(`Error processing ${entry.file.name}:`, error)
       }
     }
 
@@ -422,7 +477,7 @@ export default function SocialOutreachGenerator() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4" />
-              web
+              pdf
             </CardTitle>
           </CardHeader>
           <Separator />
@@ -440,8 +495,8 @@ export default function SocialOutreachGenerator() {
                     </p>
                   </div>
                 )}
-                {files.map((file, index) => {
-                  const data = extractedData.find((d) => d.fileName === file.name)
+                {files.map((entry, index) => {
+                  const data = extractedData.find((d) => d.id === entry.id)
                   return (
                     <Card
                       key={index}
@@ -453,7 +508,7 @@ export default function SocialOutreachGenerator() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {file.name}
+                            {entry.file.name}
                           </p>
                           {data && (
                             <p className="text-xs text-muted-foreground truncate">
@@ -469,8 +524,9 @@ export default function SocialOutreachGenerator() {
                               className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                removeFile()
+                                removeFile(entry.id)
                               }}
+                              aria-label={`Eliminar ${entry.file.name}`}
                             >
                               <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                             </Button>
@@ -497,6 +553,7 @@ export default function SocialOutreachGenerator() {
                 ref={fileInputRef}
                 type="file"
                 accept=".pdf"
+                multiple
                 onChange={handleFileInput}
                 className="hidden"
               />
@@ -509,6 +566,16 @@ export default function SocialOutreachGenerator() {
                 <FileUp className="mr-2 h-4 w-4" />
                 Cargar archivo
               </Button>
+              {files.length > 0 && (
+                <Button
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={removeAllFiles}
+                  disabled={isProcessing}
+                >
+                  Eliminar todos
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
