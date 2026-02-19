@@ -1,6 +1,5 @@
 "use client"
-
-import React, { useState, useRef, useEffect } from "react"
+import React, { useState, useRef } from "react"
 import {
   FileUp,
   Download,
@@ -45,7 +44,6 @@ import {
 import * as XLSX from "xlsx"
 import type { TextItem } from "pdfjs-dist/types/src/display/api"
 import Swal from "sweetalert2"
-
 type LineaAccion = {
   educacion: boolean
   convivenciaCultura: boolean
@@ -53,13 +51,11 @@ type LineaAccion = {
   emprendimiento: boolean
   servicioSocial: boolean
 }
-
 type Estudiante = {
   nombre: string
   codigo: string
   cedula: string
 }
-
 type ExtractedData = {
   id: string
   fileName: string
@@ -68,80 +64,139 @@ type ExtractedData = {
   lineasAccion: LineaAccion
   estudiantes: Estudiante[]
 }
-
 type FileEntry = {
   id: string
   file: File
+  safeName: string
 }
-
 const MAX_FILES = 5
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
-
+const MAX_TITLE_LENGTH = 300
+const MAX_DESCRIPTION_LENGTH = 2000
+const MAX_NAME_LENGTH = 150
+const MAX_CODE_LENGTH = 20
+const MAX_ID_LENGTH = 15
+const sanitizeText = (text: string, maxLength: number): string => {
+  if (!text) return ""
+  const withoutHtml = text.replace(/<[^>]*>/g, "")
+  const withoutControl = withoutHtml.replace(/[\u0000-\u001F\u007F]/g, " ")
+  const normalized = withoutControl.replace(/\s+/g, " ").trim()
+  return normalized.slice(0, maxLength)
+}
+const sanitizeFileName = (fileName: string): string => {
+  const baseName = fileName.replace(/\.pdf$/i, "")
+  const sanitizedBase = baseName.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 100)
+  if (!sanitizedBase) return ""
+  return `${sanitizedBase}.pdf`
+}
+const isPdfMagicNumber = (buffer: ArrayBuffer): boolean => {
+  const signature = [0x25, 0x50, 0x44, 0x46, 0x2d]
+  const bytes = new Uint8Array(buffer.slice(0, 5))
+  return signature.every((byte, index) => bytes[index] === byte)
+}
 export default function SocialOutreachGenerator() {
   const [files, setFiles] = useState<FileEntry[]>([])
   const [extractedData, setExtractedData] = useState<ExtractedData[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || [])
-    if (selectedFiles.length === 0) {
-      return
+  const processDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingFilesRef = useRef<FileEntry[]>([])
+  const scheduleProcessing = (entries: FileEntry[]) => {
+    pendingFilesRef.current = [...pendingFilesRef.current, ...entries]
+    if (processDebounceRef.current) {
+      clearTimeout(processDebounceRef.current)
     }
-
+    // Debounce de 300ms para evitar ráfagas de procesamiento
+    processDebounceRef.current = setTimeout(() => {
+      const pending = [...pendingFilesRef.current]
+      pendingFilesRef.current = []
+      processNewFiles(pending)
+    }, 300)
+  }
+  const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.currentTarget
+    const selectedFiles = Array.from(input.files || [])
+    if (selectedFiles.length === 0) return
     if (files.length >= MAX_FILES) {
       Swal.fire({
         icon: "warning",
-        title: "Limite de archivos",
-        text: `Solo se permiten hasta ${MAX_FILES} archivos`,
+        title: "Límite de archivos",
+        text: `Solo se permiten hasta ${MAX_FILES} archivos.`,
       })
-      e.target.value = ""
+      input.value = ""
       return
     }
-
     const availableSlots = MAX_FILES - files.length
     const candidates = selectedFiles.slice(0, availableSlots)
-
     const validFiles: FileEntry[] = []
     for (const file of candidates) {
+      // Validación de tamaño (rechaza archivos vacíos o demasiado grandes)
+      if (file.size <= 0) {
+        Swal.fire({
+          icon: "info",
+          title: "Archivo vacío",
+          text: `No puedes subir archivos vacíos. Archivo: "${file.name}".`,
+        })
+        continue
+      }
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        Swal.fire({
+          icon: "info",
+          title: "Archivo demasiado grande",
+          text: `El archivo "${file.name}" supera el máximo de ${Math.round(
+            MAX_FILE_SIZE_BYTES / (1024 * 1024)
+          )} MB.`,
+        })
+        continue
+      }
+      // Validación básica por tipo y extensión (no es suficiente, pero bloquea errores comunes)
       const isPdfType = file.type === "application/pdf"
       const isPdfName = file.name.toLowerCase().endsWith(".pdf")
-
       if (!isPdfType || !isPdfName) {
         Swal.fire({
           icon: "error",
-          title: "Archivo no valido",
-          text: `El archivo "${file.name}" no es un PDF valido`,
+          title: "Archivo no válido",
+          text: `El archivo "${file.name}" no es un PDF válido.`,
         })
         continue
       }
-
-      if (file.size > MAX_FILE_SIZE_BYTES) {
+      // Validación por magic number (%PDF-) para prevenir spoofing de MIME/extensión
+      const headerBuffer = await file.slice(0, 5).arrayBuffer()
+      if (!isPdfMagicNumber(headerBuffer)) {
         Swal.fire({
           icon: "error",
-          title: "Archivo demasiado grande",
-          text: `El archivo "${file.name}" supera el maximo de ${Math.round(
-            MAX_FILE_SIZE_BYTES / (1024 * 1024)
-          )} MB`,
+          title: "Firma PDF inválida",
+          text: `El archivo "${file.name}" no contiene la firma %PDF-.`,
         })
         continue
       }
-
-      validFiles.push({ id: crypto.randomUUID(), file })
+      // Sanitización del nombre del archivo para evitar caracteres peligrosos
+      const sanitizedName = sanitizeFileName(file.name)
+      if (!sanitizedName) {
+        Swal.fire({
+          icon: "error",
+          title: "Nombre inválido",
+          text: `El archivo "${file.name}" tiene un nombre inválido.`,
+        })
+        continue
+      }
+      if (sanitizedName !== file.name) {
+        Swal.fire({
+          icon: "info",
+          title: "Nombre ajustado",
+          text: `El archivo "${file.name}" se mostrará como "${sanitizedName}".`,
+        })
+      }
+      validFiles.push({ id: crypto.randomUUID(), file, safeName: sanitizedName })
     }
-
     if (validFiles.length > 0) {
       setFiles((prev) => [...prev, ...validFiles])
-      processNewFiles(validFiles)
+      scheduleProcessing(validFiles)
     }
-
     // Reset input para permitir seleccionar el mismo archivo de nuevo
-    if (e.target) {
-      e.target.value = ""
-    }
+    input.value = ""
   }
-
   const removeFile = (fileId: string) => {
     setFiles((prev) => prev.filter((entry) => entry.id !== fileId))
     setExtractedData((prev) => prev.filter((item) => item.id !== fileId))
@@ -151,28 +206,22 @@ export default function SocialOutreachGenerator() {
       return next
     })
   }
-
   const removeAllFiles = () => {
     setFiles([])
     setExtractedData([])
     setExpandedIds(new Set())
   }
-
   const extractTextFromPDF = async (file: File): Promise<string> => {
     // Importar pdfjs-dist dinámicamente para evitar errores de SSR
     const pdfjs = await import("pdfjs-dist/build/pdf.mjs")
-
     // Configurar el worker de PDF.js usando el bundle del paquete
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
       "pdfjs-dist/build/pdf.worker.min.mjs",
       import.meta.url
     ).toString()
-
     const arrayBuffer = await file.arrayBuffer()
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
-
     let fullText = ""
-
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
@@ -182,25 +231,20 @@ export default function SocialOutreachGenerator() {
         .join(" ")
       fullText += pageText + "\n"
     }
-
     return fullText
   }
-
   const parseExtractedText = (
     text: string,
     fileName: string,
     fileId: string
   ): ExtractedData => {
-
     // Extraer título - buscar texto entre comillas después de TÍTULO DEL PROYECTO
     let titulo = ""
-    // Patrón 1: Buscar el título con comillas tipográficas o normales
     const tituloPatterns = [
       /TÍTULO DEL PROYECTO[\s\S]*?[""]([^""]+)[""]|[""]([^""]+)[""][\s\S]*?LÍNEA DE ACCIÓN/i,
       /TÍTULO DEL PROYECTO[\s\S]*?"([^"]+)"/i,
       /ACCIÓN POR EL PLANETA[\s\n]*[""]([^""]+)[""]|[""]([^""]+)[""]/i,
     ]
-
     for (const pattern of tituloPatterns) {
       const match = text.match(pattern)
       if (match) {
@@ -208,35 +252,25 @@ export default function SocialOutreachGenerator() {
         if (titulo) break
       }
     }
-
-    // Si no encontró título entre comillas, buscar después de "ACCIÓN POR EL PLANETA" o línea siguiente
     if (!titulo) {
       const altMatch = text.match(/ACCIÓN POR EL PLANETA\s*["""]?([^"""\n]+)/i)
       if (altMatch) {
         titulo = altMatch[1].trim()
       }
     }
-
     // Extraer descripción del RESUMEN DEL PROYECTO
     let descripcion = ""
     const resumenPatterns = [
       /1\.\s*(?:1\.\s*)?RESUMEN DEL PROYECTO\s*([\s\S]*?)(?=2\.\s*PALABRAS|PALABRAS CLAVE|$)/i,
       /RESUMEN DEL PROYECTO\s*([\s\S]*?)(?=PALABRAS|$)/i,
     ]
-
     for (const pattern of resumenPatterns) {
       const match = text.match(pattern)
       if (match) {
-        descripcion = match[1]
-          .replace(/\s+/g, " ")
-          .trim()
-          .substring(0, 1000) // Permitir descripciones más largas
+        descripcion = match[1].replace(/\s+/g, " ").trim()
         if (descripcion) break
       }
     }
-
-    // Extraer líneas de acción - buscar X después de cada opción
-    // El formato es: SERVICIO SOCIAL__X__ MEDIO AMBIENTE _X_
     const lineasAccion: LineaAccion = {
       educacion: /EDUCACI[OÓ]N\s*[_\s]*X[_\s]*/i.test(text),
       convivenciaCultura: /CONVIVENCIA\s*(Y|E)\s*CULTURA\s*[_\s]*X[_\s]*/i.test(text),
@@ -244,66 +278,67 @@ export default function SocialOutreachGenerator() {
       emprendimiento: /EMPRENDIMIENTO\s*[_\s]*X[_\s]*/i.test(text),
       servicioSocial: /SERVICIO\s*SOCIAL\s*[_\s]*X[_\s]*/i.test(text),
     }
-
-    // Extraer estudiantes - buscar en la tabla de NOMBRE(S) DEL (LOS) PROPONENTE(S)
     const estudiantes: Estudiante[] = []
-
-    // Intentar extraer datos de estudiantes de la tabla
-    // Buscar patrones como: NOMBRE CODIGO CEDULA
-    // Los datos suelen estar después de "NOMBRE(S) DEL (LOS) PROPONENTE(S)"
-
-    // Patrón para nombres con formato: Nombre Apellido seguido de números
     const estudianteRegex = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})\s+(\d{7,10})\s+(\d{8,12})/g
     let estudianteMatch
-
     while ((estudianteMatch = estudianteRegex.exec(text)) !== null) {
       const nombre = estudianteMatch[1].trim()
       const codigo = estudianteMatch[2].trim()
       const cedula = estudianteMatch[3].trim()
-
-      // Evitar duplicados y valores placeholder
       if (nombre && !nombre.includes("TODOS") && codigo && cedula) {
-        // Verificar que no sea un duplicado
-        const exists = estudiantes.some(e => e.codigo === codigo || e.cedula === cedula)
+        const exists = estudiantes.some(
+          (e) => e.codigo === codigo || e.cedula === cedula
+        )
         if (!exists) {
           estudiantes.push({ nombre, codigo, cedula })
         }
       }
     }
-
-    // Si no se encontraron estudiantes, agregar uno vacío para que el usuario lo llene
     if (estudiantes.length === 0) {
       estudiantes.push({ nombre: "", codigo: "", cedula: "" })
     }
-
     return {
       id: fileId,
       fileName,
-      titulo,
-      descripcion,
+      // Sanitización de texto extraído antes de guardar en estado
+      titulo: sanitizeText(titulo, MAX_TITLE_LENGTH),
+      descripcion: sanitizeText(descripcion, MAX_DESCRIPTION_LENGTH),
+      estudiantes: estudiantes.map((est) => ({
+        nombre: sanitizeText(est.nombre, MAX_NAME_LENGTH),
+        codigo: sanitizeText(est.codigo, MAX_CODE_LENGTH),
+        cedula: sanitizeText(est.cedula, MAX_ID_LENGTH),
+      })),
       lineasAccion,
-      estudiantes,
     }
   }
-
   const processNewFiles = async (newFiles: FileEntry[]) => {
     if (newFiles.length === 0) return
-
     setIsProcessing(true)
     const results: ExtractedData[] = []
-
     for (const entry of newFiles) {
       try {
         const text = await extractTextFromPDF(entry.file)
-        const data = parseExtractedText(text, entry.file.name, entry.id)
+        // Rechazar PDFs con JavaScript embebido antes de procesar
+        if (/\/(JS|JavaScript)\b/i.test(text)) {
+          Swal.fire({
+            icon: "error",
+            title: "PDF no permitido",
+            text: `El archivo "${entry.safeName}" contiene JavaScript embebido.`,
+          })
+          removeFile(entry.id)
+          continue
+        }
+        const data = parseExtractedText(text, entry.safeName, entry.id)
         results.push(data)
       } catch (error) {
-        console.error(`Error processing ${entry.file.name}:`, error)
+        Swal.fire({
+          icon: "error",
+          title: "Error al procesar",
+          text: `No se pudo procesar "${entry.safeName}".`,
+        })
       }
     }
-
     setExtractedData((prev) => [...prev, ...results])
-    // Auto-expand newly added items
     setExpandedIds((prev) => {
       const newSet = new Set(prev)
       results.forEach((r) => newSet.add(r.id))
@@ -311,7 +346,6 @@ export default function SocialOutreachGenerator() {
     })
     setIsProcessing(false)
   }
-
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
       const newSet = new Set(prev)
@@ -323,7 +357,6 @@ export default function SocialOutreachGenerator() {
       return newSet
     })
   }
-
   const updateLineaAccion = (
     dataId: string,
     linea: keyof LineaAccion,
@@ -337,17 +370,25 @@ export default function SocialOutreachGenerator() {
       )
     )
   }
-
   const updateField = (
     dataId: string,
     field: "titulo" | "descripcion",
     value: string
   ) => {
     setExtractedData((prev) =>
-      prev.map((item) => (item.id === dataId ? { ...item, [field]: value } : item))
+      prev.map((item) =>
+        item.id === dataId
+          ? {
+              ...item,
+              [field]:
+                field === "titulo"
+                  ? sanitizeText(value, MAX_TITLE_LENGTH)
+                  : sanitizeText(value, MAX_DESCRIPTION_LENGTH),
+            }
+          : item
+      )
     )
   }
-
   const updateEstudiante = (
     dataId: string,
     estudianteIndex: number,
@@ -359,15 +400,21 @@ export default function SocialOutreachGenerator() {
         item.id === dataId
           ? {
               ...item,
-              estudiantes: item.estudiantes.map((est, idx) =>
-                idx === estudianteIndex ? { ...est, [field]: value } : est
-              ),
+              estudiantes: item.estudiantes.map((est, idx) => {
+                if (idx !== estudianteIndex) return est
+                const maxLength =
+                  field === "nombre"
+                    ? MAX_NAME_LENGTH
+                    : field === "codigo"
+                    ? MAX_CODE_LENGTH
+                    : MAX_ID_LENGTH
+                return { ...est, [field]: sanitizeText(value, maxLength) }
+              }),
             }
           : item
       )
     )
   }
-
   const addEstudiante = (dataId: string) => {
     setExtractedData((prev) =>
       prev.map((item) =>
@@ -383,7 +430,6 @@ export default function SocialOutreachGenerator() {
       )
     )
   }
-
   const removeEstudiante = (dataId: string, estudianteIndex: number) => {
     setExtractedData((prev) =>
       prev.map((item) =>
@@ -398,13 +444,10 @@ export default function SocialOutreachGenerator() {
       )
     )
   }
-
   const exportToXLSX = () => {
     if (extractedData.length === 0) return
-
     const rows: any[] = []
     let rowNumber = 1
-
     extractedData.forEach((data) => {
       if (data.estudiantes.length === 0) {
         rows.push({
@@ -439,11 +482,9 @@ export default function SocialOutreachGenerator() {
         })
       }
     })
-
     const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Proyección Social")
-
     ws["!cols"] = [
       { wch: 5 },
       { wch: 40 },
@@ -457,10 +498,8 @@ export default function SocialOutreachGenerator() {
       { wch: 12 },
       { wch: 15 },
     ]
-
     XLSX.writeFile(wb, "proyeccion_social.xlsx")
   }
-
   const lineasAccionLabels: { key: keyof LineaAccion; label: string }[] = [
     { key: "educacion", label: "Educación" },
     { key: "convivenciaCultura", label: "Convivencia y Cultura" },
@@ -468,7 +507,6 @@ export default function SocialOutreachGenerator() {
     { key: "emprendimiento", label: "Emprendimiento" },
     { key: "servicioSocial", label: "Servicio Social" },
   ]
-
   return (
     <TooltipProvider>
       <div className="flex h-[calc(100vh-5rem)] bg-background">
@@ -508,7 +546,7 @@ export default function SocialOutreachGenerator() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">
-                            {entry.file.name}
+                            {entry.safeName}
                           </p>
                           {data && (
                             <p className="text-xs text-muted-foreground truncate">
@@ -526,7 +564,7 @@ export default function SocialOutreachGenerator() {
                                 e.stopPropagation()
                                 removeFile(entry.id)
                               }}
-                              aria-label={`Eliminar ${entry.file.name}`}
+                              aria-label={`Eliminar ${entry.safeName}`}
                             >
                               <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                             </Button>
@@ -579,7 +617,6 @@ export default function SocialOutreachGenerator() {
             </div>
           </CardContent>
         </Card>
-
         {/* Center Arrow Indicator */}
         <div className="flex items-center justify-center w-16 bg-muted/30 border-x">
           <div className="flex flex-col items-center gap-2">
@@ -589,7 +626,6 @@ export default function SocialOutreachGenerator() {
             </span>
           </div>
         </div>
-
         {/* Right Panel - XLSX Preview */}
         <Card className="flex-1 rounded-none border-y-0 border-r-0 flex flex-col">
           <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
@@ -704,7 +740,6 @@ export default function SocialOutreachGenerator() {
                                   placeholder="Ingrese el título del proyecto..."
                                 />
                               </div>
-
                               {/* Descripción */}
                               <div className="space-y-2">
                                 <Label htmlFor={`descripcion-${data.id}`}>
@@ -720,7 +755,6 @@ export default function SocialOutreachGenerator() {
                                   rows={3}
                                 />
                               </div>
-
                               {/* Líneas de Acción */}
                               <div className="space-y-3">
                                 <Label>Líneas de Acción</Label>
@@ -751,7 +785,6 @@ export default function SocialOutreachGenerator() {
                                   ))}
                                 </div>
                               </div>
-
                               {/* Estudiantes */}
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between">
@@ -833,7 +866,10 @@ export default function SocialOutreachGenerator() {
                                                   variant="ghost"
                                                   size="icon"
                                                   onClick={() =>
-                                                    removeEstudiante(data.id, estIndex)
+                                                    removeEstudiante(
+                                                      data.id,
+                                                      estIndex
+                                                    )
                                                   }
                                                   className="h-8 w-8"
                                                   disabled={
@@ -869,3 +905,12 @@ export default function SocialOutreachGenerator() {
     </TooltipProvider>
   )
 }
+/*
+Vectores mitigados
+- Spoofing de tipo/extensión: validación de magic number %PDF-.
+- Inyección de scripts en PDF: bloqueo de /JS o /JavaScript antes de parsear.
+- XSS/HTML injection en textos: sanitización de campos extraídos y inputs.
+- Abuso por archivos grandes o vacíos: límites estrictos de tamaño (1 byte–10 MB).
+- Abuso por ráfagas de carga: debounce de 300ms.
+- Nombre de archivo malicioso: sanitización y longitud máxima.
+*/
