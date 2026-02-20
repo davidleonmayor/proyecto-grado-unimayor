@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import moreDarkImage from '@/public/moreDark.png';
-import api from '@/app/lib/api';
+import { eventsService } from '@/modules/events/services/events.service';
+
 
 type ValuePiece = Date | null;
 
@@ -69,7 +70,7 @@ const EventCalendar = () => {
         try {
             setIsLoading(true);
             // For calendar widget, get first page with limit of 50 to show more events
-            const response = await api.getEvents(1, 50);
+            const response = await eventsService.getEvents({ page: 1, limit: 50 });
             const eventsData = response.events;
             // Events are already sorted by the backend, but ensure proper sorting for display
             const sortedEvents = eventsData.sort((a: Event, b: Event) => {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { projectsService } from '@/modules/projects/services/projects.service';
 import type { Project } from '@/modules/projects/types';
-import { useUserRole } from '@/app/hooks/useUserRole';
+import { useUserRole } from '@/shared/hooks/useUserRole';
 
 export default function ProjectsPage() {
     const { role, loading: roleLoading } = useUserRole();

@@ -2,7 +2,7 @@
 
 import { Calendar, momentLocalizer, View, Views } from 'react-big-calendar';
 import moment from 'moment'
-import { calendarEvents } from '../lib/data';
+import { calendarEvents } from '@/shared/lib/data';
 import { useState } from 'react';
 
 const localizer = momentLocalizer(moment)

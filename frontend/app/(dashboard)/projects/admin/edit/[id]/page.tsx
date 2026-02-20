@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Swal from 'sweetalert2';
-import RoleProtectedRoute from '../../../../../components/RoleProtectedRoute';
-import api from '../../../../../lib/api';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { projectsService } from '@/modules/projects/services/projects.service';
+
 
 interface FormData {
     modalities: Array<{ id: string; name: string }>;
@@ -99,11 +100,15 @@ function EditProjectPageContent() {
         setIsLoading(true);
         try {
             const [form, studentsData, advisorsData, project]: [FormData, Person[], Person[], ProjectDetail] = await Promise.all([
-                api.getFormData(),
-                api.getAvailableStudents(),
-                api.getAvailableAdvisors(),
-                api.getProjectById(id)
+                projectsService.getFormData(),
+                projectsService.getAvailableStudents(),
+                projectsService.getAvailableAdvisors(),
+                projectsService.getProjectById(id)
             ]);
+
+            if (form && form.statuses) {
+                form.statuses = form.statuses.filter((s: { id: string; name: string }) => s.name.trim().toLowerCase() !== 'en curso');
+            }
 
             setFormData(form);
 
@@ -308,7 +313,7 @@ function EditProjectPageContent() {
 
         setIsSaving(true);
         try {
-            await api.updateProject(projectId, {
+            await projectsService.updateProject(projectId, {
                 title,
                 summary,
                 objectives,

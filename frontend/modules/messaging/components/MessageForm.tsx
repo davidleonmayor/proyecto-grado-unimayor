@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { careersData } from "@/app/lib/data";
+import { careersData } from '@/shared/lib/data';
 import Swal from "sweetalert2";
 import { jsPDF } from "jspdf";
 

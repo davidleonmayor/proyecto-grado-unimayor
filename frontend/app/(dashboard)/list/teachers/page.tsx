@@ -1,20 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import TableSearch from "@/app/components/TableSearch";
+import TableSearch from '@/shared/components/ui/TableSearch';
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import plusImage from "@/public/plus.png";
-import Pagination from "@/app/components/Pagination";
-import Table from "@/app/components/Table";
+import Pagination from '@/shared/components/ui/Pagination';
+import Table from '@/shared/components/ui/Table';
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import FormModal from "@/app/components/FormModal";
-import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
-import { useUserRole } from "@/app/hooks/useUserRole";
-import api from "@/app/lib/api";
+import FormModal from '@/shared/components/ui/FormModal';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { useUserRole } from '@/shared/hooks/useUserRole';
+import { projectsService } from '@/modules/projects/services/projects.service';
+import { personsService } from '@/modules/persons/services/persons.service';
+
 
 type Teacher = {
     id: string;
@@ -29,13 +31,13 @@ type Teacher = {
 }
 
 const columns = [
-    { header: "Info", accesor: "info" },
-    { header: "Teléfono", accesor: "telefono", className: "hidden md:table-cell" },
-    // { header: "ID", accesor: "id", className: "hidden md:table-cell" },
-    { header: "Nombre", accesor: "nombre", className: "hidden md:table-cell" },
-    { header: "Carrera", accesor: "carrera", className: "hidden md:table-cell" },
-    // { header: "Email", accesor: "email", className: "hidden md:table-cell" },
-    { header: "Rol", accesor: "rol", className: "hidden md:table-cell" },
+    { header: "Info", accessor: "info" },
+    { header: "Teléfono", accessor: "telefono", className: "hidden md:table-cell" },
+    // { header: "ID", accessor: "id", className: "hidden md:table-cell" },
+    { header: "Nombre", accessor: "nombre", className: "hidden md:table-cell" },
+    { header: "Carrera", accessor: "carrera", className: "hidden md:table-cell" },
+    // { header: "Email", accessor: "email", className: "hidden md:table-cell" },
+    { header: "Rol", accessor: "rol", className: "hidden md:table-cell" },
 ]
 
 const TeacherListPageContent = () => {
@@ -87,7 +89,7 @@ const TeacherListPageContent = () => {
 
     const loadFaculties = async () => {
         try {
-            const formData = await api.getFormData();
+            const formData = await projectsService.getFormData();
             const uniqueFaculties = new Map<string, string>();
             formData.programs.forEach((p: any) => {
                 if (p.faculty && !uniqueFaculties.has(p.faculty)) {
@@ -103,10 +105,16 @@ const TeacherListPageContent = () => {
     const loadTeachers = async () => {
         try {
             setIsLoading(true);
-            const response = await api.getTeachers(currentPage, 10, searchTerm || undefined, filterRole !== 'all' ? filterRole : undefined, filterFaculty !== 'all' ? filterFaculty : undefined);
-            
+            const response = await personsService.getTeachers({
+                page: currentPage,
+                limit: 10,
+                search: searchTerm || undefined,
+                role: filterRole !== 'all' ? filterRole : undefined,
+                faculty: filterFaculty !== 'all' ? filterFaculty : undefined
+            });
+
             let sortedTeachers = [...response.teachers];
-            
+
             // Apply sorting
             if (sortBy === 'name') {
                 sortedTeachers.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -118,26 +126,26 @@ const TeacherListPageContent = () => {
                 sortedTeachers.sort((a, b) => (a.facultad || '').localeCompare(b.facultad || ''));
             }
 
-      setTeachers(sortedTeachers);
-      setPagination(response.pagination);
-      
-      // Extract unique roles from loaded teachers (including allRoles)
-      const uniqueRoles = new Set<string>();
-      sortedTeachers.forEach(t => {
-        uniqueRoles.add(t.rol);
-        // Also add all roles if available
-        if (t.allRoles && Array.isArray(t.allRoles)) {
-          t.allRoles.forEach((r: string) => uniqueRoles.add(r));
+            setTeachers(sortedTeachers);
+            setPagination(response.pagination);
+
+            // Extract unique roles from loaded teachers (including allRoles)
+            const uniqueRoles = new Set<string>();
+            sortedTeachers.forEach(t => {
+                uniqueRoles.add(t.rol);
+                // Also add all roles if available
+                if (t.allRoles && Array.isArray(t.allRoles)) {
+                    t.allRoles.forEach((r: string) => uniqueRoles.add(r));
+                }
+            });
+            setRoles(Array.from(uniqueRoles).sort());
+        } catch (error) {
+            console.error('Error loading teachers:', error);
+            setTeachers([]);
+        } finally {
+            setIsLoading(false);
         }
-      });
-      setRoles(Array.from(uniqueRoles).sort());
-    } catch (error) {
-      console.error('Error loading teachers:', error);
-      setTeachers([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
     const renderRow = (item: Teacher) => (
         <tr key={item.id} className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe]">
@@ -188,7 +196,7 @@ const TeacherListPageContent = () => {
                     <div className="flex items-center gap-4 self-end relative">
                         {/* Filter Button */}
                         <div className="relative filter-menu-container">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowFilterMenu(!showFilterMenu);
                                     setShowSortMenu(false);
@@ -243,7 +251,7 @@ const TeacherListPageContent = () => {
 
                         {/* Sort Button */}
                         <div className="relative sort-menu-container">
-                            <button 
+                            <button
                                 onClick={() => {
                                     setShowSortMenu(!showSortMenu);
                                     setShowFilterMenu(false);
@@ -310,8 +318,8 @@ const TeacherListPageContent = () => {
             ) : teachers.length === 0 ? (
                 <div className="text-center py-12">
                     <p className="text-gray-500">
-                        {searchTerm || filterRole !== 'all' || filterFaculty !== 'all' 
-                            ? 'No se encontraron profesores que coincidan con los filtros' 
+                        {searchTerm || filterRole !== 'all' || filterFaculty !== 'all'
+                            ? 'No se encontraron profesores que coincidan con los filtros'
                             : 'No hay profesores disponibles'}
                     </p>
                 </div>

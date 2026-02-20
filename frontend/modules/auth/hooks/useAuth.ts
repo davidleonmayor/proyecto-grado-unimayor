@@ -8,6 +8,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '../services/auth.service';
+import { dashboardService } from '@/modules/dashboard/services/dashboard.service';
 import { TokenManager } from '@/shared/lib/auth/token-manager';
 import type { User, RegisterData, LoginCredentials } from '../types';
 
@@ -50,7 +51,7 @@ export const useAuth = (): UseAuthReturn => {
       // Import dynamically to avoid circular dependencies
       const { projectsService } = await import('@/modules/projects/services/projects.service');
       const projects = await projectsService.getProjects();
-      
+
       const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
       const hasPrivilegedRole = projects.some((project: any) =>
         PRIVILEGED_ROLES.includes(project.role)
@@ -62,7 +63,7 @@ export const useAuth = (): UseAuthReturn => {
 
       if (hasPrivilegedRole) {
         try {
-          await projectsService.getDashboardStats();
+          await dashboardService.getDashboardStats();
           return '/admin';
         } catch {
           return '/teacher';

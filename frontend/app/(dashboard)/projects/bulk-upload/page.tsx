@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import BulkUploadProjects from '../../../components/BulkUploadProjects';
+import BulkUploadProjects from '@/modules/projects/components/BulkUploadProjects';
 
 export default function BulkUploadProjectsPage() {
     return (

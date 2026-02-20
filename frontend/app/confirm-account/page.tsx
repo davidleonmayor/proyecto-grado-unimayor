@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '@/modules/auth/hooks/useAuth';
 import Swal from 'sweetalert2';
 
 export default function ConfirmAccount() {

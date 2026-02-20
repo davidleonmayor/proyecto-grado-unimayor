@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { projectsService } from '@/modules/projects/services/projects.service';
+import { dashboardService } from '@/modules/dashboard/services/dashboard.service';
 
 export type UserRole = 'student' | 'teacher' | 'admin' | 'dean' | null;
 
@@ -65,7 +66,7 @@ export const useUserRole = (): { role: UserRole; loading: boolean } => {
           // If no clear role from projects (e.g., a teacher with no projects assigned yet),
           // try to access the teacher dashboard stats to determine if they are a teacher.
           try {
-            await projectsService.getTeacherDashboardStats();
+            await dashboardService.getTeacherDashboardStats();
             setRole('teacher');
           } catch {
             // If that fails, default to student

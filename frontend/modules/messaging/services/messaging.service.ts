@@ -83,6 +83,19 @@ export class MessagingService extends BaseApiClient {
             requiresAuth: true
         });
     }
+
+    async getUnreadCount(): Promise<{ unreadCount: number }> {
+        return this.request<{ unreadCount: number }>('/api/messaging/unread-count', {
+            requiresAuth: true
+        });
+    }
+
+    async markConversationRead(userId: string): Promise<{ markedRead: number }> {
+        return this.request<{ markedRead: number }>(`/api/messaging/conversation/${userId}/read`, {
+            method: 'PUT',
+            requiresAuth: true
+        });
+    }
 }
 
 export const messagingService = new MessagingService();

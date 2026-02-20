@@ -280,12 +280,35 @@ export class ProjectController {
 
             if (!userId) return res.status(401).json({ error: "No autorizado" });
 
-            const actor = await prisma.actores.findFirst({
+            let actor = await prisma.actores.findFirst({
                 where: {
                     id_persona: userId,
                     id_trabajo_grado: id
                 }
             });
+
+            if (!actor) {
+                // Provide emergency actor link for coordinators and deans
+                const userRoles = await prisma.actores.findMany({
+                    where: { id_persona: userId },
+                    include: { tipo_rol: true }
+                });
+
+                const privilegedRole = userRoles.find(r =>
+                    ["admin", "Administrador", "Admin", "Coordinador de Carrera", "Coordinador", "Decano"].includes(r.tipo_rol.nombre_rol)
+                );
+
+                if (privilegedRole) {
+                    actor = await prisma.actores.create({
+                        data: {
+                            id_persona: userId,
+                            id_trabajo_grado: id,
+                            id_tipo_rol: privilegedRole.id_tipo_rol,
+                            estado: "Activo"
+                        }
+                    });
+                }
+            }
 
             if (!actor) return res.status(403).json({ error: "No tienes permiso en este proyecto" });
 

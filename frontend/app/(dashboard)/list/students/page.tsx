@@ -1,20 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import TableSearch from "@/app/components/TableSearch";
+import TableSearch from '@/shared/components/ui/TableSearch';
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import plusImage from "@/public/plus.png";
-import Pagination from "@/app/components/Pagination";
-import Table from "@/app/components/Table";
+import Pagination from '@/shared/components/ui/Pagination';
+import Table from '@/shared/components/ui/Table';
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import FormModal from "@/app/components/FormModal";
-import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
-import { useUserRole } from "@/app/hooks/useUserRole";
-import api from "@/app/lib/api";
+import FormModal from '@/shared/components/ui/FormModal';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { useUserRole } from '@/shared/hooks/useUserRole';
+import { projectsService } from '@/modules/projects/services/projects.service';
+import { personsService } from '@/modules/persons/services/persons.service';
+
 
 type Student = {
   id: string;
@@ -29,10 +31,10 @@ type Student = {
 };
 
 const columns = [
-  { header: "Info", accesor: "info" },
-  { header: "Carrera", accesor: "carrera", className: "hidden md:table-cell" },
-  { header: "Opción de Grado", accesor: "opcionGrado", className: "hidden md:table-cell" },
-  { header: "Estado", accesor: "estado", className: "hidden md:table-cell" },
+  { header: "Info", accessor: "info" },
+  { header: "Carrera", accessor: "carrera", className: "hidden md:table-cell" },
+  { header: "Opción de Grado", accessor: "opcionGrado", className: "hidden md:table-cell" },
+  { header: "Estado", accessor: "estado", className: "hidden md:table-cell" },
 ];
 
 const StudentListPageContent = () => {
@@ -84,7 +86,7 @@ const StudentListPageContent = () => {
 
   const loadFormData = async () => {
     try {
-      const formData = await api.getFormData();
+      const formData = await projectsService.getFormData();
       setPrograms(formData.programs || []);
       const uniqueFaculties = new Map<string, string>();
       formData.programs.forEach((p: any) => {
@@ -101,10 +103,16 @@ const StudentListPageContent = () => {
   const loadStudents = async () => {
     try {
       setIsLoading(true);
-      const response = await api.getStudents(currentPage, 10, searchTerm || undefined, filterProgram !== 'all' ? filterProgram : undefined, filterFaculty !== 'all' ? filterFaculty : undefined);
-      
+      const response = await personsService.getStudents({
+        page: currentPage,
+        limit: 10,
+        search: searchTerm || undefined,
+        program: filterProgram !== 'all' ? filterProgram : undefined,
+        faculty: filterFaculty !== 'all' ? filterFaculty : undefined
+      });
+
       let sortedStudents = [...response.students];
-      
+
       // Apply sorting
       if (sortBy === 'name') {
         sortedStudents.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -179,7 +187,7 @@ const StudentListPageContent = () => {
           <div className="flex items-center gap-4 self-end relative">
             {/* Filter Button */}
             <div className="relative filter-menu-container">
-              <button 
+              <button
                 onClick={() => {
                   setShowFilterMenu(!showFilterMenu);
                   setShowSortMenu(false);
@@ -234,7 +242,7 @@ const StudentListPageContent = () => {
 
             {/* Sort Button */}
             <div className="relative sort-menu-container">
-              <button 
+              <button
                 onClick={() => {
                   setShowSortMenu(!showSortMenu);
                   setShowFilterMenu(false);
@@ -301,8 +309,8 @@ const StudentListPageContent = () => {
       ) : students.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500">
-            {searchTerm || filterProgram !== 'all' || filterFaculty !== 'all' 
-              ? 'No se encontraron estudiantes que coincidan con los filtros' 
+            {searchTerm || filterProgram !== 'all' || filterFaculty !== 'all'
+              ? 'No se encontraron estudiantes que coincidan con los filtros'
               : 'No hay estudiantes disponibles'}
           </p>
         </div>

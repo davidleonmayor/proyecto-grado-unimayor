@@ -10,11 +10,12 @@ import singleAttendanceImage from "@/public/singleAttendance.png";
 import singleBranch from "@/public/singleBranch.png";
 import singleClass from "@/public/singleClass.png";
 import singleLesson from "@/public/singleLesson.png";
-import EventCalendar from "@/app/components/EventCalendar";
+import EventCalendar from '@/modules/events/components/EventCalendar';
 import Link from "next/link";
-import FormModal from "@/app/components/FormModal";
-import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
-import api from "@/app/lib/api";
+import FormModal from '@/shared/components/ui/FormModal';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { personsService } from '@/modules/persons/services/persons.service';
+
 
 const SingleStudentPageContent = () => {
     const params = useParams();
@@ -30,7 +31,7 @@ const SingleStudentPageContent = () => {
     const loadStudent = async () => {
         try {
             setIsLoading(true);
-            const data = await api.getPersonById(studentId);
+            const data = await personsService.getPersonById(studentId);
             setStudent(data);
             setProject(data.studentProjects?.[0] || null);
         } catch (error) {

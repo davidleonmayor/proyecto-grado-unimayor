@@ -2,9 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../../../lib/api';
+
 import Swal from 'sweetalert2';
-import RoleProtectedRoute from '../../../../components/RoleProtectedRoute';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { projectsService } from '@/modules/projects/services/projects.service';
+import { authService } from '@/modules/auth/services/auth.service';
 
 interface FormData {
     modalities: Array<{ id: string; name: string }>;
@@ -68,10 +70,14 @@ function NewProjectPageContent() {
     const loadInitialData = async () => {
         try {
             const [form, advisorsData, userData] = await Promise.all([
-                api.getFormData(),
-                api.getAvailableAdvisors(),
-                api.getCurrentUser()
+                projectsService.getFormData(),
+                projectsService.getAvailableAdvisors(),
+                authService.getCurrentUser()
             ]);
+
+            if (form && form.statuses) {
+                form.statuses = form.statuses.filter((s: { id: string; name: string }) => s.name.trim().toLowerCase() !== 'en curso');
+            }
 
             setFormData(form);
             setAllAdvisors(advisorsData);
@@ -98,7 +104,7 @@ function NewProjectPageContent() {
 
     const loadAllStudents = async () => {
         try {
-            const studentsData = await api.getAvailableStudents();
+            const studentsData = await projectsService.getAvailableStudents();
             setAllStudents(studentsData);
             setStudents(studentsData);
         } catch (error) {
@@ -108,7 +114,7 @@ function NewProjectPageContent() {
 
     const loadStudentsByProgram = async (programId: string) => {
         try {
-            const studentsData = await api.getAvailableStudents(programId);
+            const studentsData = await projectsService.getAvailableStudents(programId);
             setAllStudents(studentsData);
             // Apply search filter if exists
             filterStudents(studentsData, studentSearch);
@@ -231,7 +237,7 @@ function NewProjectPageContent() {
         }
 
         try {
-            await api.createProject({
+            await projectsService.createProject({
                 title,
                 summary,
                 objectives,

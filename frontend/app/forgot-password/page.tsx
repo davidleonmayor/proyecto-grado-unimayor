@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../lib/api';
+
 import Swal from 'sweetalert2';
+import { authService } from '@/modules/auth/services/auth.service';
 
 export default function ForgotPassword() {
     const [email, setEmail] = useState('');
@@ -16,7 +17,7 @@ export default function ForgotPassword() {
         setIsLoading(true);
 
         try {
-            const response = await api.forgotPassword(email);
+            const response = await authService.forgotPassword(email);
 
             // Extract token from response if available
             const tokenMatch = response.match(/Token:\s*([A-Z0-9]{6})/);

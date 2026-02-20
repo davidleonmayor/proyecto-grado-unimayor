@@ -473,4 +473,69 @@ export class MessagingController {
             res.status(500).json({ error: 'Error fetching conversations' });
         }
     }
+
+    /**
+     * Lightweight endpoint: returns only the total unread message count.
+     * Used by the Navbar for efficient polling.
+     */
+    public async getUnreadCount(req: Request, res: Response): Promise<void> {
+        try {
+            const user = (req as any).user;
+            if (!user) {
+                res.status(401).json({ error: 'No autorizado' });
+                return;
+            }
+
+            const count = await (prisma as any).mensaje_entrega.count({
+                where: {
+                    id_receptor: user.id_persona,
+                    estado: 'PENDING',
+                    mensaje: {
+                        id_emisor: { not: user.id_persona }
+                    }
+                }
+            });
+
+            res.json({ unreadCount: count });
+        } catch (error) {
+            console.error('[getUnreadCount] Error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
+
+    /**
+     * Mark all messages from a specific peer as READ.
+     * Called when the user opens a conversation.
+     */
+    public async markConversationRead(req: Request, res: Response): Promise<void> {
+        try {
+            const user = (req as any).user;
+            const peerId = req.params.userId;
+
+            if (!user || !peerId) {
+                res.status(400).json({ error: 'Faltan parámetros' });
+                return;
+            }
+
+            // Update all PENDING deliveries where I am the recipient and the peer is the sender
+            const result = await (prisma as any).mensaje_entrega.updateMany({
+                where: {
+                    id_receptor: user.id_persona,
+                    estado: 'PENDING',
+                    mensaje: {
+                        id_emisor: peerId
+                    }
+                },
+                data: {
+                    estado: 'READ',
+                    fecha_lectura: new Date()
+                }
+            });
+
+            res.json({ markedRead: result.count });
+        } catch (error) {
+            console.error('[markConversationRead] Error:', error);
+            res.status(500).json({ error: 'Server error' });
+        }
+    }
 }

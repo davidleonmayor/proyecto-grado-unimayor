@@ -59,7 +59,14 @@ const menuItems: MenuSection[] = [
   },
   {
     title: 'CONFIGURACIÓN',
-    items: [],
+    items: [
+      {
+        icon: '/profile.png',
+        label: 'Perfil',
+        href: '/profile',
+        visible: ['admin', 'teacher', 'dean', 'student'],
+      },
+    ],
   },
 ];
 

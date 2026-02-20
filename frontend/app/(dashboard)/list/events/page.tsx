@@ -1,19 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import TableSearch from "@/app/components/TableSearch";
+import TableSearch from '@/shared/components/ui/TableSearch';
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import plusImage from "@/public/plus.png";
-import Pagination from "@/app/components/Pagination";
-import Table from "@/app/components/Table";
+import Pagination from '@/shared/components/ui/Pagination';
+import Table from '@/shared/components/ui/Table';
 import Link from "next/link";
 import viewImage from "@/public/view.png";
-import FormModal from "@/app/components/FormModal";
-import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
-import { useUserRole } from "@/app/hooks/useUserRole";
-import api from "@/app/lib/api";
+import FormModal from '@/shared/components/ui/FormModal';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { useUserRole } from '@/shared/hooks/useUserRole';
+import { projectsService } from '@/modules/projects/services/projects.service';
+import { eventsService } from '@/modules/events/services/events.service';
+
 
 interface Event {
   id: string;
@@ -31,12 +33,12 @@ interface Event {
 }
 
 const columns = [
-  { header: "Evento", accesor: "title" },
-  { header: "Fecha", accesor: "fecha", className: "hidden md:table-cell" },
-  { header: "Hora inicio", accesor: "horaInicio", className: "hidden md:table-cell" },
-  { header: "Hora fin", accesor: "horaFin", className: "hidden md:table-cell" },
-  { header: "Prioridad", accesor: "prioridad", className: "hidden md:table-cell" },
-  { header: "Días restantes", accesor: "daysRemaining", className: "hidden md:table-cell" },
+  { header: "Evento", accessor: "title" },
+  { header: "Fecha", accessor: "fecha", className: "hidden md:table-cell" },
+  { header: "Hora inicio", accessor: "horaInicio", className: "hidden md:table-cell" },
+  { header: "Hora fin", accessor: "horaFin", className: "hidden md:table-cell" },
+  { header: "Prioridad", accessor: "prioridad", className: "hidden md:table-cell" },
+  { header: "Días restantes", accessor: "daysRemaining", className: "hidden md:table-cell" },
 ];
 
 const EventListPageContent = () => {
@@ -88,7 +90,7 @@ const EventListPageContent = () => {
 
   const checkIfCoordinator = async () => {
     try {
-      const projects = await api.getProjects();
+      const projects = await projectsService.getProjects();
       const hasCoordinatorRole = projects.some((project: any) =>
         project.role === 'Coordinador de Carrera'
       );
@@ -102,9 +104,9 @@ const EventListPageContent = () => {
   const loadEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await api.getEvents(currentPage, 10);
+      const response = await eventsService.getEvents({ page: currentPage, limit: 10 });
       const eventsData = response.events;
-      
+
       // Apply client-side filters and sorting
       let filtered = [...eventsData];
 
@@ -274,7 +276,7 @@ const EventListPageContent = () => {
           <div className="flex items-center gap-4 self-end relative">
             {/* Filter Button */}
             <div className="relative filter-menu-container">
-              <button 
+              <button
                 onClick={() => {
                   setShowFilterMenu(!showFilterMenu);
                   setShowSortMenu(false);
@@ -329,7 +331,7 @@ const EventListPageContent = () => {
 
             {/* Sort Button */}
             <div className="relative sort-menu-container">
-              <button 
+              <button
                 onClick={() => {
                   setShowSortMenu(!showSortMenu);
                   setShowFilterMenu(false);

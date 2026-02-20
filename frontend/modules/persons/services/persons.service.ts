@@ -8,13 +8,13 @@ import type { Teacher, Student, Person } from '../types';
 import type { PaginationParams, PaginationResponse } from '@/shared/types/common';
 
 export interface TeachersResponse {
-  teachers: Teacher[];
-  pagination: PaginationResponse;
+  teachers: any[];
+  pagination: any;
 }
 
 export interface StudentsResponse {
-  students: Student[];
-  pagination: PaginationResponse;
+  students: any[];
+  pagination: any;
 }
 
 export class PersonsService extends BaseApiClient {
@@ -26,7 +26,7 @@ export class PersonsService extends BaseApiClient {
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (role && role !== 'all') url += `&role=${encodeURIComponent(role)}`;
     if (faculty && faculty !== 'all') url += `&faculty=${encodeURIComponent(faculty)}`;
-    
+
     return this.request<TeachersResponse>(url, {
       requiresAuth: true,
     });
@@ -40,7 +40,7 @@ export class PersonsService extends BaseApiClient {
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (program && program !== 'all') url += `&program=${encodeURIComponent(program)}`;
     if (faculty && faculty !== 'all') url += `&faculty=${encodeURIComponent(faculty)}`;
-    
+
     return this.request<StudentsResponse>(url, {
       requiresAuth: true,
     });

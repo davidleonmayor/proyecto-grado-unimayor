@@ -1,8 +1,10 @@
 'use client'
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAuth } from "./hooks/useAuth";
-import api from "./lib/api";
+import { useAuth } from '@/modules/auth/hooks/useAuth';
+import { projectsService } from '@/modules/projects/services/projects.service';
+import { dashboardService } from '@/modules/dashboard/services/dashboard.service';
+
 
 export default function Home() {
   const router = useRouter();
@@ -21,7 +23,7 @@ export default function Home() {
 
       try {
         // Get user's projects to determine role
-        const projects = await api.getProjects();
+        const projects = await projectsService.getProjects();
         
         // Check if user has privileged roles
         const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
@@ -45,7 +47,7 @@ export default function Home() {
           } else {
             // For other privileged roles, check if they have admin access
             try {
-              await api.getDashboardStats();
+              await dashboardService.getDashboardStats();
               router.push('/admin');
             } catch {
               // If not admin privileges, use teacher dashboard

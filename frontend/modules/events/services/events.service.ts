@@ -8,8 +8,8 @@ import type { Event, EventFormData } from '../types';
 import type { PaginationParams, PaginationResponse } from '@/shared/types/common';
 
 export interface EventsResponse {
-  events: Event[];
-  pagination: PaginationResponse;
+  events: any[];
+  pagination: any;
 }
 
 export class EventsService extends BaseApiClient {
@@ -25,7 +25,7 @@ export class EventsService extends BaseApiClient {
     );
   }
 
-  async createEvent(eventData: EventFormData): Promise<Event> {
+  async createEvent(eventData: any): Promise<Event> {
     return this.request<Event>('/api/events', {
       method: 'POST',
       requiresAuth: true,
@@ -33,7 +33,7 @@ export class EventsService extends BaseApiClient {
     });
   }
 
-  async updateEvent(id: string, eventData: Partial<EventFormData>): Promise<Event> {
+  async updateEvent(id: string, eventData: any): Promise<Event> {
     return this.request<Event>(`/api/events/${id}`, {
       method: 'PUT',
       requiresAuth: true,

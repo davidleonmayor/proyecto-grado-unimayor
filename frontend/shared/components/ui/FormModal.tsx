@@ -3,20 +3,21 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { JSX, useState } from "react";
-import api from "@/app/lib/api";
+
 import Swal from "sweetalert2";
-// import TeacherForm from "./forms/TeacherForm";
-// import StudentForm from "./forms/StudentForm";
+// import TeacherForm from '@/modules/persons/components/TeacherForm';
+// import StudentForm from '@/modules/persons/components/StudentForm';
+import { eventsService } from '@/modules/events/services/events.service';
 
-const TeacherForm = dynamic(() => import("./forms/TeacherForm"), {
+const TeacherForm = dynamic(() => import('@/modules/persons/components/TeacherForm'), {
     loading: () => <p>cargando...</p>,
 });
 
-const StudentForm = dynamic(() => import("./forms/StudentForm"), {
+const StudentForm = dynamic(() => import('@/modules/persons/components/StudentForm'), {
     loading: () => <p>cargando...</p>,
 });
 
-const EventForm = dynamic(() => import("./forms/EventForm"), {
+const EventForm = dynamic(() => import('@/modules/events/components/EventForm'), {
     loading: () => <p>cargando...</p>,
 });
 
@@ -32,7 +33,7 @@ const DeleteForm = ({ table, id, onClose }: { table: string; id: number | string
     const handleDelete = async () => {
         try {
             if (table === "event") {
-                await api.deleteEvent(String(id));
+                await eventsService.deleteEvent(String(id));
                 Swal.fire('Éxito', 'Evento eliminado correctamente', 'success');
             } else if (table === "teacher" || table === "student") {
                 // TODO: Implement delete person endpoint

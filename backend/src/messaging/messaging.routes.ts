@@ -28,6 +28,12 @@ export class MessagingRoutes {
         // Get recent conversations grouped by person
         this.router.get("/conversations", this.authMiddleware.isAuthenticatedUser.bind(this.authMiddleware), this.messagingController.getRecentConversations.bind(this.messagingController));
 
+        // Get unread message count (lightweight, for polling)
+        this.router.get("/unread-count", this.authMiddleware.isAuthenticatedUser.bind(this.authMiddleware), this.messagingController.getUnreadCount.bind(this.messagingController));
+
+        // Mark conversation as read
+        this.router.put("/conversation/:userId/read", this.authMiddleware.isAuthenticatedUser.bind(this.authMiddleware), this.messagingController.markConversationRead.bind(this.messagingController));
+
         // Internal Webhook Consumer path (does NOT require user auth, requires secret validation)
         this.router.post("/webhook/consume", this.messagingController.consumeWebhook.bind(this.messagingController));
     }

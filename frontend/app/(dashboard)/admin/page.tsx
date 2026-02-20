@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import CountCharts from "@/app/components/CountCharts";
-import UserCard from "@/app/components/UserCard";
-import ProjectStatusChart from "@/app/components/ProjectStatusChart";
-import FinanceChart from "@/app/components/FinanceChart";
-import EventCalendar from "@/app/components/EventCalendar";
-import RoleProtectedRoute from "@/app/components/RoleProtectedRoute";
-import api from "@/app/lib/api";
+import CountCharts from '@/modules/dashboard/components/CountCharts';
+import UserCard from '@/modules/dashboard/components/UserCard';
+import ProjectStatusChart from '@/modules/dashboard/components/ProjectStatusChart';
+import FinanceChart from '@/modules/dashboard/components/FinanceChart';
+import EventCalendar from '@/modules/events/components/EventCalendar';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import { dashboardService } from '@/modules/dashboard/services/dashboard.service';
+
 
 function AdminPageContent() {
   const [stats, setStats] = useState<any>(null);
@@ -16,7 +17,7 @@ function AdminPageContent() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const data = await api.getDashboardStats();
+        const data = await dashboardService.getDashboardStats();
         setStats(data);
       } catch (error) {
         console.error('Error loading stats:', error);

@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import api from '../../../lib/api';
+
 import Swal from 'sweetalert2';
-import RoleProtectedRoute from '../../../components/RoleProtectedRoute';
-import BulkUploadProjects from '../../../components/BulkUploadProjects';
+import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
+import BulkUploadProjects from '@/modules/projects/components/BulkUploadProjects';
+import { projectsService } from '@/modules/projects/services/projects.service';
 interface Project {
     id: string;
     title: string;
@@ -29,7 +30,7 @@ function AdminProjectsPageContent() {
     const loadProjects = async () => {
         try {
             setIsLoading(true);
-            const data = await api.getAllProjects();
+            const data = await projectsService.getAllProjects();
             setProjects(data);
             setError(null);
         } catch (err: any) {
@@ -62,7 +63,7 @@ function AdminProjectsPageContent() {
 
         if (result.isConfirmed) {
             try {
-                await api.deleteProject(projectId);
+                await projectsService.deleteProject(projectId);
                 await Swal.fire('Eliminado', 'Proyecto eliminado exitosamente', 'success');
                 loadProjects(); // Refresh list
             } catch (error) {
@@ -140,12 +141,12 @@ function AdminProjectsPageContent() {
                                         <td className="px-6 py-5 whitespace-nowrap align-top">
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'Aprobado' ? 'bg-emerald-500' :
-                                                        project.status === 'Rechazado' ? 'bg-rose-500' :
-                                                            'bg-amber-400'
+                                                    project.status === 'Rechazado' ? 'bg-rose-500' :
+                                                        'bg-amber-400'
                                                     }`}></span>
                                                 <span className={`text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded border ${project.status === 'Aprobado' ? 'text-emerald-700 border-emerald-200' :
-                                                        project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
-                                                            'text-amber-700 border-amber-200'
+                                                    project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
+                                                        'text-amber-700 border-amber-200'
                                                     }`}>
                                                     {project.status}
                                                 </span>

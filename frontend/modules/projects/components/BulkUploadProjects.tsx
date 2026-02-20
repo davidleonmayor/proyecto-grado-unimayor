@@ -93,74 +93,73 @@ export const BulkUploadProjects = ({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-          <div className="flex-1">
-            <h2 className="text-lg font-semibold text-gray-800">Carga masiva de proyectos</h2>
-            <p className="text-sm text-gray-600 mt-2">
-              Importa múltiples proyectos a la vez usando un archivo Excel. Asegúrate de que los
-              datos hagan referencia a registros existentes en el sistema (modalidades, programas,
-              estados, estudiantes y asesores).
-            </p>
-            <ul className="mt-4 text-sm text-gray-600 list-disc pl-5 space-y-1">
-              <li>
-                <span className="font-semibold">Columnas obligatorias:</span> Titulo, Modalidad,
-                Estado, Programa, Fecha_inicio, Estudiantes.
-              </li>
-              <li>
-                <span className="font-semibold">Columnas opcionales:</span> Resumen, Objetivos,
-                Empresa, Fecha_fin, Asesores.
-              </li>
-              <li>
-                Utiliza formato de fecha AAAA-MM-DD. Las listas (estudiantes/asesores) se separan
-                con punto y coma (;).
-              </li>
-              <li>
-                Máximo 2 estudiantes y 2 asesores por fila. Un estudiante no puede repetirse en
-                varios proyectos.
-              </li>
-            </ul>
+      <div className="bg-white rounded-lg border border-gray-100 p-8">
+        <div className="flex flex-col gap-8 md:flex-row md:items-start max-w-5xl mx-auto">
+          <div className="flex-1 space-y-4">
+            <div>
+              <h2 className="text-xl font-medium text-gray-900 tracking-tight">Carga Masiva de Proyectos</h2>
+              <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                Importa múltiples proyectos mediante un archivo Excel (.xlsx, .xls).
+              </p>
+            </div>
+
+            <div className="text-xs text-gray-500 bg-gray-50 p-4 rounded-md border border-gray-100 space-y-2">
+              <p><span className="font-semibold text-gray-700">Columnas obligatorias:</span> Titulo, Modalidad, Estado, Programa, Fecha_inicio, Estudiantes.</p>
+              <p><span className="font-semibold text-gray-700">Columnas opcionales:</span> Resumen, Objetivos, Empresa, Fecha_fin, Asesores.</p>
+              <p><span className="font-semibold text-gray-700">Formato:</span> Fechas AAAA-MM-DD. Listas separadas por (;). Máx. 2 estudiantes/asesores.</p>
+            </div>
           </div>
 
-          <div className="w-full lg:w-80">
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="bulk-upload">
-              Archivo Excel (.xlsx o .xls)
-            </label>
-            <input
-              id="bulk-upload"
-              ref={fileInputRef}
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleFileChange}
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-            <p className="text-xs text-gray-500 mt-2">
-              {selectedFile ? `Archivo seleccionado: ${selectedFile.name}` : 'Tamaño máximo 5MB.'}
-            </p>
-            <div className="mt-4 flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={handleBulkUpload}
-                disabled={!selectedFile || isImporting}
-                className={`inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold text-white transition-colors ${
-                  !selectedFile || isImporting
-                    ? 'bg-blue-300 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700'
-                }`}
-              >
-                {isImporting ? 'Procesando...' : 'Importar proyectos'}
-              </button>
+          <div className="w-full md:w-[380px] flex flex-col gap-4">
+            <div className="relative group">
+              <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-all ${selectedFile ? 'border-gray-800 bg-gray-50' : 'border-gray-200 hover:border-gray-400 bg-white'}`}>
+                <input
+                  id="bulk-upload"
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+
+                {!selectedFile ? (
+                  <div className="space-y-2 pointer-events-none">
+                    <svg className="mx-auto h-8 w-8 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <div className="text-sm font-medium text-gray-700">Haz clic o arrastra un archivo</div>
+                    <div className="text-xs text-gray-400">Excel hasta 5MB</div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 pointer-events-none">
+                    <svg className="mx-auto h-8 w-8 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="text-sm font-medium text-gray-900 truncate px-2">{selectedFile.name}</div>
+                    <div className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
                 disabled={isDownloadingTemplate}
-                className={`inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-semibold border transition-colors ${
-                  isDownloadingTemplate
-                    ? 'border-gray-300 text-gray-400 cursor-not-allowed'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                }`}
+                className="flex-1 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 disabled:opacity-50 transition-colors"
+                title="Descargar Plantilla"
               >
-                {isDownloadingTemplate ? 'Generando plantilla...' : 'Descargar plantilla'}
+                {isDownloadingTemplate ? 'Generando...' : 'Plantilla'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleBulkUpload}
+                disabled={!selectedFile || isImporting}
+                className="flex-[2] px-4 py-2.5 bg-gray-900 text-white border border-transparent text-sm font-medium rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-200 disabled:text-gray-500 transition-colors"
+              >
+                {isImporting ? 'Procesando...' : 'Importar Archivo'}
               </button>
             </div>
           </div>
@@ -168,68 +167,55 @@ export const BulkUploadProjects = ({
       </div>
 
       {importSummary && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+        <div className="bg-white rounded-lg border border-gray-100 p-8">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-800">Resumen de importación</h2>
-              <p className="text-sm text-gray-500">
-                Total filas procesadas: {importSummary.totalRows}
+              <h3 className="text-lg font-medium text-gray-900">Resultados de Importación</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {importSummary.totalRows} filas procesadas en total
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 text-sm">
-              <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 font-medium">
-                Importados: {importSummary.imported}
-              </span>
-              <span
-                className={`px-3 py-1 rounded-full font-medium ${
-                  importSummary.failed
-                    ? 'bg-red-50 text-red-700'
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                Errores: {importSummary.failed}
-              </span>
+            <div className="flex gap-4 text-sm bg-gray-50 rounded-md p-1 border border-gray-100">
+              <div className="px-4 py-2 rounded bg-white shadow-sm border border-gray-100">
+                <span className="text-gray-500 mr-2">Exitosos</span>
+                <span className="font-semibold text-gray-900">{importSummary.imported}</span>
+              </div>
+              <div className="px-4 py-2 rounded bg-white shadow-sm border border-gray-100">
+                <span className="text-gray-500 mr-2">Errores</span>
+                <span className="font-semibold text-gray-900">{importSummary.failed}</span>
+              </div>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
+          <div className="border border-gray-100 rounded-md overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-100 text-sm">
+              <thead className="bg-gray-50/50">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                    Fila
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                    Título
-                  </th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider">
-                    Mensajes
-                  </th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-500">Fila</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-500">Estado</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-500">Proyecto</th>
+                  <th className="px-6 py-3 text-left font-medium text-gray-500">Detalles</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-50">
                 {importSummary.rows.map((row) => (
                   <tr key={`${row.row}-${row.title ?? ''}-${row.status}`}>
-                    <td className="px-4 py-3 text-gray-900 font-medium">{row.row}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          row.status === 'success'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {row.status === 'success' ? 'Importado' : 'Error'}
-                      </span>
+                    <td className="px-6 py-4 text-gray-500">{row.row}</td>
+                    <td className="px-6 py-4">
+                      {row.status === 'success' ? (
+                        <span className="text-green-600 font-medium whitespace-nowrap">✓ Importado</span>
+                      ) : (
+                        <span className="text-red-600 font-medium whitespace-nowrap">✕ Error</span>
+                      )}
                     </td>
-                    <td className="px-4 py-3 text-gray-900">{row.title || 'Sin título'}</td>
-                    <td className="px-4 py-3">
-                      <ul className="list-disc pl-5 space-y-1 text-gray-700">
+                    <td className="px-6 py-4 text-gray-900 font-medium">{row.title || '—'}</td>
+                    <td className="px-6 py-4">
+                      <ul className="space-y-1 text-gray-600">
                         {row.messages.map((message, index) => (
-                          <li key={`${row.row}-message-${index}`}>{message}</li>
+                          <li key={`${row.row}-message-${index}`} className="flex items-start">
+                            <span className="mr-2 text-gray-400">•</span>
+                            <span>{message}</span>
+                          </li>
                         ))}
                       </ul>
                     </td>

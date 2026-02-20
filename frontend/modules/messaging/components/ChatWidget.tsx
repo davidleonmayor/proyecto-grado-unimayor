@@ -43,11 +43,13 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
         }
     }, [isOpen, isAuth]);
 
-    // Load conversation when active user changes + start polling
+    // Load conversation when active user changes + start polling + mark as read
     useEffect(() => {
         if (activeChatUser) {
             loadConversation(activeChatUser.id_persona);
             startPolling(activeChatUser.id_persona);
+            // Mark messages from this peer as read
+            messagingService.markConversationRead(activeChatUser.id_persona).catch(() => { });
         } else {
             stopPolling();
         }
@@ -77,10 +79,17 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
                 const data = await messagingService.getConversation(userId);
                 setMessages(prev => {
                     // Only update if there are new messages (avoid unnecessary re-renders)
-                    if (data.length !== prev.length) return data;
+                    if (data.length !== prev.length) {
+                        // Mark as read since user is viewing this conversation
+                        messagingService.markConversationRead(userId).catch(() => { });
+                        return data;
+                    }
                     const lastNew = data[data.length - 1];
                     const lastOld = prev[prev.length - 1];
-                    if (lastNew?.id_entrega !== lastOld?.id_entrega) return data;
+                    if (lastNew?.id_entrega !== lastOld?.id_entrega) {
+                        messagingService.markConversationRead(userId).catch(() => { });
+                        return data;
+                    }
                     return prev;
                 });
             } catch (error) {

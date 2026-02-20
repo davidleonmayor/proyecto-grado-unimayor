@@ -3,10 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import InputField from "../InputField";
-import api from "@/app/lib/api";
+import InputField from '@/shared/components/ui/InputField';
+
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
+import { eventsService } from '@/modules/events/services/events.service';
 
 const schema = z.object({
     titulo: z
@@ -40,7 +41,7 @@ const schema = z.object({
 
 const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) => {
     const router = useRouter();
-    
+
     // Format date for input (YYYY-MM-DD)
     const formatDateForInput = (dateString?: string) => {
         if (!dateString) return '';
@@ -78,7 +79,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
     const onSubmit = handleSubmit(async (formData) => {
         try {
             if (type === "create") {
-                await api.createEvent({
+                await eventsService.createEvent({
                     titulo: formData.titulo,
                     descripcion: formData.descripcion || null,
                     fecha_inicio: formData.fecha_inicio,
@@ -90,7 +91,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
                 });
                 Swal.fire('Éxito', 'Evento creado correctamente', 'success');
             } else {
-                await api.updateEvent(data.id, {
+                await eventsService.updateEvent(data.id, {
                     titulo: formData.titulo,
                     descripcion: formData.descripcion || null,
                     fecha_inicio: formData.fecha_inicio,
@@ -102,7 +103,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
                 });
                 Swal.fire('Éxito', 'Evento actualizado correctamente', 'success');
             }
-            
+
             // Close modal - the parent component will handle reloading
             // The modal will close automatically when the form unmounts
             if (typeof window !== 'undefined') {
@@ -213,7 +214,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
             </div>
 
             {/* BUTTON */}
-            <button 
+            <button
                 type="submit"
                 className="bg-blue-400 text-white p-2 rounded-md hover:bg-blue-700"
             >

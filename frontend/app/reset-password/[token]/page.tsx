@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../lib/api';
+
 import Swal from 'sweetalert2';
+import { authService } from '@/modules/auth/services/auth.service';
 
 export default function ResetPassword() {
     const [password, setPassword] = useState('');
@@ -54,7 +55,7 @@ export default function ResetPassword() {
         setIsLoading(true);
 
         try {
-            await api.resetPassword(token, password);
+            await authService.resetPassword(token, password);
 
             await Swal.fire({
                 icon: 'success',

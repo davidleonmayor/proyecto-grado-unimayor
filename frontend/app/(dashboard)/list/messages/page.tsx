@@ -1,4 +1,4 @@
-import { MessageForm } from "@/app/components/forms/MessageForm";
+import { MessageForm } from '@/modules/messaging/components/MessageForm';
 
 export const metadata = {
   title: 'Mensajes',

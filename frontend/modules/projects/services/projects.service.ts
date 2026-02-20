@@ -104,8 +104,8 @@ export class ProjectsService extends BaseApiClient {
   }
 
   // Admin operations
-  async getAllProjects(): Promise<Project[]> {
-    return this.request<Project[]>('/api/projects/admin/all', {
+  async getAllProjects(): Promise<any[]> {
+    return this.request<any[]>('/api/projects/admin/all', {
       requiresAuth: true,
     });
   }
@@ -118,8 +118,8 @@ export class ProjectsService extends BaseApiClient {
     });
   }
 
-  async getProjectById(projectId: string): Promise<Project> {
-    return this.request<Project>(`/api/projects/admin/${projectId}`, {
+  async getProjectById(projectId: string): Promise<any> {
+    return this.request<any>(`/api/projects/admin/${projectId}`, {
       requiresAuth: true,
     });
   }
@@ -229,20 +229,7 @@ export class ProjectsService extends BaseApiClient {
     });
   }
 
-  async getDashboardStats(): Promise<DashboardStats> {
-    return this.request<DashboardStats>('/api/projects/stats/dashboard', {
-      requiresAuth: true,
-    });
-  }
 
-  async getTeacherDashboardStats(): Promise<DashboardStats> {
-    return this.request<DashboardStats>(
-      '/api/projects/stats/teacher-dashboard',
-      {
-        requiresAuth: true,
-      }
-    );
-  }
 }
 
 export const projectsService = new ProjectsService();

@@ -1,15 +1,15 @@
-import TableSearch from "@/app/components/TableSearch";
+import TableSearch from '@/shared/components/ui/TableSearch';
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import plusImage from "@/public/plus.png";
-import Pagination from "@/app/components/Pagination";
-import Table from "@/app/components/Table";
+import Pagination from '@/shared/components/ui/Pagination';
+import Table from '@/shared/components/ui/Table';
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import { role, degreeOptionsData } from "@/app/lib/data";
-import FormModal from "@/app/components/FormModal";
+import { role, degreeOptionsData } from '@/shared/lib/data';
+import FormModal from '@/shared/components/ui/FormModal';
 
 type DegreeOption = {
   id: number;
@@ -19,9 +19,9 @@ type DegreeOption = {
 };
 
 const columns = [
-  { header: "Nombre", accesor: "nombre" },
-  { header: "Descripción", accesor: "descripcion", className: "hidden md:table-cell" },
-  { header: "Requisitos", accesor: "requisitos", className: "hidden md:table-cell" },
+  { header: "Nombre", accessor: "nombre" },
+  { header: "Descripción", accessor: "descripcion", className: "hidden md:table-cell" },
+  { header: "Requisitos", accessor: "requisitos", className: "hidden md:table-cell" },
 ];
 
 const DegreeOptionsListPage = () => {
@@ -80,7 +80,7 @@ const DegreeOptionsListPage = () => {
       {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={degreeOptionsData} />
       {/* PAGINATION */}
-      <Pagination />
+      <Pagination currentPage={1} totalPages={1} onPageChange={() => { }} hasNextPage={false} hasPrevPage={false} />
     </div>
   );
 };
