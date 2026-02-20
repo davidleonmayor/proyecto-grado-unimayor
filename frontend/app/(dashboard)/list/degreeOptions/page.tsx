@@ -1,3 +1,4 @@
+"use client";
 import TableSearch from '@/shared/components/ui/TableSearch';
 import Image from "next/image";
 import filterImage from "@/public/filter.png";

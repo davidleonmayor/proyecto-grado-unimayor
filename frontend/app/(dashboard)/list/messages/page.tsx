@@ -1,9 +1,5 @@
+"use client";
 import { MessageForm } from '@/modules/messaging/components/MessageForm';
-
-export const metadata = {
-  title: 'Mensajes',
-  description: 'Mensajes',
-};
 
 export default function MessagesPage() {
   return (

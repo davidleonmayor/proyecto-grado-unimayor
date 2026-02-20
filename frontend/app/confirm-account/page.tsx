@@ -6,7 +6,9 @@ import Link from 'next/link';
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import Swal from 'sweetalert2';
 
-export default function ConfirmAccount() {
+import { Suspense } from 'react';
+
+function ConfirmAccountContent() {
     const [token, setToken] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const { confirmAccount } = useAuth();
@@ -143,5 +145,13 @@ export default function ConfirmAccount() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ConfirmAccount() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-gray-50">Cargando...</div>}>
+            <ConfirmAccountContent />
+        </Suspense>
     );
 }

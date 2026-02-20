@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "build:frontend": "pnpm --filter frontend install && pnpm --filter frontend build",
+    "build:backend": "pnpm --filter backend install && pnpm --filter backend run build",
+    "build": "pnpm run build:backend && pnpm run build:frontend"
+  },
   "devDependencies": {
     "@types/blob-stream": "^0.1.33",
     "@types/pdfkit": "^0.17.3"
