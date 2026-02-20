@@ -3,7 +3,8 @@ export const sanitizeText = (text: string, maxLength: number): string => {
   if (!text) return ""
   const withoutHtml = text.replace(/<[^>]*>/g, "")
   const withoutControl = withoutHtml.replace(/[\u0000-\u001F\u007F]/g, " ")
-  const normalized = withoutControl.replace(/\s+/g, " ").trim()
+  const withoutEmojis = withoutControl.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "")
+  const normalized = withoutEmojis.replace(/\s+/g, " ").trim()
   return normalized.slice(0, maxLength)
 }
 

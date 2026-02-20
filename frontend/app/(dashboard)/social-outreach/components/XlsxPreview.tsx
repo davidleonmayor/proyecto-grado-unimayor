@@ -1,10 +1,21 @@
-import { ArrowRight, Download, FileSpreadsheet } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
+import { ArrowRight, Download } from "lucide-react"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { ScrollArea } from "@/shared/components/ui/scroll-area"
+import { Separator } from "@/shared/components/ui/separator"
 import type { ExtractedData, LineaAccion, Estudiante } from "../types"
 import { ProjectCard } from "./ProjectCard"
+
+const XlsxIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M14 2H6C4.895 2 4 2.895 4 4V20C4 21.105 4.895 22 6 22H18C19.105 22 20 21.105 20 20V8L14 2ZM18 20H6V4H13V9H18V20ZM10 17H14V19H10V17ZM10 14H14V16H10V14ZM10 11H14V13H10V11Z" />
+  </svg>
+)
 
 type XlsxPreviewProps = {
   extractedData: ExtractedData[]
@@ -51,7 +62,7 @@ export const XlsxPreview = ({
       <Card className="flex-1 rounded-none border-y-0 border-r-0 flex flex-col">
         <CardHeader className="pb-3 flex-row items-center justify-between space-y-0">
           <CardTitle className="flex items-center gap-2 text-base">
-            <FileSpreadsheet className="h-4 w-4 text-green-600" />
+            <XlsxIcon className="h-5 w-5 text-green-600" />
             .xlsx
           </CardTitle>
           <Button
@@ -69,7 +80,7 @@ export const XlsxPreview = ({
           <ScrollArea className="h-full">
             {extractedData.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full py-16 text-center">
-                <FileSpreadsheet className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                <XlsxIcon className="h-14 w-14 text-muted-foreground/50 mb-3" />
                 <p className="text-sm text-muted-foreground">
                   Vista previa del archivo Excel
                 </p>

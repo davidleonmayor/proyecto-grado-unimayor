@@ -22,7 +22,7 @@ type UseSocialOutreachResult = {
   extractedData: ExtractedData[]
   isProcessing: boolean
   expandedIds: Set<string>
-  fileInputRef: RefObject<HTMLInputElement>
+  fileInputRef: RefObject<HTMLInputElement | null>
   handleFileInput: (e: ChangeEvent<HTMLInputElement>) => Promise<void>
   removeFile: (fileId: string) => void
   removeAllFiles: () => void
@@ -171,7 +171,7 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
   }
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
-    // Importar pdfjs-dist dinámicamente para evitar errores de SSR
+    // @ts-ignore
     const pdfjs = await import("pdfjs-dist/build/pdf.mjs")
     // Configurar el worker de PDF.js usando el bundle del paquete
     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -185,8 +185,8 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
       const pageText = textContent.items
-        .filter((item): item is TextItem => "str" in item)
-        .map((item) => item.str)
+        .filter((item: any): item is TextItem => "str" in item)
+        .map((item: any) => item.str)
         .join(" ")
       fullText += pageText + "\n"
     }
@@ -343,12 +343,12 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       prev.map((item) =>
         item.id === dataId
           ? {
-              ...item,
-              [field]:
-                field === "titulo"
-                  ? sanitizeText(value, MAX_TITLE_LENGTH)
-                  : sanitizeText(value, MAX_DESCRIPTION_LENGTH),
-            }
+            ...item,
+            [field]:
+              field === "titulo"
+                ? sanitizeText(value, MAX_TITLE_LENGTH)
+                : sanitizeText(value, MAX_DESCRIPTION_LENGTH),
+          }
           : item
       )
     )
@@ -364,18 +364,21 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       prev.map((item) =>
         item.id === dataId
           ? {
-              ...item,
-              estudiantes: item.estudiantes.map((est, idx) => {
-                if (idx !== estudianteIndex) return est
-                const maxLength =
-                  field === "nombre"
-                    ? MAX_NAME_LENGTH
-                    : field === "codigo"
+            ...item,
+            estudiantes: item.estudiantes.map((est, idx) => {
+              if (idx !== estudianteIndex) return est
+              const maxLength =
+                field === "nombre"
+                  ? MAX_NAME_LENGTH
+                  : field === "codigo"
                     ? MAX_CODE_LENGTH
                     : MAX_ID_LENGTH
-                return { ...est, [field]: sanitizeText(value, maxLength) }
-              }),
-            }
+              const sanitizedValue = (field === "cedula" || field === "codigo")
+                ? sanitizeText(value.replace(/\D/g, ""), maxLength)
+                : sanitizeText(value, maxLength)
+              return { ...est, [field]: sanitizedValue }
+            }),
+          }
           : item
       )
     )
@@ -386,12 +389,12 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       prev.map((item) =>
         item.id === dataId
           ? {
-              ...item,
-              estudiantes: [
-                ...item.estudiantes,
-                { nombre: "", codigo: "", cedula: "" },
-              ],
-            }
+            ...item,
+            estudiantes: [
+              ...item.estudiantes,
+              { nombre: "", codigo: "", cedula: "" },
+            ],
+          }
           : item
       )
     )
@@ -402,11 +405,11 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       prev.map((item) =>
         item.id === dataId
           ? {
-              ...item,
-              estudiantes: item.estudiantes.filter(
-                (_, idx) => idx !== estudianteIndex
-              ),
-            }
+            ...item,
+            estudiantes: item.estudiantes.filter(
+              (_, idx) => idx !== estudianteIndex
+            ),
+          }
           : item
       )
     )

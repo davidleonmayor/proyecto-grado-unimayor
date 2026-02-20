@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import moreImage from "@/public/more.png";
 
-export default function UserCard({ type, value = 0, href }: { type: string, value?: number, href?: string }) {
+export default function UserCard({ type, value = 0, href, bgColor }: { type: string, value?: number, href?: string, bgColor?: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -26,7 +26,7 @@ export default function UserCard({ type, value = 0, href }: { type: string, valu
   }, []);
 
   return (
-    <div className="rounded-2xl odd:bg-secondary even:bg-principal p-4 flex-1">
+    <div className={`rounded-2xl ${bgColor || "odd:bg-secondary even:bg-principal"} p-4 flex-1`}>
       <div className="flex justify-between items-center relative">
         <span className="text-[10px] bg-white px-2 py-1 rounded-full text-green-600">2024/25</span>
 

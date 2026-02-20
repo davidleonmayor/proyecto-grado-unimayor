@@ -7,7 +7,7 @@ import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import plusImage from "@/public/plus.png";
 import Pagination from '@/shared/components/ui/Pagination';
-import Table from '@/shared/components/ui/Table';
+import LegacyTable from "@/shared/components/ui/LegacyTable";
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
@@ -325,7 +325,7 @@ const TeacherListPageContent = () => {
                 </div>
             ) : (
                 <>
-                    <Table columns={columns} renderRow={renderRow} data={teachers} />
+                    <LegacyTable columns={columns} renderRow={renderRow} data={teachers} />
                     {pagination.totalPages > 1 && (
                         <Pagination
                             currentPage={pagination.page}

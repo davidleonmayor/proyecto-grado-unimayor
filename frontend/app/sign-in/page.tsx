@@ -48,7 +48,7 @@ export default function SignIn() {
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-white rounded-full blur-3xl"></div>
           <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-white rounded-full blur-3xl"></div>
         </div>
-        
+
         {/* Content Container */}
         <div className="relative z-10 flex flex-col justify-between w-full p-12">
           {/* Top Section */}
@@ -61,7 +61,7 @@ export default function SignIn() {
           {/* Bottom Section */}
           <div className="text-white">
             <h2 className="text-3xl font-bold mb-2">Gestión de Proyectos</h2>
-            <p className="text-lg opacity-90">Universidad Mayor del Cauca</p>
+            <p className="text-lg opacity-90">Colegio Mayor del Cauca</p>
           </div>
         </div>
       </div>

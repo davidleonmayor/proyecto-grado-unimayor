@@ -56,16 +56,16 @@ function DeanPageContent() {
         <div className="flex gap-4 justify-between flex-wrap">
           {isAdminStats ? (
             <>
-              <UserCard type="Total proyectos grado registrados" value={stats?.stats?.totalProjects || 0} href="/dashboard/projects" />
+              <UserCard type="Total proyectos grado registrados" value={stats?.stats?.totalProjects || 0} href="/dashboard/projects" bgColor="bg-[#0ea5e9]" />
               <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/dashboard/projects" />
-              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/dashboard/projects" bgColor="bg-[#0ea5e9]" />
               <UserCard type="Profesores/directores activos" value={stats?.stats?.profesoresActivos || 0} href="/list/teachers" />
             </>
           ) : (
             <>
-              <UserCard type="Proyectos asignados" value={stats?.stats?.totalProjects || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos asignados" value={stats?.stats?.totalProjects || 0} href="/dashboard/projects" bgColor="bg-[#0ea5e9]" />
               <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/dashboard/projects" />
-              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/dashboard/projects" bgColor="bg-[#0ea5e9]" />
               <UserCard type="Estudiantes asignados" value={stats?.stats?.estudiantesAsignados || 0} href="/list/students" />
             </>
           )}

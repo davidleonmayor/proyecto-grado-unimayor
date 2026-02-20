@@ -46,7 +46,7 @@ const menuItems: MenuSection[] = [
       {
         icon: '/project.png',
         label: 'Proyectos de Grado',
-        href: '/dashboard/projects',
+        href: '/projects',
         visible: ['admin', 'teacher', 'dean', 'student'],
       },
       {
@@ -57,6 +57,7 @@ const menuItems: MenuSection[] = [
       },
     ],
   },
+
 
   {
     title: 'PROYECCIÓN SOCIAL',
@@ -98,36 +99,43 @@ export const Menu = () => {
 
   return (
     <div className="mt-4 text-sm">
-      {menuItems.map((section) => (
-        <div className="flex flex-col gap-2" key={section.title}>
-          <span className="hidden lg:block text-gray-400 font-light my-4">
-            {section.title}
-          </span>
-          {section.items.map((item) => {
-            if (item.visible.includes(currentRole)) {
-              return (
-                <Link
-                  href={item.href}
-                  key={item.label}
-                  className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md px-4
-                                                                     transition-all duration-300 ease-in-out
-                                                                     hover:bg-hoverColor hover:text-white hover:font-semibold
-                                                                     hover:scale-105 hover:shadow-lg"
-                >
-                  <Image
-                    src={item.icon}
-                    alt={section.title}
-                    width={20}
-                    height={20}
-                  />
-                  <span className="hidden lg:block">{item.label}</span>
-                </Link>
-              );
-            }
-            return null;
-          })}
-        </div>
-      ))}
+      {menuItems.map((section) => {
+        const hasVisibleItems = section.items.some((item) =>
+          item.visible.includes(currentRole)
+        );
+        if (!hasVisibleItems) return null;
+
+        return (
+          <div className="flex flex-col gap-2" key={section.title}>
+            <span className="hidden lg:block text-gray-400 font-light my-4">
+              {section.title}
+            </span>
+            {section.items.map((item) => {
+              if (item.visible.includes(currentRole)) {
+                return (
+                  <Link
+                    href={item.href}
+                    key={item.label}
+                    className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md px-4
+                                                                       transition-all duration-300 ease-in-out
+                                                                       hover:bg-hoverColor hover:text-white hover:font-semibold
+                                                                       hover:scale-105 hover:shadow-lg"
+                  >
+                    <Image
+                      src={item.icon}
+                      alt={section.title}
+                      width={20}
+                      height={20}
+                    />
+                    <span className="hidden lg:block">{item.label}</span>
+                  </Link>
+                );
+              }
+              return null;
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 };

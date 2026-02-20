@@ -1,5 +1,5 @@
 "use client"
-import { TooltipProvider } from "@/components/ui/tooltip"
+import { TooltipProvider } from "@/shared/components/ui/tooltip"
 import { PdfFileList } from "./components/PdfFileList"
 import { XlsxPreview } from "./components/XlsxPreview"
 import { useSocialOutreach } from "./useSocialOutreach"

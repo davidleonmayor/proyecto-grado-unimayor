@@ -4,7 +4,7 @@
 
 // Components
 export { InputField } from './components/ui/InputField';
-export { Table } from './components/ui/Table';
+export { LegacyTable } from './components/ui/LegacyTable';
 export { Pagination } from './components/ui/Pagination';
 export { TableSearch } from './components/ui/TableSearch';
 export { ProtectedRoute } from './components/layout/ProtectedRoute';

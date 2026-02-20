@@ -1,21 +1,32 @@
-import { FileText, FileUp, Loader2, Trash2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
+import { FileUp, Loader2, Trash2 } from "lucide-react"
+import { Button } from "@/shared/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
+import { ScrollArea } from "@/shared/components/ui/scroll-area"
+import { Separator } from "@/shared/components/ui/separator"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/shared/components/ui/tooltip"
 import type { ChangeEvent, RefObject } from "react"
 import type { ExtractedData, FileEntry } from "../types"
+
+const PdfIcon = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M7 2H13.5L19 7.5V20C19 21.1 18.1 22 17 22H7C5.9 22 5 21.1 5 20V4C5 2.9 5.9 2 7 2ZM13 3.5V8H17.5L13 3.5ZM9 12H15V13.5H9V12ZM9 15H13V16.5H9V15Z" />
+  </svg>
+)
 
 type PdfFileListProps = {
   files: FileEntry[]
   extractedData: ExtractedData[]
   isProcessing: boolean
-  fileInputRef: RefObject<HTMLInputElement>
+  fileInputRef: RefObject<HTMLInputElement | null>
   handleFileInput: (e: ChangeEvent<HTMLInputElement>) => void | Promise<void>
   removeFile: (fileId: string) => void
   removeAllFiles: () => void
@@ -34,7 +45,7 @@ export const PdfFileList = ({
     <Card className="w-80 rounded-none border-y-0 border-l-0 flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
-          <FileText className="h-4 w-4" />
+          <PdfIcon className="h-5 w-5 text-red-600" />
           pdf
         </CardTitle>
       </CardHeader>
@@ -59,10 +70,11 @@ export const PdfFileList = ({
                 <Card
                   key={index}
                   className="group cursor-pointer transition-all hover:shadow-md"
+                  onClick={() => window.open(URL.createObjectURL(entry.file), '_blank')}
                 >
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
-                      <FileText className="h-4 w-4 text-red-600 dark:text-red-400" />
+                      <PdfIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
