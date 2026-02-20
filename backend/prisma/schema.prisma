@@ -33,10 +33,12 @@ model persona {
   id_facultad           String?   @db.VarChar(191)
   id_programa_academico String?   @db.VarChar(191)
 
-  tipo_documento     tipo_documento     @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
-  facultad            facultad?          @relation(fields: [id_facultad], references: [id_facultad])
+  tipo_documento     tipo_documento      @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
+  facultad           facultad?           @relation(fields: [id_facultad], references: [id_facultad])
   programa_academico programa_academico? @relation(fields: [id_programa_academico], references: [id_programa])
   actores            actores[]
+  mensajes_enviados  mensaje[]           @relation("MensajesEnviados")
+  mensajes_recibidos mensaje_entrega[]   @relation("MensajesRecibidos")
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])
@@ -260,19 +262,19 @@ model distincion_tg {
 }
 
 model evento {
-  id_evento       String        @id @default(cuid())
-  titulo          String        @db.VarChar(200)
-  descripcion     String?       @db.Text
-  fecha_inicio    DateTime      @db.DateTime(0)
-  fecha_fin       DateTime      @db.DateTime(0)
-  hora_inicio     String?       @db.VarChar(10)
-  hora_fin        String?       @db.VarChar(10)
-  prioridad       String        @db.VarChar(20) // "alta", "media", "baja"
-  todo_el_dia     Boolean       @default(false)
-  fecha_creacion  DateTime      @default(now()) @db.DateTime(0)
-  activo          Boolean       @default(true)
+  id_evento        String         @id @default(cuid())
+  titulo           String         @db.VarChar(200)
+  descripcion      String?        @db.Text
+  fecha_inicio     DateTime       @db.DateTime(0)
+  fecha_fin        DateTime       @db.DateTime(0)
+  hora_inicio      String?        @db.VarChar(10)
+  hora_fin         String?        @db.VarChar(10)
+  prioridad        String         @db.VarChar(20) // "alta", "media", "baja"
+  todo_el_dia      Boolean        @default(false)
+  fecha_creacion   DateTime       @default(now()) @db.DateTime(0)
+  activo           Boolean        @default(true)
   id_trabajo_grado String?
-  trabajo_grado   trabajo_grado? @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
+  trabajo_grado    trabajo_grado? @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
 
   @@index([fecha_inicio])
   @@index([prioridad])
@@ -280,3 +282,45 @@ model evento {
   @@map("EVENTO")
 }
 
+model mensaje {
+  id_mensaje  String   @id @default(cuid())
+  contenido   String   @db.Text
+  id_emisor   String
+  fecha_envio DateTime @default(now()) @db.DateTime(0)
+  target_rol  String?  @db.VarChar(100) // If the message was broadcasted to a role
+
+  emisor   persona           @relation("MensajesEnviados", fields: [id_emisor], references: [id_persona])
+  entregas mensaje_entrega[]
+
+  @@index([id_emisor])
+  @@map("MENSAJE")
+}
+
+model mensaje_entrega {
+  id_entrega    String    @id @default(cuid())
+  id_mensaje    String
+  id_receptor   String
+  estado        String    @default("PENDING") @db.VarChar(20) // PENDING, DELIVERED, READ
+  fecha_lectura DateTime? @db.DateTime(0)
+
+  mensaje  mensaje @relation(fields: [id_mensaje], references: [id_mensaje])
+  receptor persona @relation("MensajesRecibidos", fields: [id_receptor], references: [id_persona])
+
+  @@index([id_mensaje])
+  @@index([id_receptor])
+  @@index([estado])
+  @@map("MENSAJE_ENTREGA")
+}
+
+model webhook_subscription {
+  id_subscription String   @id @default(cuid())
+  topic           String   @db.VarChar(100)
+  url             String   @db.VarChar(500)
+  secret          String?  @db.VarChar(100)
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now()) @db.DateTime(0)
+
+  @@index([topic])
+  @@index([is_active])
+  @@map("WEBHOOK_SUBSCRIPTION")
+}

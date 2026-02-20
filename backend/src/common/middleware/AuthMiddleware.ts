@@ -82,6 +82,7 @@ export class AuthMiddleware {
                     confirmed: true,
                     token: true,
                     ultimo_acceso: true,
+                    id_facultad: true,
                 },
             });
 

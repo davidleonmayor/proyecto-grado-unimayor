@@ -80,6 +80,10 @@ async function main() {
     await prisma.seguimiento_tg.deleteMany({});
     await prisma.actores.deleteMany({});
     await prisma.trabajo_grado.deleteMany({});
+    // Clean messaging tables before persona (FK constraints)
+    await (prisma as any).mensaje_entrega.deleteMany({});
+    await (prisma as any).mensaje.deleteMany({});
+    await (prisma as any).webhook_subscription.deleteMany({});
     await prisma.persona.deleteMany({});
     await prisma.distinciones.deleteMany({});
     await prisma.accion_seg.deleteMany({});
@@ -396,7 +400,7 @@ async function main() {
     const empresasAdicionales: Promise<Awaited<ReturnType<typeof prisma.empresa.create>>>[] = [];
     const tiposEmpresa = ["S.A.S", "Ltda", "S.A", "E.U", "S.C.A"];
     const sectores = ["Tecnología", "Consultoría", "Servicios", "Comercial", "Industrial", "Educación", "Salud", "Financiero"];
-    
+
     for (let i = 0; i < 100; i++) {
         const sector = sectores[Math.floor(Math.random() * sectores.length)];
         const tipo = tiposEmpresa[Math.floor(Math.random() * tiposEmpresa.length)];
@@ -522,7 +526,29 @@ async function main() {
     console.log(`👨‍🎓 Creando estudiantes (100 por cada programa = ${programas.length * 100} estudiantes)...`);
     const estudiantesPromises: Promise<Awaited<ReturnType<typeof prisma.persona.create>>>[] = [];
     let estudianteGlobalIndex = 0;
-    
+
+    // Build a lookup: programaId -> facultadId
+    const programaToFacultad: { [programaId: string]: string } = {};
+    // Each programa_academico has `id_facultad` set during creation above.
+    // We'll use a simple lookup based on the order of creation:
+    // programas[0..2] -> facultades[0] (Ingeniería)
+    // programas[3..4] -> facultades[1] (Educación)
+    // programas[5..7] -> facultades[2] (Artes y Diseño)
+    // programas[8..11] -> facultades[3] (Ciencias Sociales)
+    const programaFacultadMap = [
+        [0, 1, 2],       // Ingeniería
+        [3, 4],           // Educación
+        [5, 6, 7],        // Artes y Diseño
+        [8, 9, 10, 11],   // Ciencias Sociales
+    ];
+    programaFacultadMap.forEach((indices, facIdx) => {
+        indices.forEach(pIdx => {
+            if (programas[pIdx]) {
+                programaToFacultad[programas[pIdx].id_programa] = facultades[facIdx].id_facultad;
+            }
+        });
+    });
+
     // Generar 100 estudiantes por cada programa académico
     for (const programa of programas) {
         for (let i = 0; i < 100; i++) {
@@ -540,10 +566,11 @@ async function main() {
                         correo_electronico: generateEmail(nombres, apellidos, estudianteGlobalIndex, 'estudiante'),
                         password: defaultPassword,
                         confirmed: Math.random() > 0.2, // 80% confirmados
-                        token: Math.random() > 0.2 ? null : generateToken(), // Solo generar token si no está confirmado
+                        token: Math.random() > 0.2 ? null : generateToken(),
                         ultimo_acceso: Math.random() > 0.3 ? new Date() : null,
                         intentos_fallidos: Math.floor(Math.random() * 3),
-                        id_programa_academico: programa.id_programa, // Asociar estudiante con su programa
+                        id_programa_academico: programa.id_programa,
+                        id_facultad: programaToFacultad[programa.id_programa] || null, // Assign faculty from program
                     } as any,
                 })
             );
@@ -551,7 +578,7 @@ async function main() {
         }
     }
     const estudiantes = await Promise.all(estudiantesPromises);
-    
+
     // Organizar estudiantes por programa (para facilitar asignación a trabajos)
     const estudiantesPorPrograma: { [programaId: string]: typeof estudiantes } = {};
     programas.forEach((programa, programaIndex) => {
@@ -655,32 +682,32 @@ async function main() {
     console.log(`\nUsuarios con acceso: ${personas.filter(p => p.password).length}`);
     console.log(`Usuarios pendientes de confirmación: ${personas.filter(p => !p.confirmed && p.password).length}`);
     console.log(`Usuarios sin acceso: ${personas.filter(p => !p.password).length}`);
-    
+
     // Mostrar ejemplos de usuarios para iniciar sesión
     console.log("\n📧 EJEMPLOS DE USUARIOS PARA INICIAR SESIÓN:");
     console.log("===========================================");
-    
+
     // Mostrar 5 estudiantes confirmados
     const estudiantesConfirmados = estudiantes.filter(e => e.confirmed && e.password).slice(0, 5);
     console.log("\n👨‍🎓 Estudiantes (primeros 5):");
     estudiantesConfirmados.forEach((est, idx) => {
         console.log(`   ${idx + 1}. Email: ${est.correo_electronico} | Contraseña: Password123!`);
     });
-    
+
     // Mostrar 5 profesores
     const profesoresConfirmados = profesores.filter(p => p.confirmed && p.password).slice(0, 5);
     console.log("\n👨‍🏫 Profesores/Directores (primeros 5):");
     profesoresConfirmados.forEach((prof, idx) => {
         console.log(`   ${idx + 1}. Email: ${prof.correo_electronico} | Contraseña: Password123!`);
     });
-    
+
     // Mostrar todos los coordinadores
     const coordinadoresConfirmados = coordinadores.filter(c => c.confirmed && c.password);
     console.log("\n👔 Coordinadores:");
     coordinadoresConfirmados.forEach((coord, idx) => {
         console.log(`   ${idx + 1}. Email: ${coord.correo_electronico} | Contraseña: Password123!`);
     });
-    
+
     console.log("\n💡 NOTA: Todos los usuarios con acceso tienen la misma contraseña: Password123!");
     console.log("💡 Los usuarios pendientes de confirmación necesitan confirmar su cuenta primero.\n");
 
@@ -707,7 +734,7 @@ async function main() {
         const opcionIndex = Math.floor(Math.random() * opcionesGrado.length);
         const estadoIndex = Math.floor(Math.random() * estados.length);
         const tieneEmpresa = Math.random() > 0.6; // 40% tienen empresa
-        
+
         const fechaInicio = new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1);
         const fechaFin = new Date(fechaInicio);
         fechaFin.setMonth(fechaFin.getMonth() + Math.floor(Math.random() * 12) + 6);
@@ -754,7 +781,7 @@ async function main() {
         // Obtener estudiantes del mismo programa que el trabajo
         const estudiantesDelPrograma = estudiantesPorPrograma[trabajo.id_programa_academico] || [];
         const indicePrograma = estudiantesPorProgramaIndex[trabajo.id_programa_academico] || 0;
-        
+
         // 1-2 estudiantes por trabajo (del mismo programa)
         const numEstudiantes = Math.random() > 0.5 ? 2 : 1;
         for (let i = 0; i < numEstudiantes && indicePrograma + i < estudiantesDelPrograma.length; i++) {
@@ -839,19 +866,19 @@ async function main() {
     console.log("📋 Creando seguimientos (100+)...");
     const seguimientosPromises: Promise<Awaited<ReturnType<typeof prisma.seguimiento_tg.create>>>[] = [];
     const tiposAccion = ["Registro", "Revisión", "Asignación jurado", "Sustentación", "Aprobación", "Entrega versión final"];
-    
+
     for (let i = 0; i < 100; i++) {
         const trabajo = trabajos[Math.floor(Math.random() * trabajos.length)];
         const actoresTrabajo = actores.filter(a => a.id_trabajo_grado === trabajo.id_trabajo_grado);
         if (actoresTrabajo.length === 0) continue;
-        
+
         const actor = actoresTrabajo[Math.floor(Math.random() * actoresTrabajo.length)];
         const accionNombre = tiposAccion[Math.floor(Math.random() * tiposAccion.length)];
         const accion = acciones.find(a => a.tipo_accion === accionNombre) || acciones[0];
-        
+
         const estadoAnterior = Math.random() > 0.5 ? estados[Math.floor(Math.random() * estados.length)].id_estado_tg : null;
         const estadoNuevo = estados[Math.floor(Math.random() * estados.length)].id_estado_tg;
-        
+
         const fechaSeguimiento = new Date(trabajo.fecha_inicio);
         fechaSeguimiento.setDate(fechaSeguimiento.getDate() + Math.floor(Math.random() * 180));
 
@@ -876,7 +903,7 @@ async function main() {
     // 15. EVENTOS PARA CADA PROYECTO DE GRADO
     console.log("📅 Creando eventos para proyectos de grado...");
     const eventosPromises: Promise<any>[] = [];
-    
+
     const tiposEventos = [
         { nombre: "Inicio del proyecto", prioridad: "alta", diasDespues: 0 },
         { nombre: "Primera revisión", prioridad: "media", diasDespues: 30 },
@@ -892,10 +919,10 @@ async function main() {
         for (const tipoEvento of tiposEventos) {
             const fechaEvento = new Date(trabajo.fecha_inicio);
             fechaEvento.setDate(fechaEvento.getDate() + tipoEvento.diasDespues);
-            
+
             const horaInicio = Math.floor(Math.random() * 8) + 8; // Entre 8 AM y 4 PM
             const horaFin = horaInicio + 2; // Duración de 2 horas
-            
+
             eventosPromises.push(
                 (prisma as any).evento.create({
                     data: {
@@ -930,7 +957,7 @@ async function main() {
     for (const eventoPrueba of eventosPrueba) {
         const fechaEvento = new Date(hoy);
         fechaEvento.setDate(fechaEvento.getDate() + eventoPrueba.dias);
-        
+
         eventosPromises.push(
             (prisma as any).evento.create({
                 data: {

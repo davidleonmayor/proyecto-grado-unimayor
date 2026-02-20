@@ -62,7 +62,7 @@ const SingleStudentPageContent = () => {
     const program = student.programa_academico?.nombre_programa || 'N/A';
     const modality = project?.opcion_grado?.nombre_opcion_grado || 'N/A';
     const status = project?.estado_tg?.nombre_estado || 'Sin proyecto';
-    const advisors = project?.actores?.filter((a: any) => 
+    const advisors = project?.actores?.filter((a: any) =>
         ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol?.nombre_rol)
     ) || [];
 
@@ -92,7 +92,7 @@ const SingleStudentPageContent = () => {
                                 <FormModal type="update" table="student" data={student} />
                             </div>
                             <p className="text-xs sm:text-sm text-gray-500">
-                                Estudiante de {program}. {project ? `Proyecto: ${project.titulo}` : 'Sin proyecto asignado.'}
+                                Estudiante de {program}. {project?.titulo_trabajo ? `Proyecto: ${project.titulo_trabajo}` : 'Sin proyecto asignado.'}
                             </p>
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-2 flex-wrap text-xs font-medium">
                                 <div className="w-full sm:w-auto flex items-center gap-2">
@@ -168,8 +168,8 @@ const SingleStudentPageContent = () => {
                     <div className="mt-4 bg-white rounded-md p-3 sm:p-4">
                         <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Proyecto de Grado</h1>
                         <div className="border border-gray-200 rounded-md p-3 sm:p-4">
-                            <h3 className="font-semibold text-base sm:text-lg break-words">{project.titulo}</h3>
-                            <p className="text-xs sm:text-sm text-gray-500 mt-2 break-words">{project.descripcion || 'Sin descripción'}</p>
+                            <h3 className="font-semibold text-base sm:text-lg break-words">{project.titulo_trabajo}</h3>
+                            <p className="text-xs sm:text-sm text-gray-500 mt-2 break-words">{project.resumen || 'Sin descripción'}</p>
                             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
                                     <p className="text-xs text-gray-400">Estado</p>
