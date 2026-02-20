@@ -19,6 +19,7 @@ type PdfFileListProps = {
   handleFileInput: (e: ChangeEvent<HTMLInputElement>) => void | Promise<void>
   removeFile: (fileId: string) => void
   removeAllFiles: () => void
+  onSelectPdf: (fileId: string) => void
 }
 
 export const PdfFileList = ({
@@ -29,6 +30,7 @@ export const PdfFileList = ({
   handleFileInput,
   removeFile,
   removeAllFiles,
+  onSelectPdf,
 }: PdfFileListProps) => {
   return (
     <Card className="w-80 rounded-none border-y-0 border-l-0 flex flex-col">
@@ -59,6 +61,7 @@ export const PdfFileList = ({
                 <Card
                   key={index}
                   className="group cursor-pointer transition-all hover:shadow-md"
+                  onClick={() => onSelectPdf(entry.id)}
                 >
                   <CardContent className="p-3 flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
