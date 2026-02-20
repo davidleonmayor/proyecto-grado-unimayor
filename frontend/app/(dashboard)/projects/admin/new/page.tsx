@@ -133,10 +133,10 @@ function NewProjectPageContent() {
             const idMatch = student.id.toLowerCase().includes(search);
             const nameMatch = student.name.toLowerCase().includes(search);
             const emailMatch = student.email.toLowerCase().includes(search);
-            
+
             return documentMatch || idMatch || nameMatch || emailMatch;
         });
-        
+
         setStudents(filtered);
     }, []);
 
@@ -153,10 +153,10 @@ function NewProjectPageContent() {
             const idMatch = advisor.id.toLowerCase().includes(search);
             const nameMatch = advisor.name.toLowerCase().includes(search);
             const emailMatch = advisor.email.toLowerCase().includes(search);
-            
+
             return documentMatch || idMatch || nameMatch || emailMatch;
         });
-        
+
         setAdvisors(filtered);
     }, []);
 
@@ -171,10 +171,10 @@ function NewProjectPageContent() {
         const filtered = companiesList.filter(company => {
             const idMatch = company.id.toLowerCase().includes(search);
             const nameMatch = company.name.toLowerCase().includes(search);
-            
+
             return idMatch || nameMatch;
         });
-        
+
         setCompanies(filtered);
     }, []);
 
@@ -380,7 +380,7 @@ function NewProjectPageContent() {
                         <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                             {companies.length === 0 ? (
                                 <p className="text-gray-500 text-sm text-center py-4">
-                                    {companySearch 
+                                    {companySearch
                                         ? `No se encontraron empresas que coincidan con "${companySearch}"`
                                         : 'No hay empresas disponibles'
                                     }
@@ -389,8 +389,8 @@ function NewProjectPageContent() {
                                 <div className="space-y-2">
                                     <label
                                         className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === ''
-                                                ? 'bg-primary-100 border-2 border-primary-500'
-                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                            ? 'bg-primary-100 border-2 border-primary-500'
+                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
                                             }`}
                                     >
                                         <input
@@ -408,8 +408,8 @@ function NewProjectPageContent() {
                                         <label
                                             key={company.id}
                                             className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === company.id
-                                                    ? 'bg-primary-100 border-2 border-primary-500'
-                                                    : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                                ? 'bg-primary-100 border-2 border-primary-500'
+                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
                                                 }`}
                                         >
                                             <input
@@ -494,7 +494,7 @@ function NewProjectPageContent() {
                             </p>
                         ) : students.length === 0 ? (
                             <p className="text-gray-500 text-sm text-center py-4">
-                                {studentSearch 
+                                {studentSearch
                                     ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
                                     : 'No hay estudiantes disponibles para este programa'
                                 }
@@ -505,8 +505,8 @@ function NewProjectPageContent() {
                                     <label
                                         key={student.id}
                                         className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedStudents.includes(student.id)
-                                                ? 'bg-primary-100 border-2 border-primary-500'
-                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                            ? 'bg-primary-100 border-2 border-primary-500'
+                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
                                             }`}
                                     >
                                         <input
@@ -577,7 +577,7 @@ function NewProjectPageContent() {
                     <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                         {advisors.filter(a => a.id !== currentUser?.id).length === 0 ? (
                             <p className="text-gray-500 text-sm text-center py-4">
-                                {advisorSearch 
+                                {advisorSearch
                                     ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
                                     : 'No hay asesores disponibles'
                                 }
@@ -587,29 +587,29 @@ function NewProjectPageContent() {
                                 {advisors
                                     .filter(advisor => advisor.id !== currentUser?.id)
                                     .map(advisor => (
-                                    <label
-                                        key={advisor.id}
-                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedAdvisors.includes(advisor.id)
+                                        <label
+                                            key={advisor.id}
+                                            className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedAdvisors.includes(advisor.id)
                                                 ? 'bg-blue-100 border-2 border-blue-500'
                                                 : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedAdvisors.includes(advisor.id)}
-                                            onChange={() => toggleAdvisor(advisor.id)}
-                                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                        />
-                                        <div className="ml-3 flex-1">
-                                            <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
-                                            <div className="text-xs text-gray-500">
-                                                {advisor.document && `Cédula: ${advisor.document}`}
-                                                {advisor.document && ' • '}
-                                                Código: {advisor.id} • {advisor.email}
+                                                }`}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedAdvisors.includes(advisor.id)}
+                                                onChange={() => toggleAdvisor(advisor.id)}
+                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                            />
+                                            <div className="ml-3 flex-1">
+                                                <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
+                                                <div className="text-xs text-gray-500">
+                                                    {advisor.document && `Cédula: ${advisor.document}`}
+                                                    {advisor.document && ' • '}
+                                                    Código: {advisor.id} • {advisor.email}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </label>
-                                ))}
+                                        </label>
+                                    ))}
                             </div>
                         )}
                     </div>
@@ -646,7 +646,7 @@ function NewProjectPageContent() {
 
 export default function NewProjectPage() {
     return (
-        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/dashboard/projects">
             <NewProjectPageContent />
         </RoleProtectedRoute>
     );

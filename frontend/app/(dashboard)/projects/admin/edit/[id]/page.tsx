@@ -106,7 +106,7 @@ function EditProjectPageContent() {
             ]);
 
             setFormData(form);
-            
+
             // Set all available people
             const mergedStudents = mergePeopleLists(studentsData, project.students);
             const mergedAdvisors = mergePeopleLists(advisorsData, project.advisors);
@@ -120,7 +120,7 @@ function EditProjectPageContent() {
             const availableStudentsList = mergedStudents.filter(s => !project.students.some(ps => ps.id === s.id));
             setAvailableStudents(availableStudentsList);
             setFilteredAvailableStudents(availableStudentsList);
-            
+
             setAssignedAdvisors(project.advisors);
             const availableAdvisorsList = mergedAdvisors.filter(a => !project.advisors.some(pa => pa.id === a.id));
             setAvailableAdvisors(availableAdvisorsList);
@@ -156,10 +156,10 @@ function EditProjectPageContent() {
             const idMatch = student.id.toLowerCase().includes(search);
             const nameMatch = student.name.toLowerCase().includes(search);
             const emailMatch = student.email.toLowerCase().includes(search);
-            
+
             return documentMatch || idMatch || nameMatch || emailMatch;
         });
-        
+
         setFilteredAvailableStudents(filtered);
     }, [availableStudents]);
 
@@ -176,10 +176,10 @@ function EditProjectPageContent() {
             const idMatch = advisor.id.toLowerCase().includes(search);
             const nameMatch = advisor.name.toLowerCase().includes(search);
             const emailMatch = advisor.email.toLowerCase().includes(search);
-            
+
             return documentMatch || idMatch || nameMatch || emailMatch;
         });
-        
+
         setFilteredAvailableAdvisors(filtered);
     }, [availableAdvisors]);
 
@@ -194,10 +194,10 @@ function EditProjectPageContent() {
         const filtered = allCompanies.filter(company => {
             const idMatch = company.id.toLowerCase().includes(search);
             const nameMatch = company.name.toLowerCase().includes(search);
-            
+
             return idMatch || nameMatch;
         });
-        
+
         setCompanies(filtered);
     }, [allCompanies]);
 
@@ -453,7 +453,7 @@ function EditProjectPageContent() {
                         <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                             {companies.length === 0 ? (
                                 <p className="text-gray-500 text-sm text-center py-4">
-                                    {companySearch 
+                                    {companySearch
                                         ? `No se encontraron empresas que coincidan con "${companySearch}"`
                                         : 'No hay empresas disponibles'
                                     }
@@ -462,8 +462,8 @@ function EditProjectPageContent() {
                                 <div className="space-y-2">
                                     <label
                                         className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === ''
-                                                ? 'bg-primary-100 border-2 border-primary-500'
-                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                            ? 'bg-primary-100 border-2 border-primary-500'
+                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
                                             }`}
                                     >
                                         <input
@@ -481,8 +481,8 @@ function EditProjectPageContent() {
                                         <label
                                             key={company.id}
                                             className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === company.id
-                                                    ? 'bg-primary-100 border-2 border-primary-500'
-                                                    : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                                ? 'bg-primary-100 border-2 border-primary-500'
+                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
                                                 }`}
                                         >
                                             <input
@@ -596,7 +596,7 @@ function EditProjectPageContent() {
                             <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                                 {filteredAvailableStudents.length === 0 ? (
                                     <p className="text-gray-500 text-sm text-center py-4">
-                                        {studentSearch 
+                                        {studentSearch
                                             ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
                                             : 'No hay estudiantes disponibles'
                                         }
@@ -697,7 +697,7 @@ function EditProjectPageContent() {
                             <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                                 {filteredAvailableAdvisors.length === 0 ? (
                                     <p className="text-gray-500 text-sm text-center py-4">
-                                        {advisorSearch 
+                                        {advisorSearch
                                             ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
                                             : 'No hay asesores disponibles'
                                         }
@@ -760,7 +760,7 @@ function EditProjectPageContent() {
 
 export default function EditProjectPage() {
     return (
-        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/dashboard/projects">
             <EditProjectPageContent />
         </RoleProtectedRoute>
     );

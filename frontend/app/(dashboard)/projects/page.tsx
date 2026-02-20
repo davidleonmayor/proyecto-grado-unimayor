@@ -4,28 +4,27 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { projectsService } from '@/modules/projects/services/projects.service';
 import type { Project } from '@/modules/projects/types';
-
-
-// Privileged roles that can access admin panel
-const PRIVILEGED_ROLES = ['Director'];
+import { useUserRole } from '@/app/hooks/useUserRole';
 
 export default function ProjectsPage() {
+    const { role, loading: roleLoading } = useUserRole();
     const [projects, setProjects] = useState<Project[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isPrivileged, setIsPrivileged] = useState(false);
+
+    const isCoordinator = role === 'admin' || role === 'dean';
 
     useEffect(() => {
         const fetchProjects = async () => {
+            if (roleLoading) return;
             try {
-                const data = await projectsService.getProjects();
+                let data;
+                if (isCoordinator) {
+                    data = await projectsService.getAllProjects();
+                } else {
+                    data = await projectsService.getProjects();
+                }
                 setProjects(data);
-
-                // Check if user has any privileged role
-                const hasPrivilegedRole = data.some((project: Project) =>
-                    PRIVILEGED_ROLES.includes(project.role)
-                );
-                setIsPrivileged(hasPrivilegedRole);
             } catch (err) {
                 setError('Error al cargar proyectos');
                 console.error(err);
@@ -35,9 +34,9 @@ export default function ProjectsPage() {
         };
 
         fetchProjects();
-    }, []);
+    }, [role, roleLoading, isCoordinator]);
 
-    if (isLoading) {
+    if (isLoading || roleLoading) {
         return (
             <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -59,7 +58,7 @@ export default function ProjectsPage() {
                 <h1 className="text-2xl font-bold text-gray-800">Mis Proyectos</h1>
 
                 {/* Admin button - Only visible for privileged users */}
-                {isPrivileged && (
+                {isCoordinator && (
                     <div className="flex l-0 gap-3">
                         <Link
                             href="/dashboard/projects/admin/new"
@@ -96,7 +95,7 @@ export default function ProjectsPage() {
             </div>
 
             {projects.length === 0 ? (
-                <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-8 text-center text-gray-400 font-light">
                     No tienes proyectos asignados actualmente.
                 </div>
             ) : (
@@ -107,31 +106,39 @@ export default function ProjectsPage() {
                             href={`/dashboard/projects/${project.id}`}
                             className="block group"
                         >
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-all duration-200 hover:border-blue-300 h-full flex flex-col">
-                                <div className="flex justify-between items-start mb-4">
-                                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${project.status === 'Aprobado' ? 'bg-green-100 text-green-800' :
-                                        project.status === 'Rechazado' ? 'bg-red-100 text-red-800' :
-                                            'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                        {project.status}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                        {new Date(project.lastUpdate).toLocaleDateString()}
+                            <div className="bg-white rounded-lg shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-gray-100 p-6 transition-all duration-300 hover:shadow-[0_8px_24px_rgb(0,0,0,0.08)] hover:-translate-y-1 h-full flex flex-col">
+                                <div className="flex justify-between items-center mb-5">
+                                    <div className="flex items-center gap-2">
+                                        {/* Status Dot */}
+                                        <span className={`w-2 h-2 rounded-full ${project.status === 'Aprobado' ? 'bg-emerald-500' :
+                                                project.status === 'Rechazado' ? 'bg-rose-500' :
+                                                    'bg-amber-400'
+                                            }`}></span>
+                                        {/* Status Text Outline */}
+                                        <span className={`text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded border ${project.status === 'Aprobado' ? 'text-emerald-700 border-emerald-200' :
+                                                project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
+                                                    'text-amber-700 border-amber-200'
+                                            }`}>
+                                            {project.status}
+                                        </span>
+                                    </div>
+                                    <span className="text-[11px] text-gray-400 font-light whitespace-nowrap">
+                                        {new Date(project.lastUpdate).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </span>
                                 </div>
 
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                <h3 className="text-[17px] leading-snug font-medium text-gray-800 mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
                                     {project.title}
                                 </h3>
 
-                                <div className="mt-auto space-y-2 pt-4">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <span className="font-medium mr-2">Modalidad:</span>
-                                        {project.modality}
+                                <div className="mt-auto pt-5 border-t border-gray-50 flex flex-col gap-2">
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-gray-400">Modalidad</span>
+                                        <span className="text-gray-700 font-medium">{project.modality}</span>
                                     </div>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                        <span className="font-medium mr-2">Mi Rol:</span>
-                                        <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700">{project.role}</span>
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className="text-gray-400">Mi Rol</span>
+                                        <span className="text-gray-700 font-medium bg-gray-50 px-2 py-1 rounded">{project.role || 'Coordinador/Observador'}</span>
                                     </div>
                                 </div>
                             </div>

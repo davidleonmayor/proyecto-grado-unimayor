@@ -1,7 +1,10 @@
 'use client';
 
+import { useState, useRef, useEffect } from "react";
 import Image from 'next/image';
+import Link from 'next/link';
 import checkImage from "@/public/check.png";
+import moreDarkImage from "@/public/moreDark.png";
 
 {/*Chatgpt helps me with this fck sht*/ }
 import {
@@ -11,13 +14,11 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import type { RadialBarProps, LegendProps } from 'recharts';
-import moreDarkImage from "@/public/moreDark.png";
 
 {/*Chatgpt helps me with this fck sht too*/ }
 const RadialBarChart = RechartsRadialBarChart as unknown as React.FC<any>;
 const RadialBar = RechartsRadialBar as unknown as React.FC<RadialBarProps>;
 const Legend = RechartsLegend as unknown as React.FC<any>;
-
 
 interface CountChartsProps {
   entregado: number;
@@ -25,15 +26,32 @@ interface CountChartsProps {
   total: number;
   porcentajeEntregado: number;
   porcentajeSinEntregar: number;
+  href?: string;
 }
 
-export default function CountCharts({ 
-  entregado = 0, 
-  sinEntregar = 0, 
+export default function CountCharts({
+  entregado = 0,
+  sinEntregar = 0,
   total = 0,
   porcentajeEntregado = 0,
-  porcentajeSinEntregar = 0
+  porcentajeSinEntregar = 0,
+  href
 }: CountChartsProps) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('es-CO').format(num);
   };
@@ -62,15 +80,39 @@ export default function CountCharts({
     },
   ];
   return (
-    <div className="bg-white rounded-xl w-full h-full p-4">
+    <div className="bg-white rounded-xl w-full h-full p-4 relative z-0">
       {/* TITLE */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center relative z-10">
         <h1 className="text-lg font-semibold">Estudiantes</h1>
-        <Image src={moreDarkImage} alt="more dark image" width={20} height={20} />
+
+        {href ? (
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="hover:opacity-75 transition-opacity cursor-pointer border-none bg-transparent flex items-center justify-center p-1 rounded-full hover:bg-black/5"
+            >
+              <Image src={moreDarkImage} alt="more dark image" width={20} height={20} />
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-100 overflow-hidden">
+                <Link
+                  href={href}
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-principal transition-colors w-full text-left"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Ver listado
+                </Link>
+              </div>
+            )}
+          </div>
+        ) : (
+          <Image src={moreDarkImage} alt="more dark image" width={20} height={20} />
+        )}
+
       </div>
 
       {/* CHARTS */}
-      <div className="relative w-full h-[75%]">
+      <div className="relative w-full h-[75%] -z-10">
         <ResponsiveContainer>
           <RadialBarChart
             cx="50%"

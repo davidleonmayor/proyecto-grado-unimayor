@@ -47,21 +47,30 @@ export const useUserRole = (): { role: UserRole; loading: boolean } => {
           const isDean = projects.some(
             (project: any) => project.role === 'Decano'
           );
+          const isCoordinator = projects.some(
+            (project: any) => project.role === 'Coordinador de Carrera'
+          );
 
           if (isDean) {
             setRole('dean');
+          } else if (isCoordinator) {
+            setRole('admin');
           } else {
-            try {
-              await projectsService.getDashboardStats();
-              setRole('admin');
-            } catch {
-              setRole('teacher');
-            }
+            // For 'Director' or 'Jurado', they are just teachers
+            setRole('teacher');
           }
-        } else if (isStudentOnly || projects.length === 0) {
+        } else if (isStudentOnly) {
           setRole('student');
         } else {
-          setRole('student');
+          // If no clear role from projects (e.g., a teacher with no projects assigned yet),
+          // try to access the teacher dashboard stats to determine if they are a teacher.
+          try {
+            await projectsService.getTeacherDashboardStats();
+            setRole('teacher');
+          } catch {
+            // If that fails, default to student
+            setRole('student');
+          }
         }
       } catch (error) {
         console.error('Error determining role:', error);

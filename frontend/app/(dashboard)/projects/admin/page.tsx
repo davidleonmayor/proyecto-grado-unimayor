@@ -104,79 +104,96 @@ function AdminProjectsPageContent() {
                     No hay proyectos registrados.
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Título
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Estado
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Programa
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Modalidad
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Actores
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {projects.map((project) => (
-                                <tr key={project.id} className="hover:bg-gray-50">
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm font-medium text-gray-900 line-clamp-2">
-                                            {project.title}
-                                        </div>
-                                        {project.summary && (
-                                            <div className="text-xs text-gray-500 line-clamp-1">{project.summary}</div>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${project.status === 'Aprobado' ? 'bg-green-100 text-green-800' :
-                                                project.status === 'Rechazado' ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
-                                            }`}>
-                                            {project.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">{project.program}</div>
-                                        <div className="text-xs text-gray-500">{project.faculty}</div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                        {project.modality}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="text-sm text-gray-900">
-                                            {project.actors.length} {project.actors.length === 1 ? 'persona' : 'personas'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <Link
-                                            href={`/dashboard/projects/admin/edit/${project.id}`}
-                                            className="text-blue-600 hover:text-blue-900 mr-4"
-                                        >
-                                            Editar
-                                        </Link>
-                                        <button
-                                            onClick={() => handleDelete(project.id, project.title)}
-                                            className="text-red-600 hover:text-red-900"
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </td>
+                <div className="bg-white rounded-xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-gray-100 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full text-sm">
+                            <thead>
+                                <tr className="bg-indigo-50/30 border-b border-gray-100">
+                                    <th className="px-6 py-5 text-left font-medium text-gray-500 uppercase tracking-widest text-[10px]">
+                                        Proyecto
+                                    </th>
+                                    <th className="px-6 py-5 text-left font-medium text-gray-500 uppercase tracking-widest text-[10px]">
+                                        Estado
+                                    </th>
+                                    <th className="px-6 py-5 text-left font-medium text-gray-500 uppercase tracking-widest text-[10px]">
+                                        Programa Académico
+                                    </th>
+                                    <th className="px-6 py-5 text-left font-medium text-gray-500 uppercase tracking-widest text-[10px]">
+                                        Detalles
+                                    </th>
+                                    <th className="px-6 py-5 text-right font-medium text-gray-500 uppercase tracking-widest text-[10px]">
+                                        Acciones
+                                    </th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {projects.map((project) => (
+                                    <tr key={project.id} className="hover:bg-slate-50/50 transition-colors group">
+                                        <td className="px-6 py-5 align-top">
+                                            <div className="font-medium text-gray-900 line-clamp-2 leading-relaxed mb-1 pr-4">
+                                                {project.title}
+                                            </div>
+                                            {project.summary && (
+                                                <div className="text-[13px] text-gray-400 line-clamp-2 font-light leading-snug">{project.summary}</div>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-5 whitespace-nowrap align-top">
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'Aprobado' ? 'bg-emerald-500' :
+                                                        project.status === 'Rechazado' ? 'bg-rose-500' :
+                                                            'bg-amber-400'
+                                                    }`}></span>
+                                                <span className={`text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded border ${project.status === 'Aprobado' ? 'text-emerald-700 border-emerald-200' :
+                                                        project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
+                                                            'text-amber-700 border-amber-200'
+                                                    }`}>
+                                                    {project.status}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5 align-top">
+                                            <div className="text-[13px] text-gray-800 font-medium mb-1">{project.program}</div>
+                                            <div className="text-[12px] text-gray-400 font-light">{project.faculty}</div>
+                                        </td>
+                                        <td className="px-6 py-5 align-top">
+                                            <div className="flex flex-col gap-1.5 mt-0.5">
+                                                <div className="flex items-center text-[12px]">
+                                                    <span className="text-gray-400 w-16">Modalidad:</span>
+                                                    <span className="text-gray-700 font-medium">{project.modality}</span>
+                                                </div>
+                                                <div className="flex items-center text-[12px]">
+                                                    <span className="text-gray-400 w-16">Actores:</span>
+                                                    <span className="text-gray-700">{project.actors.length} personas</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-5 whitespace-nowrap text-right align-top">
+                                            <div className="flex justify-end items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Link
+                                                    href={`/dashboard/projects/admin/edit/${project.id}`}
+                                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                                    title="Editar proyecto"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                    </svg>
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleDelete(project.id, project.title)}
+                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                                    title="Eliminar proyecto"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
         </div>
@@ -185,7 +202,7 @@ function AdminProjectsPageContent() {
 
 export default function AdminProjectsPage() {
     return (
-        <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/dashboard/projects">
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/dashboard/projects">
             <AdminProjectsPageContent />
         </RoleProtectedRoute>
     );

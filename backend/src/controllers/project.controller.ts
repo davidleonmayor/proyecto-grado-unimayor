@@ -313,7 +313,7 @@ export class ProjectController {
 
             // Determine action type
             let actionName: string;
-            
+
             // If actionType is provided, use it; otherwise use default logic
             if (actionType && typeof actionType === 'string' && actionType.trim() !== '') {
                 actionName = actionType.trim();
@@ -737,7 +737,59 @@ export class ProjectController {
     // Get ALL projects (for privileged users)
     async getAllProjects(req: Request, res: Response) {
         try {
+            const userId = req.user?.id_persona;
+
+            // Determine user's faculty
+            let userFacultyIds: Set<string> = new Set();
+            if (userId) {
+                const userPersona = await prisma.persona.findUnique({
+                    where: { id_persona: userId },
+                    select: { id_facultad: true }
+                });
+
+                if (userPersona?.id_facultad) {
+                    userFacultyIds.add(userPersona.id_facultad);
+                } else {
+                    const privilegedRoles = await prisma.tipo_rol.findMany({
+                        where: {
+                            nombre_rol: { in: ["Director", "Jurado", "Coordinador de Carrera", "Decano"] }
+                        }
+                    });
+                    const privilegedRoleIds = privilegedRoles.map(r => r.id_rol);
+
+                    const userActors = await prisma.actores.findMany({
+                        where: {
+                            id_persona: userId,
+                            id_tipo_rol: { in: privilegedRoleIds }
+                        },
+                        include: {
+                            trabajo_grado: {
+                                include: {
+                                    programa_academico: {
+                                        select: { id_facultad: true }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    userActors.forEach(actor => {
+                        if (actor.trabajo_grado?.programa_academico?.id_facultad) {
+                            userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
+                        }
+                    });
+                }
+            }
+
+            const projectsWhere: any = {};
+            if (userFacultyIds.size > 0) {
+                projectsWhere.programa_academico = {
+                    id_facultad: { in: Array.from(userFacultyIds) }
+                };
+            }
+
             const projects = await prisma.trabajo_grado.findMany({
+                where: projectsWhere,
                 include: {
                     estado_tg: true,
                     opcion_grado: true,
@@ -2364,6 +2416,11 @@ export class ProjectController {
             const teacherActors = user.actores.filter(actor =>
                 actor.tipo_rol.nombre_rol !== "Estudiante"
             );
+
+            // If the user doesn't have ANY non-student roles, explicitly forbid them
+            if (teacherActors.length === 0) {
+                return res.status(403).json({ error: "Acceso denegado. Se requiere un rol docente o administrativo." });
+            }
 
             // Get projects where user is director/advisor/jury
             const proyectosAsignados = teacherActors.map(actor => actor.trabajo_grado).filter(p => p);

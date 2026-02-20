@@ -55,17 +55,17 @@ function DeanPageContent() {
         <div className="flex gap-4 justify-between flex-wrap">
           {isAdminStats ? (
             <>
-              <UserCard type="Total proyectos grado registrados" value={stats?.stats?.totalProjects || 0} />
-              <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} />
-              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} />
-              <UserCard type="Profesores/directores activos" value={stats?.stats?.profesoresActivos || 0} />
+              <UserCard type="Total proyectos grado registrados" value={stats?.stats?.totalProjects || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/dashboard/projects" />
+              <UserCard type="Profesores/directores activos" value={stats?.stats?.profesoresActivos || 0} href="/list/teachers" />
             </>
           ) : (
             <>
-              <UserCard type="Proyectos asignados" value={stats?.stats?.totalProjects || 0} />
-              <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} />
-              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} />
-              <UserCard type="Estudiantes asignados" value={stats?.stats?.estudiantesAsignados || 0} />
+              <UserCard type="Proyectos asignados" value={stats?.stats?.totalProjects || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/dashboard/projects" />
+              <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/dashboard/projects" />
+              <UserCard type="Estudiantes asignados" value={stats?.stats?.estudiantesAsignados || 0} href="/list/students" />
             </>
           )}
         </div>
@@ -73,22 +73,23 @@ function DeanPageContent() {
         <div className="flex gap-4 flex-col lg:flex-row">
           {/* COUNT CHART */}
           <div className="w-full lg:w-1/3 h-[450px]">
-            <CountCharts 
+            <CountCharts
               entregado={stats?.students?.entregado || 0}
               sinEntregar={stats?.students?.sinEntregar || 0}
               total={stats?.students?.total || 0}
               porcentajeEntregado={stats?.students?.porcentajeEntregado || 0}
               porcentajeSinEntregar={stats?.students?.porcentajeSinEntregar || 0}
+              href="/list/students"
             />
           </div>
           {/* PROJECT STATUS CHART */}
           <div className="w-full lg:w-2/3 h-[450px]">
-            <ProjectStatusChart data={stats?.weeklyChart || []} />
+            <ProjectStatusChart data={stats?.weeklyChart || []} href="/dashboard/projects" />
           </div>
         </div>
         {/* BOTTOM CHARTS */}
         <div className="w-full h-[500px]">
-          <FinanceChart data={stats?.monthlyChart || []} />
+          <FinanceChart data={stats?.monthlyChart || []} href="/dashboard/projects" />
         </div>
       </div>
       {/* RIGHT */}

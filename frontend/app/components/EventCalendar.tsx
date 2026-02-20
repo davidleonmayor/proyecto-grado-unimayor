@@ -1,6 +1,6 @@
 "use client"
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -34,13 +34,28 @@ const EventCalendar = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         loadEvents();
     }, []);
 
     useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
         if (searchTerm) {
-            const filtered = allEvents.filter(event => 
+            const filtered = allEvents.filter(event =>
                 event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase()))
             );
@@ -59,10 +74,10 @@ const EventCalendar = () => {
             // Events are already sorted by the backend, but ensure proper sorting for display
             const sortedEvents = eventsData.sort((a: Event, b: Event) => {
                 const priorityOrder = { 'alta': 0, 'media': 1, 'baja': 2 };
-                const priorityDiff = (priorityOrder[a.prioridad as keyof typeof priorityOrder] || 3) - 
-                                    (priorityOrder[b.prioridad as keyof typeof priorityOrder] || 3);
+                const priorityDiff = (priorityOrder[a.prioridad as keyof typeof priorityOrder] || 3) -
+                    (priorityOrder[b.prioridad as keyof typeof priorityOrder] || 3);
                 if (priorityDiff !== 0) return priorityDiff;
-                
+
                 // Future events first, then past events
                 if (a.daysRemaining >= 0 && b.daysRemaining >= 0) {
                     return a.daysRemaining - b.daysRemaining;
@@ -108,13 +123,33 @@ const EventCalendar = () => {
     };
 
     return (
-        <div className='bg-white p-4 rounded-md'>
+        <div className='bg-white p-4 rounded-md relative z-0'>
             <Calendar onChange={onChange} value={value} />
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between relative z-10">
                 <h1 className='text-xl font-semibold my-4'>Eventos</h1>
-                <Image src={moreDarkImage} alt='' width={20} height={20}/>
+                <div className="relative" ref={menuRef}>
+                    <button
+                        onClick={() => setMenuOpen(!menuOpen)}
+                        className="hover:opacity-75 transition-opacity cursor-pointer border-none bg-transparent flex items-center justify-center p-1 rounded-full hover:bg-black/5"
+                    >
+                        <Image src={moreDarkImage} alt="more dark image" width={20} height={20} />
+                    </button>
+                    {menuOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-xl py-2 z-50 border border-gray-100 overflow-hidden">
+                            <button
+                                onClick={() => {
+                                    setMenuOpen(false);
+                                    router.push('/list/events');
+                                }}
+                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-principal transition-colors w-full text-left"
+                            >
+                                Ver todos los eventos
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
-            
+
             {/* Barra de filtrado y botón si hay más de 5 eventos */}
             {!isLoading && allEvents.length > 5 && (
                 <div className="mb-4 flex flex-col gap-2">
@@ -145,8 +180,8 @@ const EventCalendar = () => {
             ) : (
                 <div className="flex flex-col gap-4">
                     {events.map((event) => (
-                        <div 
-                            key={event.id} 
+                        <div
+                            key={event.id}
                             className={`p-5 rounded-md border-2 border-gray-100 border-t-4 ${event.borderColor}`}
                         >
                             <div className="flex items-start justify-between">
@@ -160,14 +195,13 @@ const EventCalendar = () => {
                                     )}
                                 </div>
                                 <div className="ml-2 text-right">
-                                    <span className={`text-xs font-medium px-2 py-1 rounded ${
-                                        event.color === 'red' ? 'bg-red-100 text-red-700' :
+                                    <span className={`text-xs font-medium px-2 py-1 rounded ${event.color === 'red' ? 'bg-red-100 text-red-700' :
                                         event.color === 'orange' ? 'bg-orange-100 text-orange-700' :
-                                        event.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
-                                        event.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                                        event.color === 'green' ? 'bg-green-100 text-green-700' :
-                                        'bg-gray-100 text-gray-700'
-                                    }`}>
+                                            event.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
+                                                event.color === 'blue' ? 'bg-blue-100 text-blue-700' :
+                                                    event.color === 'green' ? 'bg-green-100 text-green-700' :
+                                                        'bg-gray-100 text-gray-700'
+                                        }`}>
                                         {getDaysText(event.daysRemaining)}
                                     </span>
                                     <p className="text-xs text-gray-400 mt-1 capitalize">{event.prioridad}</p>

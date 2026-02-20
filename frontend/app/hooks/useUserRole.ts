@@ -23,7 +23,7 @@ export const useUserRole = (): { role: UserRole; loading: boolean } => {
 
             try {
                 const projects = await api.getProjects();
-                
+
                 const PRIVILEGED_ROLES = ['Director', 'Jurado', 'Coordinador de Carrera', 'Decano'];
                 const hasPrivilegedRole = projects.some((project: any) =>
                     PRIVILEGED_ROLES.includes(project.role)
@@ -34,30 +34,34 @@ export const useUserRole = (): { role: UserRole; loading: boolean } => {
                 );
 
                 if (hasPrivilegedRole) {
-                    // Check if user is a dean first
                     const isDean = projects.some((project: any) =>
                         project.role === 'Decano'
                     );
-                    
+                    const isCoordinator = projects.some((project: any) =>
+                        project.role === 'Coordinador de Carrera'
+                    );
+
                     if (isDean) {
                         setRole('dean');
+                    } else if (isCoordinator) {
+                        setRole('admin');
                     } else {
-                        // For other privileged roles (Director, Jurado, Coordinador), check if they have admin access
-                        // Admin access is determined by being able to access getDashboardStats
-                        try {
-                            await api.getDashboardStats();
-                            setRole('admin');
-                        } catch {
-                            // If can't access admin stats, they are a teacher/director
-                            setRole('teacher');
-                        }
+                        // For 'Director' or 'Jurado', they are just teachers
+                        setRole('teacher');
                     }
-                } else if (isStudentOnly || projects.length === 0) {
-                    // If student only or no projects (likely a student), assign student role
+                } else if (isStudentOnly) {
+                    // Valid student check
                     setRole('student');
                 } else {
-                    // Default to student if user is authenticated but has no clear role
-                    setRole('student');
+                    // If no clear role from projects (e.g., a teacher with no projects assigned yet),
+                    // try to access the teacher dashboard stats to determine if they are a teacher.
+                    try {
+                        await api.getTeacherDashboardStats();
+                        setRole('teacher');
+                    } catch {
+                        // If that fails, default to student
+                        setRole('student');
+                    }
                 }
             } catch (error) {
                 console.error('Error determining role:', error);
