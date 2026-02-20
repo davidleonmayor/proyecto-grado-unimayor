@@ -184,11 +184,29 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i)
       const textContent = await page.getTextContent()
-      const pageText = textContent.items
+      const items = textContent.items
         .filter((item): item is TextItem => "str" in item)
-        .map((item) => item.str)
-        .join(" ")
-      fullText += pageText + "\n"
+        .map((item) => ({
+          str: item.str,
+          x: item.transform[4],
+          y: item.transform[5],
+        }))
+      const linesMap = new Map<number, { str: string; x: number }[]>()
+      for (const item of items) {
+        const lineKey = Math.round(item.y * 2) / 2
+        const lineItems = linesMap.get(lineKey) ?? []
+        lineItems.push({ str: item.str, x: item.x })
+        linesMap.set(lineKey, lineItems)
+      }
+      const lines = Array.from(linesMap.entries())
+        .sort((a, b) => b[0] - a[0])
+        .map(([, lineItems]) =>
+          lineItems
+            .sort((a, b) => a.x - b.x)
+            .map((item) => item.str)
+            .join(" ")
+        )
+      fullText += lines.join("\n") + "\n"
     }
     return fullText
   }
@@ -231,27 +249,39 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
         if (descripcion) break
       }
     }
+    const lineasSectionMatch = text.match(
+      /L[IÍ]\s*NEA\s*DE\s*ACCI[OÓ]N[\s\S]*?(?=NOMBRE\(S\)|FACULTAD|PROGRAMA|DOCENTE|FECHA|$)/i
+    )
+    const lineasSource = lineasSectionMatch ? lineasSectionMatch[0] : text
+    const hasLinea = (label: string) =>
+      new RegExp(`${label}[^A-Z0-9]{0,12}X`, "i").test(lineasSource)
     const lineasAccion: LineaAccion = {
-      educacion: /EDUCACI[OÓ]N\s*[_\s]*X[_\s]*/i.test(text),
-      convivenciaCultura: /CONVIVENCIA\s*(Y|E)\s*CULTURA\s*[_\s]*X[_\s]*/i.test(text),
-      medioAmbiente: /MEDIO\s*AMBIENTE\s*[_\s]*X[_\s]*/i.test(text),
-      emprendimiento: /EMPRENDIMIENTO\s*[_\s]*X[_\s]*/i.test(text),
-      servicioSocial: /SERVICIO\s*SOCIAL\s*[_\s]*X[_\s]*/i.test(text),
+      educacion: hasLinea("EDUCACI[OÓ]N"),
+      convivenciaCultura: hasLinea("CONVIVENCIA\\s*(Y|E)\\s*CULTURA"),
+      medioAmbiente: hasLinea("MEDIO\\s*AMBIENTE"),
+      emprendimiento: hasLinea("EMPRENDIMIENTO"),
+      servicioSocial: hasLinea("SERVICIO\\s*SOCIAL"),
     }
     const estudiantes: Estudiante[] = []
-    const estudianteRegex = /([A-ZÁÉÍÓÚÑ][a-záéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+){1,4})\s+(\d{7,10})\s+(\d{8,12})/g
-    let estudianteMatch
-    while ((estudianteMatch = estudianteRegex.exec(text)) !== null) {
-      const nombre = estudianteMatch[1].trim()
-      const codigo = estudianteMatch[2].trim()
-      const cedula = estudianteMatch[3].trim()
-      if (nombre && !nombre.includes("TODOS") && codigo && cedula) {
-        const exists = estudiantes.some(
-          (e) => e.codigo === codigo || e.cedula === cedula
-        )
-        if (!exists) {
-          estudiantes.push({ nombre, codigo, cedula })
-        }
+    const lines = text
+      .split(/\r?\n/)
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+    for (const line of lines) {
+      const match = line.match(/^(.*?)(\d{6,12})\s+(\d{6,12})\s*$/)
+      if (!match) continue
+      const nombre = match[1].trim()
+      const codigo = match[2].trim()
+      const cedula = match[3].trim()
+      if (!nombre || /\d/.test(nombre)) continue
+      if (/[a-záéíóúñ]/.test(nombre)) continue
+      if (/\bTODOS\b/i.test(nombre)) continue
+      if (nombre.split(" ").filter(Boolean).length < 2) continue
+      const exists = estudiantes.some(
+        (e) => e.codigo === codigo || e.cedula === cedula
+      )
+      if (!exists) {
+        estudiantes.push({ nombre, codigo, cedula })
       }
     }
     if (estudiantes.length === 0) {
