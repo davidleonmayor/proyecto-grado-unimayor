@@ -1,4 +1,4 @@
-import type { Request } from "./interfaces/auth-request.interface";
+import type { Request } from "./interfaces/authRequest.interface";
 import type { Response, NextFunction } from "express";
 
 import { AuthService } from "./auth.service";
