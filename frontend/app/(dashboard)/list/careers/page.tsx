@@ -1,15 +1,15 @@
-import TableSearch from "@/app/components/TableSearch";
+import TableSearch from '@/shared/components/ui/TableSearch';
 import Image from "next/image";
 import filterImage from "@/public/filter.png";
 import sortImage from "@/public/sort.png";
 import plusImage from "@/public/plus.png";
-import Pagination from "@/app/components/Pagination";
-import Table from "@/app/components/Table";
+import Pagination from '@/shared/components/ui/Pagination';
+import Table from '@/shared/components/ui/Table';
 import Link from "next/link";
 import viewImage from "@/public/view.png";
 import deleteImage from "@/public/delete.png";
-import { role, careersData } from "@/app/lib/data";
-import FormModal from "@/app/components/FormModal";
+import { role, careersData } from '@/shared/lib/data';
+import FormModal from '@/shared/components/ui/FormModal';
 
 type Career = {
   id: number;
@@ -18,8 +18,8 @@ type Career = {
 };
 
 const columns = [
-  { header: "Nombre", accesor: "nombre" },
-  { header: "Código", accesor: "codigo", className: "hidden md:table-cell" },
+  { header: "Nombre", accessor: "nombre" },
+  { header: "Código", accessor: "codigo", className: "hidden md:table-cell" },
 ];
 
 const CareersListPage = () => {
@@ -71,7 +71,7 @@ const CareersListPage = () => {
       {/* LIST */}
       <Table columns={columns} renderRow={renderRow} data={careersData} />
       {/* PAGINATION */}
-      <Pagination />
+      <Pagination currentPage={1} totalPages={1} onPageChange={() => { }} hasNextPage={false} hasPrevPage={false} />
     </div>
   );
 };
