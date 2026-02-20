@@ -171,7 +171,7 @@ function AdminProjectsPageContent() {
                                         <td className="px-6 py-5 whitespace-nowrap text-right align-top">
                                             <div className="flex justify-end items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Link
-                                                    href={`/dashboard/projects/admin/edit/${project.id}`}
+                                                    href={`/projects/admin/edit/${project.id}`}
                                                     className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                                                     title="Editar proyecto"
                                                 >
@@ -196,14 +196,15 @@ function AdminProjectsPageContent() {
                         </table>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }
 
 export default function AdminProjectsPage() {
     return (
-        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/dashboard/projects">
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/projects">
             <AdminProjectsPageContent />
         </RoleProtectedRoute>
     );

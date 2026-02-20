@@ -286,7 +286,7 @@ const ProfilePage = () => {
                 <div className="bg-white p-3 sm:p-4 rounded-md">
                     <h1 className="text-lg sm:text-xl font-semibold">Atajos</h1>
                     <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-4 flex-wrap text-xs text-gray-600">
-                        <Link href="/dashboard/projects" className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">
+                        <Link href="/projects" className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">
                             Mis Proyectos
                         </Link>
                         <Link href="/list/events" className="p-2 sm:p-3 rounded-md bg-pastelGreen hover:bg-pastelGreen/80 transition-colors">

@@ -15,7 +15,7 @@ export default function BulkUploadProjectsPage() {
                     </p>
                 </div>
                 <Link
-                    href="/dashboard/projects"
+                    href="/projects"
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

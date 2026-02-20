@@ -58,7 +58,7 @@ const SingleTeacherPageContent = () => {
     }
 
     const fullName = `${teacher.nombres} ${teacher.apellidos}`;
-    const role = teacher.actores?.find((a: any) => 
+    const role = teacher.actores?.find((a: any) =>
         ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol?.nombre_rol)
     )?.tipo_rol?.nombre_rol || 'Profesor';
     const faculty = teacher.facultad?.nombre_facultad || 'N/A';
@@ -66,7 +66,7 @@ const SingleTeacherPageContent = () => {
     const phone = teacher.numero_celular || 'N/A';
     const totalProjects = projects.length;
     const totalStudents = new Set(
-        projects.flatMap((p: any) => 
+        projects.flatMap((p: any) =>
             p.actores?.filter((a: any) => a.tipo_rol?.nombre_rol === 'Estudiante')
                 .map((a: any) => a.persona?.id_persona)
         )
@@ -219,7 +219,7 @@ const SingleTeacherPageContent = () => {
                 <div className="bg-white p-3 sm:p-4 rounded-md">
                     <h1 className="text-lg sm:text-xl font-semibold">Atajos</h1>
                     <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-4 flex-wrap text-xs text-gray-600">
-                        <Link href={"/dashboard/projects"} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Proyectos</Link>
+                        <Link href={"/projects"} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Proyectos</Link>
                         <Link href={"/list/students"} className="p-2 sm:p-3 rounded-md bg-pastelPurple hover:bg-pastelPurple/80 transition-colors">Estudiantes</Link>
                         <Link href={"/list/teachers"} className="p-2 sm:p-3 rounded-md bg-pastelYellow hover:bg-pastelYellow/80 transition-colors">Profesores</Link>
                         <Link href={"/list/events"} className="p-2 sm:p-3 rounded-md bg-pastelGreen hover:bg-pastelGreen/80 transition-colors">Eventos</Link>

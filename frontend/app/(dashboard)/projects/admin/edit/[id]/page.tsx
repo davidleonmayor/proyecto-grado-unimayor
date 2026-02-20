@@ -142,7 +142,7 @@ function EditProjectPageContent() {
             setEndDate(formatDate(project.endDate));
         } catch (error: any) {
             Swal.fire('Error', error.message || 'No se pudo cargar el proyecto', 'error');
-            router.push('/dashboard/projects/admin');
+            router.push('/projects/admin');
         } finally {
             setIsLoading(false);
         }
@@ -328,7 +328,7 @@ function EditProjectPageContent() {
             });
 
             await Swal.fire('¡Actualizado!', 'Proyecto actualizado correctamente', 'success');
-            router.push('/dashboard/projects/admin');
+            router.push('/projects/admin');
         } catch (error: any) {
             Swal.fire('Error', error.message || 'No se pudo actualizar el proyecto', 'error');
         } finally {
@@ -765,7 +765,7 @@ function EditProjectPageContent() {
 
 export default function EditProjectPage() {
     return (
-        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/dashboard/projects">
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/projects">
             <EditProjectPageContent />
         </RoleProtectedRoute>
     );

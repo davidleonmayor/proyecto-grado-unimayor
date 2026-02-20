@@ -252,7 +252,7 @@ function NewProjectPageContent() {
             });
 
             await Swal.fire('¡Éxito!', 'Proyecto creado exitosamente', 'success');
-            router.push('/dashboard/projects/admin');
+            router.push('/projects/admin');
         } catch (error: any) {
             Swal.fire('Error', error.message || 'No se pudo crear el proyecto', 'error');
         }
@@ -652,7 +652,7 @@ function NewProjectPageContent() {
 
 export default function NewProjectPage() {
     return (
-        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/dashboard/projects">
+        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/projects">
             <NewProjectPageContent />
         </RoleProtectedRoute>
     );

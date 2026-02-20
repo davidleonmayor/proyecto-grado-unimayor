@@ -221,9 +221,9 @@ const SingleStudentPageContent = () => {
                     <h1 className="text-lg sm:text-xl font-semibold">Atajos</h1>
                     <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-4 flex-wrap text-xs text-gray-600">
                         {project && (
-                            <Link href={`/dashboard/projects/${project.id_trabajo_grado}`} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Ver Proyecto</Link>
+                            <Link href={`/projects/${project.id_trabajo_grado}`} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Ver Proyecto</Link>
                         )}
-                        <Link href={"/dashboard/projects"} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Proyectos</Link>
+                        <Link href={"/projects"} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Proyectos</Link>
                         <Link href={"/list/events"} className="p-2 sm:p-3 rounded-md bg-pastelGreen hover:bg-pastelGreen/80 transition-colors">Eventos</Link>
                     </div>
                 </div>

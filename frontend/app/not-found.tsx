@@ -73,9 +73,6 @@ export default function NotFound() {
                                 className="group relative bg-white rounded-lg p-4 shadow-md hover:shadow-xl transition-all duration-300 transform hover:scale-105 border border-gray-200 hover:border-primary-500"
                             >
                                 <div className="flex items-center justify-center sm:justify-start gap-3">
-                                    <span className="text-2xl group-hover:scale-110 transition-transform">
-                                        {link.icon}
-                                    </span>
                                     <span className="text-sm font-medium text-gray-700 group-hover:text-primary-600 transition-colors">
                                         {link.label}
                                     </span>

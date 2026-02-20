@@ -61,7 +61,7 @@ export default function ProjectsPage() {
                 {isCoordinator && (
                     <div className="flex l-0 gap-3">
                         <Link
-                            href="/dashboard/projects/admin/new"
+                            href="/projects/admin/new"
                             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,7 +71,7 @@ export default function ProjectsPage() {
                         </Link>
                         {/* TODO: implement that functionality */}
                         <Link
-                            href="/dashboard/projects/bulk-upload"
+                            href="/projects/bulk-upload"
                             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@ export default function ProjectsPage() {
                             Cargar Múltiples Proyectos
                         </Link>
                         <Link
-                            href="/dashboard/projects/admin"
+                            href="/projects/admin"
                             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-all font-medium flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +103,7 @@ export default function ProjectsPage() {
                     {projects.map((project) => (
                         <Link
                             key={project.id}
-                            href={`/dashboard/projects/${project.id}`}
+                            href={`/projects/${project.id}`}
                             className="block group"
                         >
                             <div className="bg-white rounded-lg shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-gray-100 p-6 transition-all duration-300 hover:shadow-[0_8px_24px_rgb(0,0,0,0.08)] hover:-translate-y-1 h-full flex flex-col">
@@ -111,13 +111,13 @@ export default function ProjectsPage() {
                                     <div className="flex items-center gap-2">
                                         {/* Status Dot */}
                                         <span className={`w-2 h-2 rounded-full ${project.status === 'Aprobado' ? 'bg-emerald-500' :
-                                                project.status === 'Rechazado' ? 'bg-rose-500' :
-                                                    'bg-amber-400'
+                                            project.status === 'Rechazado' ? 'bg-rose-500' :
+                                                'bg-amber-400'
                                             }`}></span>
                                         {/* Status Text Outline */}
                                         <span className={`text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded border ${project.status === 'Aprobado' ? 'text-emerald-700 border-emerald-200' :
-                                                project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
-                                                    'text-amber-700 border-amber-200'
+                                            project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
+                                                'text-amber-700 border-amber-200'
                                             }`}>
                                             {project.status}
                                         </span>
