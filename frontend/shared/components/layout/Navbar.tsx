@@ -234,7 +234,7 @@ export const Navbar = () => {
                   <div className="flex justify-between items-start mb-1.5">
                     <h4 className="text-[13px] font-medium text-gray-700 leading-snug">Bienvenido al nuevo sistema</h4>
                   </div>
-                  <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">Gracias por conectarte a la nueva plataforma de administración de proyectos de la Universidad Mayor...</p>
+                  <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">Gracias por conectarte a la nueva plataforma de administración de proyectos del Colegio Mayor...</p>
                   <span className="text-[10px] text-gray-400 mt-2 block font-light">Hace 3 días</span>
                 </div>
               </div>

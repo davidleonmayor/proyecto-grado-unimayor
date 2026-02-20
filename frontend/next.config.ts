@@ -3,8 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   images: {
-    remotePatterns:[
-      {hostname: 'images.pexels.com'},
+    remotePatterns: [
+      { hostname: 'images.pexels.com' },
     ],
   },
   reactStrictMode: true,
@@ -12,4 +12,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
- 
+

@@ -196,9 +196,8 @@ function AdminProjectsPageContent() {
                         </table>
                     </div>
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 }
 

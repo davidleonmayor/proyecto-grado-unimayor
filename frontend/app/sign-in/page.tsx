@@ -176,7 +176,7 @@ export default function SignIn() {
         {/* Footer */}
         <div className="px-8 py-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            Todos los derechos reservados © Universidad Mayor del Cauca
+            Todos los derechos reservados © Colegio Mayor del Cauca
           </p>
         </div>
       </div>
