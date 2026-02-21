@@ -1,6 +1,7 @@
 import { useRef, useState } from "react"
 import type { ChangeEvent, RefObject } from "react"
-import * as XLSX from "xlsx"
+// import * as XLSX from "xlsx"
+import * as XLSX from "xlsx-js-style"
 import type { TextItem } from "pdfjs-dist/types/src/display/api"
 import Swal from "sweetalert2"
 import {
@@ -204,11 +205,19 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
   ): ExtractedData => {
     // Extraer título - buscar texto entre comillas después de TÍTULO DEL PROYECTO
     let titulo = ""
+
+
     const tituloPatterns = [
-      /TÍTULO DEL PROYECTO[\s\S]*?[""]([^""]+)[""]|[""]([^""]+)[""][\s\S]*?LÍNEA DE ACCIÓN/i,
-      /TÍTULO DEL PROYECTO[\s\S]*?"([^"]+)"/i,
-      /ACCIÓN POR EL PLANETA[\s\n]*[""]([^""]+)[""]|[""]([^""]+)[""]/i,
+      // Captura SOLO entre comilla tipográfica de apertura y cierre
+      /\u201c([^\u201d]+)\u201d/,           // " ... "
+      /\u00ab([^\u00bb]+)\u00bb/,           // « ... »
+      // Fallback: línea después de "ACCIÓN POR EL PLANETA"
+      /ACCI[OÓ]N POR EL PLANETA\s*\n\s*[""]?([^\n""\n]+)/i,
+      // Fallback: línea después de "TÍTULO DEL PROYECTO"
+      /T[IÍ]TULO DEL PROYECTO\s*(?:[^\n]*\n){1,3}\s*[""]?([^\n""]+)/i,
     ]
+
+
     for (const pattern of tituloPatterns) {
       const match = text.match(pattern)
       if (match) {
@@ -442,31 +451,28 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
   const exportToXLSX = () => {
     if (extractedData.length === 0) return
 
-    // Validate that all necessary fields are filled
+    // --- Validación (igual que antes) ---
     let hasEmptyFields = false
     let emptyFieldReason = ""
 
     for (const data of extractedData) {
       if (!data.titulo.trim() || !data.descripcion.trim()) {
         hasEmptyFields = true
-        emptyFieldReason = `El proyecto "${data.titulo || 'Sin título'}" tiene el título o la descripción vacíos.`
+        emptyFieldReason = `El proyecto "${data.titulo || "Sin título"}" tiene el título o la descripción vacíos.`
         break
       }
-
       if (data.estudiantes.length === 0) {
         hasEmptyFields = true
         emptyFieldReason = `El proyecto "${data.titulo}" no tiene estudiantes asignados.`
         break
       }
-
       for (const est of data.estudiantes) {
         if (!est.nombre.trim() || !est.codigo.trim() || !est.cedula.trim()) {
           hasEmptyFields = true
-          emptyFieldReason = `Faltan datos (nombre, código o cédula) en un estudiante del proyecto "${data.titulo}".`
+          emptyFieldReason = `Faltan datos en un estudiante del proyecto "${data.titulo}".`
           break
         }
       }
-
       if (hasEmptyFields) break
     }
 
@@ -475,62 +481,279 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
         icon: "warning",
         title: "Campos incompletos",
         text: emptyFieldReason,
-        confirmButtonColor: "#107c41"
+        confirmButtonColor: "#107c41",
       })
       return
     }
 
-    const rows: XlsxRow[] = []
-    let rowNumber = 1
-    extractedData.forEach((data) => {
-      if (data.estudiantes.length === 0) {
-        rows.push({
-          "No.": rowNumber++,
-          "TÍTULO DEL PROYECTO/PRÁCTICA": data.titulo,
-          "DESCRIPCIÓN DEL PROYECTO": data.descripcion,
-          EDUCACIÓN: data.lineasAccion.educacion ? "X" : "",
-          "CONVIVENCIA Y CULTURA": data.lineasAccion.convivenciaCultura ? "X" : "",
-          "MEDIO AMBIENTE": data.lineasAccion.medioAmbiente ? "X" : "",
-          EMPRENDIMIENTO: data.lineasAccion.emprendimiento ? "X" : "",
-          "SERVICIO SOCIAL": data.lineasAccion.servicioSocial ? "X" : "",
-          ESTUDIANTES: "",
-          CÓDIGO: "",
-          CEDULA: "",
-        })
-      } else {
-        data.estudiantes.forEach((est) => {
-          rows.push({
-            "No.": rowNumber++,
-            "TÍTULO DEL PROYECTO/PRÁCTICA": data.titulo,
-            "DESCRIPCIÓN DEL PROYECTO": data.descripcion,
-            EDUCACIÓN: data.lineasAccion.educacion ? "X" : "",
-            "CONVIVENCIA Y CULTURA": data.lineasAccion.convivenciaCultura ? "X" : "",
-            "MEDIO AMBIENTE": data.lineasAccion.medioAmbiente ? "X" : "",
-            EMPRENDIMIENTO: data.lineasAccion.emprendimiento ? "X" : "",
-            "SERVICIO SOCIAL": data.lineasAccion.servicioSocial ? "X" : "",
-            ESTUDIANTES: est.nombre,
-            CÓDIGO: est.codigo,
-            CEDULA: est.cedula,
-          })
-        })
+    // --- Colores ---
+    const YELLOW = "FFFF00"
+    const GREEN = "C8E6C9"
+    const CREAM = "FFFFC0"
+    const WHITE = "FFFFFF"
+
+    const fillYellow = { patternType: "solid", fgColor: { rgb: YELLOW } } as const
+    const fillGreen = { patternType: "solid", fgColor: { rgb: GREEN } } as const
+    const fillCream = { patternType: "solid", fgColor: { rgb: CREAM } } as const
+
+    const borderStyle = {
+      top: { style: "thin", color: { rgb: "000000" } },
+      bottom: { style: "thin", color: { rgb: "000000" } },
+      left: { style: "thin", color: { rgb: "000000" } },
+      right: { style: "thin", color: { rgb: "000000" } },
+    } as const
+
+    const makeCell = (
+      v: string | number,
+      fill: typeof fillYellow | typeof fillGreen | typeof fillCream,
+      bold = false
+    ): XLSX.CellObject => ({
+      v,
+      t: "s",
+      s: {
+        fill,
+        font: { name: "Arial", sz: 9, bold },
+        alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        border: borderStyle,
+      },
+    })
+
+    const wb = XLSX.utils.book_new()
+    const ws: XLSX.WorkSheet = {}
+
+    // --- Fila 1: headers principales ---
+    // Columnas: A=1, B=2 ... AF=32
+    const row1: Array<[number, string, typeof fillYellow | typeof fillGreen | typeof fillCream]> = [
+      [1, "No.", fillYellow],
+      [2, "TÍTULO DEL PROYECTO/PRÁCTICA", fillYellow],
+      [3, "DESCRIPCIÓN DEL PROYECTO", fillYellow],
+      // D-H: LÍNEA DE ACCIÓN (merge)
+      [9, "ESTUDIANTES", fillYellow],
+      [10, "CÓDIGO", fillGreen],
+      [11, "CÉDULA", fillGreen],
+      [12, "EMAIL", fillGreen],
+      [13, "No. Estudiantes", fillGreen],
+      [14, "EVIDENCIAS", fillGreen],
+      // O-T: MODALIDAD (merge)
+      // U-V: CONVENIO (merge)
+      [23, "PROFESOR", fillYellow],
+      [24, "TIPO CONTRATACIÓN", fillGreen],
+      [25, "E-MAIL", fillGreen],
+      // Z-AC: POBLACIÓN (merge)
+      [30, "FECHA INICIO", fillGreen],
+      [31, "VALOR", fillGreen],
+      [32, "OBSERVACIONES", fillGreen],
+    ]
+
+    // Columnas que se mergean fila 1 y 2 (header + vacío abajo = span 2 rows)
+    const spanTwoRows = [1, 2, 3, 9, 10, 11, 12, 13, 14, 23, 24, 25, 30, 31, 32]
+
+    for (const [col, val, fill] of row1) {
+      const addr = XLSX.utils.encode_cell({ r: 0, c: col - 1 })
+      ws[addr] = makeCell(val, fill, true)
+    }
+
+    // Headers de grupos (fila 1, primera celda del rango mergeado)
+    ws[XLSX.utils.encode_cell({ r: 0, c: 3 })] = makeCell("LÍNEA DE ACCIÓN", fillYellow, true)  // D1
+    ws[XLSX.utils.encode_cell({ r: 0, c: 14 })] = makeCell("MODALIDAD", fillYellow, true)  // O1
+    ws[XLSX.utils.encode_cell({ r: 0, c: 20 })] = makeCell("CONVENIO", fillYellow, true)  // U1
+    ws[XLSX.utils.encode_cell({ r: 0, c: 25 })] = makeCell("POBLACIÓN", fillCream, true)  // Z1
+
+    // --- Fila 2: sub-headers ---
+    const lineaAccion = [
+      "EDUCACIÓN",
+      "CONVIVENCIA Y CULTURA",
+      "MEDIO AMBIENTE Y SOSTENIBILIDAD",
+      "EMPRENDIMIENTO",
+      "SERVICIO SOCIAL",
+    ]
+    lineaAccion.forEach((h, i) => {
+      const addr = XLSX.utils.encode_cell({ r: 1, c: 3 + i }) // D2..H2
+      ws[addr] = {
+        v: h, t: "s",
+        s: {
+          fill: fillYellow,
+          font: { name: "Arial", sz: 9, bold: false },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true, textRotation: 90 },
+          border: borderStyle,
+        },
       }
     })
-    const ws = XLSX.utils.json_to_sheet(rows)
-    const wb = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(wb, ws, "Proyección Social")
-    ws["!cols"] = [
-      { wch: 5 },
-      { wch: 40 },
-      { wch: 60 },
-      { wch: 12 },
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 35 },
-      { wch: 12 },
-      { wch: 15 },
+
+    const modalidad = [
+      "PROYECTO DE INVESTIGACIÓN",
+      "TRABAJO DE GRADO",
+      "PRÁCTICA PROFESIONAL",
+      "CLÍNICA DE AULA",
+      "PROYECTO SOCIAL",
+      "OTRO",
     ]
+    modalidad.forEach((h, i) => {
+      const addr = XLSX.utils.encode_cell({ r: 1, c: 14 + i }) // O2..T2
+      ws[addr] = {
+        v: h, t: "s",
+        s: {
+          fill: fillYellow,
+          font: { name: "Arial", sz: 9, bold: false },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true, textRotation: 90 },
+          border: borderStyle,
+        },
+      }
+    })
+
+    ws[XLSX.utils.encode_cell({ r: 1, c: 20 })] = makeCell("SI", fillYellow)  // U2
+    ws[XLSX.utils.encode_cell({ r: 1, c: 21 })] = makeCell("NO", fillYellow)  // V2
+
+    const poblacion = [
+      "Descripción de la población",
+      "Rango de edades",
+      "No. de beneficiarios directos",
+      "lugar/Barrio/sector/Organización",
+    ]
+    poblacion.forEach((h, i) => {
+      const addr = XLSX.utils.encode_cell({ r: 1, c: 25 + i }) // Z2..AC2
+      ws[addr] = makeCell(h, fillCream)
+    })
+
+    // Rellenar con borde las celdas vacías de fila 2 para los headers que hacen span
+    for (const col of spanTwoRows) {
+      const addr = XLSX.utils.encode_cell({ r: 1, c: col - 1 })
+      if (!ws[addr]) {
+        ws[addr] = { v: "", t: "s", s: { border: borderStyle, fill: { patternType: "solid", fgColor: { rgb: WHITE } } } }
+      }
+    }
+
+    // --- Filas de datos (desde fila 3) ---
+    let rowIndex = 2 // 0-based, fila 3
+    let rowNum = 1
+
+    for (const data of extractedData) {
+      const linea = data.lineasAccion
+      const estudiantes = data.estudiantes.length > 0
+        ? data.estudiantes
+        : [{ nombre: "", codigo: "", cedula: "" }]
+
+      for (const est of estudiantes) {
+        const setCell = (
+          col: number,
+          val: string | number,
+          fill: typeof fillYellow | typeof fillGreen | typeof fillCream,
+          alignH: "center" | "left" = "center"
+        ) => {
+          const addr = XLSX.utils.encode_cell({ r: rowIndex, c: col - 1 })
+          ws[addr] = {
+            v: val, t: typeof val === "number" ? "n" : "s",
+            s: {
+              fill,
+              font: { name: "Arial", sz: 9 },
+              alignment: { horizontal: alignH, vertical: "center", wrapText: true },
+              border: borderStyle,
+            },
+          }
+        }
+
+        setCell(1, rowNum++, fillYellow)
+        setCell(2, data.titulo, fillYellow, "left")
+        setCell(3, data.descripcion, fillGreen, "left")
+        setCell(4, linea.educacion ? "X" : "", fillYellow)
+        setCell(5, linea.convivenciaCultura ? "X" : "", fillYellow)
+        setCell(6, linea.medioAmbiente ? "X" : "", fillYellow)
+        setCell(7, linea.emprendimiento ? "X" : "", fillYellow)
+        setCell(8, linea.servicioSocial ? "X" : "", fillYellow)
+        setCell(9, est.nombre, fillGreen, "left")
+        setCell(10, est.codigo, fillGreen)
+        setCell(11, est.cedula, fillGreen)
+        setCell(12, "", fillGreen)   // email estudiante
+        setCell(13, "", fillGreen)   // no. estudiantes
+        setCell(14, "", fillGreen)   // evidencias
+        setCell(15, "", fillGreen)   // proy investigación
+        setCell(16, "", fillGreen)   // trabajo grado
+        setCell(17, "", fillGreen)   // práctica prof
+        setCell(18, "", fillGreen)   // clínica aula
+        setCell(19, linea.servicioSocial ? "X" : "", fillGreen)   // proyecto social
+        setCell(20, "", fillGreen)   // otro
+        setCell(21, "X", fillGreen)   // convenio sí
+        setCell(22, "", fillGreen)   // convenio no
+        setCell(23, "", fillYellow)  // profesor
+        setCell(24, "", fillGreen)   // tipo contratación
+        setCell(25, "", fillGreen)   // email profesor
+        setCell(26, "", fillCream, "left")  // desc población
+        setCell(27, "", fillCream)   // rango edades
+        setCell(28, "", fillCream)   // beneficiarios
+        setCell(29, "", fillCream, "left")  // lugar
+        setCell(30, "", fillGreen)   // fecha inicio
+        setCell(31, "", fillGreen)   // valor
+        setCell(32, "", fillGreen, "left")  // observaciones
+
+        rowIndex++
+      }
+    }
+
+    // --- Merges ---
+    ws["!merges"] = [
+      // Fila 1: headers de grupo
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 7 } },  // D1:H1  LÍNEA DE ACCIÓN
+      { s: { r: 0, c: 14 }, e: { r: 0, c: 19 } },  // O1:T1  MODALIDAD
+      { s: { r: 0, c: 20 }, e: { r: 0, c: 21 } },  // U1:V1  CONVENIO
+      { s: { r: 0, c: 25 }, e: { r: 0, c: 28 } },  // Z1:AC1 POBLACIÓN
+      // Fila 1+2: headers simples que hacen span vertical
+      ...spanTwoRows.map(col => ({
+        s: { r: 0, c: col - 1 },
+        e: { r: 1, c: col - 1 },
+      })),
+    ]
+
+    // --- Anchos de columna ---
+    ws["!cols"] = [
+      { wch: 5 },  // A: No.
+      { wch: 30 },  // B: Título
+      { wch: 40 },  // C: Descripción
+      { wch: 12 },  // D: Educación
+      { wch: 14 },  // E: Convivencia
+      { wch: 14 },  // F: Medio Ambiente
+      { wch: 12 },  // G: Emprendimiento
+      { wch: 12 },  // H: Servicio Social
+      { wch: 30 },  // I: Estudiantes
+      { wch: 12 },  // J: Código
+      { wch: 14 },  // K: Cédula
+      { wch: 25 },  // L: Email est.
+      { wch: 10 },  // M: No. Est.
+      { wch: 18 },  // N: Evidencias
+      { wch: 14 },  // O: Proy Inv.
+      { wch: 14 },  // P: Trabajo grado
+      { wch: 14 },  // Q: Práctica prof.
+      { wch: 12 },  // R: Clínica aula
+      { wch: 12 },  // S: Proy social
+      { wch: 10 },  // T: Otro
+      { wch: 8 },  // U: Sí
+      { wch: 8 },  // V: No
+      { wch: 30 },  // W: Profesor
+      { wch: 15 },  // X: Tipo contrat.
+      { wch: 25 },  // Y: Email prof.
+      { wch: 30 },  // Z: Desc. población
+      { wch: 14 },  // AA: Rango edades
+      { wch: 15 },  // AB: Beneficiarios
+      { wch: 25 },  // AC: Lugar
+      { wch: 12 },  // AD: Fecha inicio
+      { wch: 12 },  // AE: Valor
+      { wch: 30 },  // AF: Observaciones
+    ]
+
+    // --- Alturas de fila ---
+    ws["!rows"] = [
+      { hpt: 30 },  // Fila 1
+      { hpt: 80 },  // Fila 2 (sub-headers rotados)
+      // filas de datos: dejar que Excel ajuste
+    ]
+
+    ws["!ref"] = XLSX.utils.encode_range({
+      s: { r: 0, c: 0 },
+      e: { r: rowIndex - 1, c: 31 },
+    })
+
+    XLSX.utils.book_append_sheet(wb, ws, "Proyección Social")
+
+    // xlsx-js-style requiere writeFile con bookType explícito para estilos
     XLSX.writeFile(wb, "proyeccion_social.xlsx")
   }
 
