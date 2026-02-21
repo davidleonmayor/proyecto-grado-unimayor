@@ -211,7 +211,7 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       // Captura SOLO entre comilla tipográfica de apertura y cierre
       /\u201c([^\u201d]+)\u201d/,           // " ... "
       /\u00ab([^\u00bb]+)\u00bb/,           // « ... »
-      // Fallback: línea después de "ACCIÓN POR EL PLANETA"
+
       /ACCI[OÓ]N POR EL PLANETA\s*\n\s*[""]?([^\n""\n]+)/i,
       // Fallback: línea después de "TÍTULO DEL PROYECTO"
       /T[IÍ]TULO DEL PROYECTO\s*(?:[^\n]*\n){1,3}\s*[""]?([^\n""]+)/i,
@@ -624,8 +624,20 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     }
 
     // --- Filas de datos (desde fila 3) ---
-    let rowIndex = 2 // 0-based, fila 3
+    let rowIndex = 2
     let rowNum = 1
+
+    ws["!merges"] = [
+      { s: { r: 0, c: 3 }, e: { r: 0, c: 7 } },
+      { s: { r: 0, c: 14 }, e: { r: 0, c: 19 } },
+      { s: { r: 0, c: 20 }, e: { r: 0, c: 21 } },
+      { s: { r: 0, c: 25 }, e: { r: 0, c: 28 } },
+      ...spanTwoRows.map(col => ({
+        s: { r: 0, c: col - 1 },
+        e: { r: 1, c: col - 1 },
+      })),
+    ]
+
 
     for (const data of extractedData) {
       const linea = data.lineasAccion
@@ -633,7 +645,12 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
         ? data.estudiantes
         : [{ nombre: "", codigo: "", cedula: "" }]
 
-      for (const est of estudiantes) {
+      const projectStartRow = rowIndex
+      const projectRowCount = estudiantes.length
+
+      estudiantes.forEach((est, estIndex) => {
+        const isFirst = estIndex === 0
+
         const setCell = (
           col: number,
           val: string | number,
@@ -653,55 +670,53 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
         }
 
         setCell(1, rowNum++, fillYellow)
-        setCell(2, data.titulo, fillYellow, "left")
-        setCell(3, data.descripcion, fillGreen, "left")
-        setCell(4, linea.educacion ? "X" : "", fillYellow)
-        setCell(5, linea.convivenciaCultura ? "X" : "", fillYellow)
-        setCell(6, linea.medioAmbiente ? "X" : "", fillYellow)
-        setCell(7, linea.emprendimiento ? "X" : "", fillYellow)
-        setCell(8, linea.servicioSocial ? "X" : "", fillYellow)
+        setCell(2, isFirst ? data.titulo : "", fillYellow, "left")
+        setCell(3, isFirst ? data.descripcion : "", fillGreen, "left")
+        setCell(4, isFirst && linea.educacion ? "X" : "", fillYellow)
+        setCell(5, isFirst && linea.convivenciaCultura ? "X" : "", fillYellow)
+        setCell(6, isFirst && linea.medioAmbiente ? "X" : "", fillYellow)
+        setCell(7, isFirst && linea.emprendimiento ? "X" : "", fillYellow)
+        setCell(8, isFirst && linea.servicioSocial ? "X" : "", fillYellow)
         setCell(9, est.nombre, fillGreen, "left")
         setCell(10, est.codigo, fillGreen)
         setCell(11, est.cedula, fillGreen)
-        setCell(12, "", fillGreen)   // email estudiante
-        setCell(13, "", fillGreen)   // no. estudiantes
-        setCell(14, "", fillGreen)   // evidencias
-        setCell(15, "", fillGreen)   // proy investigación
-        setCell(16, "", fillGreen)   // trabajo grado
-        setCell(17, "", fillGreen)   // práctica prof
-        setCell(18, "", fillGreen)   // clínica aula
-        setCell(19, linea.servicioSocial ? "X" : "", fillGreen)   // proyecto social
-        setCell(20, "", fillGreen)   // otro
-        setCell(21, "X", fillGreen)   // convenio sí
-        setCell(22, "", fillGreen)   // convenio no
-        setCell(23, "", fillYellow)  // profesor
-        setCell(24, "", fillGreen)   // tipo contratación
-        setCell(25, "", fillGreen)   // email profesor
-        setCell(26, "", fillCream, "left")  // desc población
-        setCell(27, "", fillCream)   // rango edades
-        setCell(28, "", fillCream)   // beneficiarios
-        setCell(29, "", fillCream, "left")  // lugar
-        setCell(30, "", fillGreen)   // fecha inicio
-        setCell(31, "", fillGreen)   // valor
-        setCell(32, "", fillGreen, "left")  // observaciones
+        setCell(12, "", fillGreen)
+        setCell(13, "", fillGreen)
+        setCell(14, "", fillGreen)
+        setCell(15, "", fillGreen)
+        setCell(16, "", fillGreen)
+        setCell(17, "", fillGreen)
+        setCell(18, "", fillGreen)
+        setCell(19, isFirst && linea.servicioSocial ? "X" : "", fillGreen)
+        setCell(20, "", fillGreen)
+        setCell(21, "", fillGreen)
+        setCell(22, "", fillGreen)
+        setCell(23, "", fillYellow)
+        setCell(24, "", fillGreen)
+        setCell(25, "", fillGreen)
+        setCell(26, "", fillCream, "left")
+        setCell(27, "", fillCream)
+        setCell(28, "", fillCream)
+        setCell(29, "", fillCream, "left")
+        setCell(30, "", fillGreen)
+        setCell(31, "", fillGreen)
+        setCell(32, "", fillGreen, "left")
 
         rowIndex++
+      })
+
+      // Merges verticales por proyecto (solo si tiene más de 1 estudiante)
+      if (projectRowCount > 1) {
+        const endRow = projectStartRow + projectRowCount - 1
+        const colsToMerge = [2, 3, 4, 5, 6, 7, 8]
+        colsToMerge.forEach(col => {
+          ws["!merges"]!.push({
+            s: { r: projectStartRow, c: col - 1 },
+            e: { r: endRow, c: col - 1 },
+          })
+        })
       }
     }
-
-    // --- Merges ---
-    ws["!merges"] = [
-      // Fila 1: headers de grupo
-      { s: { r: 0, c: 3 }, e: { r: 0, c: 7 } },  // D1:H1  LÍNEA DE ACCIÓN
-      { s: { r: 0, c: 14 }, e: { r: 0, c: 19 } },  // O1:T1  MODALIDAD
-      { s: { r: 0, c: 20 }, e: { r: 0, c: 21 } },  // U1:V1  CONVENIO
-      { s: { r: 0, c: 25 }, e: { r: 0, c: 28 } },  // Z1:AC1 POBLACIÓN
-      // Fila 1+2: headers simples que hacen span vertical
-      ...spanTwoRows.map(col => ({
-        s: { r: 0, c: col - 1 },
-        e: { r: 1, c: col - 1 },
-      })),
-    ]
 
     // --- Anchos de columna ---
     ws["!cols"] = [
