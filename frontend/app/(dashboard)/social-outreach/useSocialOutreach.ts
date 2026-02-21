@@ -44,6 +44,10 @@ type UseSocialOutreachResult = {
     value: string
   ) => void
   addEstudiante: (dataId: string) => void
+  addEstudianteBaseData: (
+    dataId: string,
+    baseData: { nombre: string; codigo: string; cedula: string }
+  ) => void
   removeEstudiante: (dataId: string, estudianteIndex: number) => void
   exportToXLSX: () => void
 }
@@ -400,6 +404,26 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     )
   }
 
+  const addEstudianteBaseData = (dataId: string, baseData: { nombre: string; codigo: string; cedula: string }) => {
+    setExtractedData((prev) =>
+      prev.map((item) =>
+        item.id === dataId
+          ? {
+            ...item,
+            estudiantes: [
+              ...item.estudiantes,
+              {
+                nombre: sanitizeText(baseData.nombre, MAX_NAME_LENGTH),
+                codigo: sanitizeText(baseData.codigo.replace(/\D/g, ""), MAX_CODE_LENGTH),
+                cedula: sanitizeText(baseData.cedula.replace(/\D/g, ""), MAX_ID_LENGTH)
+              },
+            ],
+          }
+          : item
+      )
+    )
+  }
+
   const removeEstudiante = (dataId: string, estudianteIndex: number) => {
     setExtractedData((prev) =>
       prev.map((item) =>
@@ -417,6 +441,45 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
 
   const exportToXLSX = () => {
     if (extractedData.length === 0) return
+
+    // Validate that all necessary fields are filled
+    let hasEmptyFields = false
+    let emptyFieldReason = ""
+
+    for (const data of extractedData) {
+      if (!data.titulo.trim() || !data.descripcion.trim()) {
+        hasEmptyFields = true
+        emptyFieldReason = `El proyecto "${data.titulo || 'Sin título'}" tiene el título o la descripción vacíos.`
+        break
+      }
+
+      if (data.estudiantes.length === 0) {
+        hasEmptyFields = true
+        emptyFieldReason = `El proyecto "${data.titulo}" no tiene estudiantes asignados.`
+        break
+      }
+
+      for (const est of data.estudiantes) {
+        if (!est.nombre.trim() || !est.codigo.trim() || !est.cedula.trim()) {
+          hasEmptyFields = true
+          emptyFieldReason = `Faltan datos (nombre, código o cédula) en un estudiante del proyecto "${data.titulo}".`
+          break
+        }
+      }
+
+      if (hasEmptyFields) break
+    }
+
+    if (hasEmptyFields) {
+      Swal.fire({
+        icon: "warning",
+        title: "Campos incompletos",
+        text: emptyFieldReason,
+        confirmButtonColor: "#107c41"
+      })
+      return
+    }
+
     const rows: XlsxRow[] = []
     let rowNumber = 1
     extractedData.forEach((data) => {
@@ -435,17 +498,16 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
           CEDULA: "",
         })
       } else {
-        data.estudiantes.forEach((est, idx) => {
+        data.estudiantes.forEach((est) => {
           rows.push({
-            "No.": idx === 0 ? rowNumber++ : "",
-            "TÍTULO DEL PROYECTO/PRÁCTICA": idx === 0 ? data.titulo : "",
-            "DESCRIPCIÓN DEL PROYECTO": idx === 0 ? data.descripcion : "",
-            EDUCACIÓN: idx === 0 && data.lineasAccion.educacion ? "X" : "",
-            "CONVIVENCIA Y CULTURA":
-              idx === 0 && data.lineasAccion.convivenciaCultura ? "X" : "",
-            "MEDIO AMBIENTE": idx === 0 && data.lineasAccion.medioAmbiente ? "X" : "",
-            EMPRENDIMIENTO: idx === 0 && data.lineasAccion.emprendimiento ? "X" : "",
-            "SERVICIO SOCIAL": idx === 0 && data.lineasAccion.servicioSocial ? "X" : "",
+            "No.": rowNumber++,
+            "TÍTULO DEL PROYECTO/PRÁCTICA": data.titulo,
+            "DESCRIPCIÓN DEL PROYECTO": data.descripcion,
+            EDUCACIÓN: data.lineasAccion.educacion ? "X" : "",
+            "CONVIVENCIA Y CULTURA": data.lineasAccion.convivenciaCultura ? "X" : "",
+            "MEDIO AMBIENTE": data.lineasAccion.medioAmbiente ? "X" : "",
+            EMPRENDIMIENTO: data.lineasAccion.emprendimiento ? "X" : "",
+            "SERVICIO SOCIAL": data.lineasAccion.servicioSocial ? "X" : "",
             ESTUDIANTES: est.nombre,
             CÓDIGO: est.codigo,
             CEDULA: est.cedula,
@@ -486,6 +548,7 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     updateField,
     updateEstudiante,
     addEstudiante,
+    addEstudianteBaseData,
     removeEstudiante,
     exportToXLSX,
   }

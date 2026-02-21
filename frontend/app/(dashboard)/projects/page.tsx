@@ -106,7 +106,7 @@ export default function ProjectsPage() {
                             href={`/projects/${project.id}`}
                             className="block group"
                         >
-                            <div className="bg-white rounded-lg shadow-[0_2px_8px_rgb(0,0,0,0.04)] border border-gray-100 p-6 transition-all duration-300 hover:shadow-[0_8px_24px_rgb(0,0,0,0.08)] hover:-translate-y-1 h-full flex flex-col">
+                            <div className="bg-white rounded-lg border border-gray-100 p-6 transition-all duration-300 h-full flex flex-col">
                                 <div className="flex justify-between items-center mb-5">
                                     <div className="flex items-center gap-2">
                                         {/* Status Dot */}

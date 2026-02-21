@@ -284,7 +284,7 @@ export default function ProjectDetailPage() {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="w-full py-2.5 px-4 border border-transparent rounded text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-200 disabled:text-gray-500 transition-colors"
+                                    className="w-full py-2.5 px-4 border border-transparent rounded text-sm font-medium text-white bg-[#155dfc] hover:bg-[#155dfc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-200 disabled:text-gray-500 transition-colors"
                                 >
                                     {isSubmitting ? 'Guardando...' : 'Registrar Revisión'}
                                 </button>

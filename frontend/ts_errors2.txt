@@ -1,0 +1,6 @@
+﻿app/(dashboard)/social-outreach/components/XlsxPreview.tsx(208,15): error TS2322: Type '(newValue: FlatRow[], operations: any) => void' is not assignable to type '(value: Record<string, any>[], operations: Operation[]) => void'.
+  Types of parameters 'newValue' and 'value' are incompatible.
+    Type 'Record<string, any>[]' is not assignable to type 'FlatRow[]'.
+      Type 'Record<string, any>' is missing the following properties from type 'FlatRow': projectId, no, titulo, descripcion, and 10 more.
+app/(dashboard)/social-outreach/page.tsx(124,13): error TS2322: Type '{ extractedData: ExtractedData[]; expandedIds: Set<string>; toggleExpanded: (id: string) => void; updateField: (dataId: string, field: "titulo" | "descripcion", value: string) => void; ... 7 more ...; isProcessing: boolean; }' is not assignable to type 'IntrinsicAttributes & XlsxPreviewProps'.
+  Property 'expandedIds' does not exist on type 'IntrinsicAttributes & XlsxPreviewProps'.
