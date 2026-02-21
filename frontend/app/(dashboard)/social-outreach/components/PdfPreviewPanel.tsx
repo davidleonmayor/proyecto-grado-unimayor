@@ -77,6 +77,7 @@ export const PdfPreviewPanel = ({
           pageWrapper.className = "relative mb-4 last:mb-0"
           pageWrapper.style.width = `${viewport.width}px`
           pageWrapper.style.height = `${viewport.height}px`
+          pageWrapper.style.overflow = "hidden"  
 
           const canvas = document.createElement("canvas")
           const context = canvas.getContext("2d")
@@ -141,7 +142,7 @@ export const PdfPreviewPanel = ({
     const selectedText = selection?.toString().trim()
     if (!selectedText) return
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(selectedText).catch(() => {})
+      navigator.clipboard.writeText(selectedText).catch(() => { })
     }
   }
 
