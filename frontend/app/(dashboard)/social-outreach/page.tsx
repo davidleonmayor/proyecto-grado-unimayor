@@ -87,28 +87,26 @@ export default function SocialOutreachGenerator() {
         <div
           className="flex-shrink-0 flex flex-col h-1/2 md:h-full w-full md:w-[var(--left-width)] overflow-hidden relative z-0 border-b md:border-b-0 md:border-r"
         >
-          {/* Top Half: File List */}
-          <div className={`${viewingPdfId ? 'h-[40%] border-b border-muted/50' : 'h-full'} flex-shrink-0 overflow-hidden transition-all duration-300`}>
-            <PdfFileList
-              files={outreach.files}
-              extractedData={outreach.extractedData}
-              isProcessing={outreach.isProcessing}
-              fileInputRef={outreach.fileInputRef}
-              handleFileInput={outreach.handleFileInput}
-              removeFile={outreach.removeFile}
-              removeAllFiles={outreach.removeAllFiles}
-              viewingPdfId={viewingPdfId}
-              onViewPdf={setViewingPdfId}
-            />
-          </div>
-
-          {/* Bottom Half: PDF Viewer */}
-          {viewingPdfId && viewedFile && (
-            <div className="flex-1 overflow-hidden">
+          {viewingPdfId && viewedFile ? (
+            <div className="flex-1 min-h-0 overflow-hidden">
               <PdfViewer
                 file={viewedFile.file}
                 safeName={viewedFile.safeName}
                 onClose={() => setViewingPdfId(null)}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <PdfFileList
+                files={outreach.files}
+                extractedData={outreach.extractedData}
+                isProcessing={outreach.isProcessing}
+                fileInputRef={outreach.fileInputRef}
+                handleFileInput={outreach.handleFileInput}
+                removeFile={outreach.removeFile}
+                removeAllFiles={outreach.removeAllFiles}
+                viewingPdfId={viewingPdfId}
+                onViewPdf={setViewingPdfId}
               />
             </div>
           )}
