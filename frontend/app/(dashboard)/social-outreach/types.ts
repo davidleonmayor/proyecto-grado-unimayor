@@ -6,6 +6,15 @@ export type LineaAccion = {
   servicioSocial: boolean
 }
 
+export type Modalidad = {
+  proyectoInvestigacion: boolean
+  trabajoGrado: boolean
+  practicaProfesional: boolean
+  clinicaAula: boolean
+  proyectoSocial: boolean
+  otro: boolean
+}
+
 export type Estudiante = {
   nombre: string
   codigo: string
@@ -18,7 +27,19 @@ export type ExtractedData = {
   titulo: string
   descripcion: string
   lineasAccion: LineaAccion
+  modalidad: Modalidad
   estudiantes: Estudiante[]
+  convenio: "si" | "no" | ""
+  profesor: string
+  tipoContratacion: string
+  emailProfesor: string
+  descripcionPoblacion: string
+  rangoEdades: string
+  beneficiariosDirectos: string
+  lugarOrganizacion: string
+  fechaInicio: string
+  valor: string
+  observaciones: string
 }
 
 export type FileEntry = {

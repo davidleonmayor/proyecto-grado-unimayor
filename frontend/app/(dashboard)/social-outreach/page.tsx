@@ -125,6 +125,8 @@ export default function SocialOutreachGenerator() {
           <XlsxPreview
             extractedData={outreach.extractedData}
             updateField={outreach.updateField}
+            updateModalidad={outreach.updateModalidad}   
+            updateConvenio={outreach.updateConvenio}     
             updateLineaAccion={outreach.updateLineaAccion}
             updateEstudiante={outreach.updateEstudiante}
             addEstudianteBaseData={outreach.addEstudianteBaseData}

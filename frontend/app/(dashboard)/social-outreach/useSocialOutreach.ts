@@ -13,7 +13,7 @@ import {
   MAX_NAME_LENGTH,
   MAX_TITLE_LENGTH,
 } from "./constants"
-import type { ExtractedData, FileEntry, LineaAccion, Estudiante } from "./types"
+import type { ExtractedData, FileEntry, LineaAccion, Estudiante, Modalidad } from "./types"
 import { isPdfMagicNumber, sanitizeFileName, sanitizeText } from "./utils"
 
 type XlsxRow = Record<string, string | number>
@@ -27,6 +27,8 @@ type UseSocialOutreachResult = {
   handleFileInput: (e: ChangeEvent<HTMLInputElement>) => Promise<void>
   removeFile: (fileId: string) => void
   removeAllFiles: () => void
+  updateModalidad: (dataId: string, campo: keyof Modalidad, checked: boolean) => void
+  updateConvenio: (dataId: string, value: "si" | "no" | "") => void
   toggleExpanded: (id: string) => void
   updateLineaAccion: (
     dataId: string,
@@ -35,7 +37,9 @@ type UseSocialOutreachResult = {
   ) => void
   updateField: (
     dataId: string,
-    field: "titulo" | "descripcion",
+    field: "titulo" | "descripcion" | "profesor" | "tipoContratacion" | "emailProfesor" |
+      "descripcionPoblacion" | "rangoEdades" | "beneficiariosDirectos" |
+      "lugarOrganizacion" | "fechaInicio" | "valor" | "observaciones",
     value: string
   ) => void
   updateEstudiante: (
@@ -74,6 +78,8 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
       processNewFiles(pending)
     }, 300)
   }
+
+
 
   const handleFileInput = async (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.currentTarget
@@ -273,7 +279,6 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     return {
       id: fileId,
       fileName,
-      // Sanitización de texto extraído antes de guardar en estado
       titulo: sanitizeText(titulo, MAX_TITLE_LENGTH),
       descripcion: sanitizeText(descripcion, MAX_DESCRIPTION_LENGTH),
       estudiantes: estudiantes.map((est) => ({
@@ -282,6 +287,44 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
         cedula: sanitizeText(est.cedula, MAX_ID_LENGTH),
       })),
       lineasAccion,
+      // Nuevos campos con valores por defecto
+      modalidad: {
+        proyectoInvestigacion: false,
+        trabajoGrado: false,
+        practicaProfesional: false,
+        clinicaAula: false,
+        proyectoSocial: /PROYECTO\s*SOCIAL/i.test(text),
+        otro: false,
+      },
+      convenio: "",
+      profesor: (() => {
+        const m = text.match(/DOCENTE\s*ASESOR[:\s]+([A-ZÁÉÍÓÚÑ][^\n]+)/i)
+        return m ? sanitizeText(m[1].trim(), 100) : ""
+      })(),
+      tipoContratacion: "",
+      emailProfesor: "",
+      descripcionPoblacion: (() => {
+        const m = text.match(/Poblaci[oó]n\s*directa[:\s]+([^\n.]+)/i)
+        return m ? sanitizeText(m[1].trim(), 200) : ""
+      })(),
+      rangoEdades: "",
+      beneficiariosDirectos: (() => {
+        const m = text.match(/(\d+)\s*ni[ñn]/i)
+        return m ? m[1] : ""
+      })(),
+      lugarOrganizacion: (() => {
+        const m = text.match(/CIUDAD[:\s]+([^\s]+).*?DEPARTAMENTO[:\s]+([^\s]+)/i)
+        return m ? sanitizeText(`${m[1]}, ${m[2]}`, 100) : ""
+      })(),
+      fechaInicio: (() => {
+        const m = text.match(/FECHA\s*DE\s*PRESENTACI[OÓ]N[:\s]+([^\n]+)/i)
+        return m ? sanitizeText(m[1].trim(), 50) : ""
+      })(),
+      valor: (() => {
+        const m = text.match(/VALOR\s*TOTAL[:\s]+\$?([\d.,]+)/i)
+        return m ? `$${m[1]}` : ""
+      })(),
+      observaciones: "",
     }
   }
 
@@ -349,19 +392,42 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
 
   const updateField = (
     dataId: string,
-    field: "titulo" | "descripcion",
+    field: "titulo" | "descripcion" | "profesor" | "tipoContratacion" | "emailProfesor" |
+      "descripcionPoblacion" | "rangoEdades" | "beneficiariosDirectos" |
+      "lugarOrganizacion" | "fechaInicio" | "valor" | "observaciones",
     value: string
   ) => {
     setExtractedData((prev) =>
       prev.map((item) =>
         item.id === dataId
-          ? {
-            ...item,
-            [field]:
-              field === "titulo"
-                ? sanitizeText(value, MAX_TITLE_LENGTH)
-                : sanitizeText(value, MAX_DESCRIPTION_LENGTH),
-          }
+          ? { ...item, [field]: value }
+          : item
+      )
+    )
+  }
+
+  const updateModalidad = (
+    dataId: string,
+    campo: keyof Modalidad,
+    checked: boolean
+  ) => {
+    setExtractedData((prev) =>
+      prev.map((item) =>
+        item.id === dataId
+          ? { ...item, modalidad: { ...item.modalidad, [campo]: checked } }
+          : item
+      )
+    )
+  }
+
+  const updateConvenio = (
+    dataId: string,
+    value: "si" | "no" | ""
+  ) => {
+    setExtractedData((prev) =>
+      prev.map((item) =>
+        item.id === dataId
+          ? { ...item, convenio: value }
           : item
       )
     )
@@ -691,16 +757,16 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
         setCell(20, "", fillGreen)
         setCell(21, "", fillGreen)
         setCell(22, "", fillGreen)
-        setCell(23, "", fillYellow)
-        setCell(24, "", fillGreen)
-        setCell(25, "", fillGreen)
-        setCell(26, "", fillCream, "left")
-        setCell(27, "", fillCream)
-        setCell(28, "", fillCream)
-        setCell(29, "", fillCream, "left")
-        setCell(30, "", fillGreen)
-        setCell(31, "", fillGreen)
-        setCell(32, "", fillGreen, "left")
+        setCell(23, isFirst ? data.profesor : "", fillYellow)
+        setCell(24, isFirst ? data.tipoContratacion : "", fillGreen)
+        setCell(25, isFirst ? data.emailProfesor : "", fillGreen)
+        setCell(26, isFirst ? data.descripcionPoblacion : "", fillCream, "left")
+        setCell(27, isFirst ? data.rangoEdades : "", fillCream)
+        setCell(28, isFirst ? data.beneficiariosDirectos : "", fillCream)
+        setCell(29, isFirst ? data.lugarOrganizacion : "", fillCream, "left")
+        setCell(30, isFirst ? data.fechaInicio : "", fillGreen)
+        setCell(31, isFirst ? data.valor : "", fillGreen)
+        setCell(32, isFirst ? data.observaciones : "", fillGreen, "left")
 
         rowIndex++
       })
@@ -789,6 +855,8 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     addEstudianteBaseData,
     removeEstudiante,
     exportToXLSX,
+    updateModalidad,
+    updateConvenio
   }
 }
 
