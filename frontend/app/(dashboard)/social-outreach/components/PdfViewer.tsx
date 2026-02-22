@@ -14,6 +14,7 @@ type PdfViewerProps = {
 export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
     const [numPages, setNumPages] = useState<number>(0)
     const [isLoading, setIsLoading] = useState(true)
+    const [containerWidth, setContainerWidth] = useState(0)
     const containerRef = useRef<HTMLDivElement>(null)
     const pdfDocRef = useRef<PDFDocumentProxy | null>(null)
 
@@ -54,16 +55,19 @@ export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
 
     useEffect(() => {
         let active = true
-        let animationFrameId: number
 
         const renderPages = async () => {
             if (!pdfDocRef.current || numPages === 0 || !containerRef.current) return
 
             const container = containerRef.current
+            const rawWidth = Math.max(container.clientWidth - 48, 0)
+            const targetWidth = Math.min(rawWidth, 850)
+
+            if (targetWidth <= 0) return
+
             container.innerHTML = ""
 
             const pdf = pdfDocRef.current
-            const targetWidth = Math.min(container.clientWidth - 48, 850)
 
             for (let i = 1; i <= pdf.numPages; i++) {
                 if (!active) break
@@ -109,15 +113,24 @@ export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
         return () => {
             active = false
         }
-    }, [numPages, file, isLoading])
+    }, [numPages, file, isLoading, containerWidth])
 
-    // Handle window resize dynamically adjusting width
     useEffect(() => {
-        const handleResize = () => {
-            setNumPages((prev) => prev) // small hack to trigger re-render of canvas sizes
+        if (!containerRef.current) return
+
+        const updateWidth = () => {
+            const width = containerRef.current?.getBoundingClientRect().width ?? 0
+            setContainerWidth(width)
         }
-        window.addEventListener('resize', handleResize)
-        return () => window.removeEventListener('resize', handleResize)
+
+        updateWidth()
+
+        const observer = new ResizeObserver(updateWidth)
+        observer.observe(containerRef.current)
+
+        return () => {
+            observer.disconnect()
+        }
     }, [])
 
     return (
