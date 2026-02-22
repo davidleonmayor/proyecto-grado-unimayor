@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Loader2, X, FileText } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 import { ScrollArea } from "@/shared/components/ui/scroll-area"
+import type { PDFDocumentProxy, RenderParameters } from "pdfjs-dist/types/src/display/api"
 
 type PdfViewerProps = {
     file: File
@@ -14,7 +15,7 @@ export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
     const [numPages, setNumPages] = useState<number>(0)
     const [isLoading, setIsLoading] = useState(true)
     const containerRef = useRef<HTMLDivElement>(null)
-    const pdfDocRef = useRef<any>(null)
+    const pdfDocRef = useRef<PDFDocumentProxy | null>(null)
 
     useEffect(() => {
         let isMounted = true
@@ -22,8 +23,7 @@ export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
         const loadPdf = async () => {
             setIsLoading(true)
             try {
-                // @ts-ignore
-                const pdfjs = await import("pdfjs-dist/build/pdf.mjs")
+                const pdfjs = (await import("pdfjs-dist/build/pdf.mjs")) as typeof import("pdfjs-dist/build/pdf")
                 if (!pdfjs.GlobalWorkerOptions.workerSrc) {
                     pdfjs.GlobalWorkerOptions.workerSrc = new URL(
                         "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -91,7 +91,7 @@ export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
 
                 container.appendChild(canvas)
 
-                const renderContext = {
+                const renderContext: RenderParameters = {
                     canvasContext: context,
                     viewport: viewport,
                 }
@@ -122,23 +122,21 @@ export const PdfViewer = ({ file, safeName, onClose }: PdfViewerProps) => {
 
     return (
         <div className="flex flex-col h-full bg-background relative w-full overflow-hidden">
-            <div className="flex items-center gap-2 p-3 border-b border-t bg-muted/20 flex-shrink-0 justify-between">
+            <div className="relative flex items-center gap-2 p-3 border-b border-t bg-muted/20 flex-shrink-0">
                 <div className="flex items-center gap-2 min-w-0 pr-2">
                     <FileText className="h-4 w-4 text-primary shrink-0" />
                     <h3 className="text-[13px] font-medium truncate text-foreground/80">
                         {safeName}
                     </h3>
                 </div>
-                {onClose && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 rounded hover:bg-muted shrink-0"
-                        onClick={onClose}
-                    >
-                        <X className="h-3.5 w-3.5 text-muted-foreground" />
-                    </Button>
-                )}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2 h-7 w-7 rounded hover:bg-muted"
+                    onClick={onClose}
+                >
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                </Button>
             </div>
 
             <ScrollArea className="flex-1 bg-muted/10 h-full">
