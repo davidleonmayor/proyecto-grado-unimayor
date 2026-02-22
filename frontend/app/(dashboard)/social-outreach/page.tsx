@@ -12,12 +12,36 @@ export default function SocialOutreachGenerator() {
 
   // Resizable panel state
   const [leftWidth, setLeftWidth] = useState(320)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const containerRef = useRef<HTMLDivElement | null>(null)
   const isDragging = useRef(false)
   const startX = useRef(0)
   const startWidth = useRef(0)
+  const dividerWidth = 8
 
   // PDF Viewer state
   const [viewingPdfId, setViewingPdfId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const updateContainerWidth = () => {
+      const width = containerRef.current?.getBoundingClientRect().width ?? 0
+      setContainerWidth(width)
+      if (width > 0) {
+        setLeftWidth(prev => Math.min(prev, width))
+      }
+    }
+
+    updateContainerWidth()
+
+    const observer = new ResizeObserver(updateContainerWidth)
+    observer.observe(containerRef.current)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -25,14 +49,14 @@ export default function SocialOutreachGenerator() {
 
       const delta = e.clientX - startX.current
       const newWidth = startWidth.current + delta
+      const maxWidth = containerWidth
+        || containerRef.current?.getBoundingClientRect().width
+        || 0
 
-      if (newWidth >= 220 && newWidth <= 520) {
-        setLeftWidth(newWidth)
-      } else if (newWidth < 220) {
-        setLeftWidth(220)
-      } else if (newWidth > 520) {
-        setLeftWidth(520)
-      }
+      if (maxWidth <= 0) return
+
+      const clampedWidth = Math.min(Math.max(newWidth, 0), maxWidth)
+      setLeftWidth(clampedWidth)
     }
 
     const handleMouseUp = () => {
@@ -77,9 +101,15 @@ export default function SocialOutreachGenerator() {
     ? outreach.files.find(f => f.id === viewingPdfId)
     : null
 
+  const dividerLeft = Math.min(
+    leftWidth,
+    Math.max(containerWidth - dividerWidth, 0)
+  )
+
   return (
     <TooltipProvider>
       <div
+        ref={containerRef}
         className="flex flex-col md:flex-row h-[calc(100vh-5rem)] bg-background overflow-hidden relative"
         style={{ '--left-width': `${leftWidth}px` } as React.CSSProperties}
       >
@@ -114,10 +144,11 @@ export default function SocialOutreachGenerator() {
 
         {/* Resizable Divider */}
         <div
-          className="hidden md:flex w-1 bg-muted/30 cursor-col-resize hover:bg-muted/60 transition-colors items-center justify-center relative flex-shrink-0 z-10"
+          className="hidden md:flex absolute top-0 bottom-0 w-2 bg-muted/30 cursor-col-resize hover:bg-muted/60 transition-colors items-center justify-center z-10"
+          style={{ left: dividerLeft }}
           onMouseDown={handleMouseDown}
         >
-          <GripVertical className="h-4 w-4 text-muted-foreground absolute" />
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
 
         {/* Right Panel */}
