@@ -12,25 +12,26 @@ export default function DashboardLayout({
 }>) {
   return (
     <ProtectedRoute>
-      <div className="flex">
-        <div className="w-[14%] md:w-[8%] lg:w-[16%] xl:w-[14%] p-4">
+      <div className="flex h-screen w-full overflow-hidden">
+        {/* LEFT SIDE: SIDEBAR */}
+        <div className="w-[16%] min-w-[70px] md:w-[8%] lg:w-[16%] xl:w-[14%] p-2 md:p-4 shrink-0 flex flex-col border-r border-gray-100 bg-white z-20">
           <Link
             href="/"
-            className="flex items-center justify-center gap-2 lg:justify-start"
+            className="flex items-center justify-center gap-2 lg:justify-start pt-2"
           >
-
-            <Image src={Logo} alt="logo" width={32} height={32} />
-
-            <span className="hidden lg:block font-semibold">Gestion Proyectos Grado</span>
-
+            <div className="shrink-0 bg-primary-50 p-1.5 md:p-2 rounded-xl">
+              <Image src={Logo} alt="logo" width={32} height={32} />
+            </div>
+            <span className="hidden lg:block font-bold text-gray-800 text-sm xl:text-base leading-tight">Gestor Proyectos<br />Grado</span>
           </Link>
-
           <Menu />
-        </div> {/* LEFT SIDE */}
-        <div className="w-[86%] md:w-[92%] lg:w-[84%] xl:w-[86%] bg-[#F7F8FA] overflow-scroll flex flex-col">
+        </div>
+
+        {/* RIGHT SIDE: MAIN CONTENT */}
+        <div className="flex-1 min-w-0 bg-[#F7F8FA] overflow-y-auto overflow-x-hidden flex flex-col relative">
           <Navbar />
           {children}
-        </div> {/* RIGHT SIDE */}
+        </div>
       </div>
     </ProtectedRoute>
   );

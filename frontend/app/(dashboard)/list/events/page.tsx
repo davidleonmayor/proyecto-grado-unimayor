@@ -35,11 +35,11 @@ interface Event {
 
 const columns = [
   { header: "Evento", accessor: "title" },
-  { header: "Fecha", accessor: "fecha", className: "hidden md:table-cell" },
-  { header: "Hora inicio", accessor: "horaInicio", className: "hidden md:table-cell" },
-  { header: "Hora fin", accessor: "horaFin", className: "hidden md:table-cell" },
-  { header: "Prioridad", accessor: "prioridad", className: "hidden md:table-cell" },
-  { header: "Estado", accessor: "daysRemaining", className: "hidden md:table-cell" },
+  { header: "Fecha", accessor: "fecha" },
+  { header: "Hora inicio", accessor: "horaInicio" },
+  { header: "Hora fin", accessor: "horaFin" },
+  { header: "Prioridad", accessor: "prioridad" },
+  { header: "Estado", accessor: "daysRemaining" },
 ];
 
 const EventListPageContent = () => {
@@ -232,32 +232,32 @@ const EventListPageContent = () => {
             </p>
           )}
         </td>
-        <td className="hidden md:table-cell">
+        <td className="p-4">
           {startDate.toLocaleDateString("es-CO", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
           })}
         </td>
-        <td className="hidden md:table-cell">
+        <td className="p-4">
           {item.horaInicio || (startDate.toLocaleTimeString("es-CO", {
             hour: "2-digit",
             minute: "2-digit",
           }))}
         </td>
-        <td className="hidden md:table-cell">
+        <td className="p-4">
           {item.horaFin || (endDate.toLocaleTimeString("es-CO", {
             hour: "2-digit",
             minute: "2-digit",
           }))}
         </td>
-        <td className="hidden md:table-cell">
+        <td className="p-4">
           {getPriorityBadge(item.prioridad)}
         </td>
-        <td className="hidden md:table-cell">
+        <td className="p-4">
           {getDaysRemainingBadge(item.daysRemaining)}
         </td>
-        <td>
+        <td className="p-4">
           <div className="flex items-center gap-2">
             {isCoordinator && (
               <>

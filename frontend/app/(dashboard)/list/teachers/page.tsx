@@ -32,12 +32,10 @@ type Teacher = {
 
 const columns = [
     { header: "Info", accessor: "info" },
-    { header: "Teléfono", accessor: "telefono", className: "hidden md:table-cell" },
-    // { header: "ID", accessor: "id", className: "hidden md:table-cell" },
-    { header: "Nombre", accessor: "nombre", className: "hidden md:table-cell" },
-    { header: "Carrera", accessor: "carrera", className: "hidden md:table-cell" },
-    // { header: "Email", accessor: "email", className: "hidden md:table-cell" },
-    { header: "Rol", accessor: "rol", className: "hidden md:table-cell" },
+    { header: "Teléfono", accessor: "telefono" },
+    { header: "Nombre", accessor: "nombre" },
+    { header: "Carrera", accessor: "carrera" },
+    { header: "Rol", accessor: "rol" },
 ]
 
 const TeacherListPageContent = () => {
@@ -164,11 +162,11 @@ const TeacherListPageContent = () => {
                     <p className="text-xs text-gray-500">{item?.email}</p>
                 </div>
             </td>
-            <td className="hidden md:table-cell">{item.telefono}</td>
-            <td className="hidden md:table-cell">{item.nombre}</td>
-            <td className="hidden md:table-cell">{item.carrera}</td>
-            <td className="hidden md:table-cell">{item.rol}</td>
-            <td>
+            <td className="p-4">{item.telefono}</td>
+            <td className="p-4">{item.nombre}</td>
+            <td className="p-4">{item.carrera}</td>
+            <td className="p-4">{item.rol}</td>
+            <td className="p-4">
                 <div className="flex items-center gap-2">
                     <Link href={`/list/teachers/${item.id}`}>
                         <button className="w-7 h-7 flex items-center justify-center rounded-full bg-[#EAFBFD]">

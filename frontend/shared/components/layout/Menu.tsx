@@ -116,18 +116,20 @@ export const Menu = () => {
                   <Link
                     href={item.href}
                     key={item.label}
-                    className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2 md:px-2 rounded-md px-4
-                                                                       transition-all duration-300 ease-in-out
-                                                                       hover:bg-hoverColor hover:text-white hover:font-semibold
-                                                                       hover:scale-105 hover:shadow-lg"
+                    title={item.label}
+                    className="flex items-center justify-center lg:justify-start gap-4 text-gray-500 py-2.5 px-0 md:px-2 lg:px-4 rounded-xl
+                               transition-all duration-300 ease-in-out
+                               hover:bg-primary-50 hover:text-primary-700 hover:font-semibold
+                               hover:scale-105 active:scale-95"
                   >
                     <Image
                       src={item.icon}
-                      alt={section.title}
-                      width={20}
-                      height={20}
+                      alt={item.label}
+                      width={22}
+                      height={22}
+                      className="shrink-0"
                     />
-                    <span className="hidden lg:block">{item.label}</span>
+                    <span className="hidden lg:block truncate">{item.label}</span>
                   </Link>
                 );
               }

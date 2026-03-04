@@ -188,41 +188,43 @@ export const BulkUploadProjects = ({
           </div>
 
           <div className="border border-gray-100 rounded-md overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-100 text-sm">
-              <thead className="bg-gray-50/50">
-                <tr>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Fila</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Estado</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Proyecto</th>
-                  <th className="px-6 py-3 text-left font-medium text-gray-500">Detalles</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-50">
-                {importSummary.rows.map((row) => (
-                  <tr key={`${row.row}-${row.title ?? ''}-${row.status}`}>
-                    <td className="px-6 py-4 text-gray-500">{row.row}</td>
-                    <td className="px-6 py-4">
-                      {row.status === 'success' ? (
-                        <span className="text-green-600 font-medium whitespace-nowrap">✓ Importado</span>
-                      ) : (
-                        <span className="text-red-600 font-medium whitespace-nowrap">✕ Error</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-gray-900 font-medium">{row.title || '—'}</td>
-                    <td className="px-6 py-4">
-                      <ul className="space-y-1 text-gray-600">
-                        {row.messages.map((message, index) => (
-                          <li key={`${row.row}-message-${index}`} className="flex items-start">
-                            <span className="mr-2 text-gray-400">•</span>
-                            <span>{message}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-100 text-sm">
+                <thead className="bg-gray-50/50">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Fila</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Estado</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Proyecto</th>
+                    <th className="px-6 py-3 text-left font-medium text-gray-500">Detalles</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-50">
+                  {importSummary.rows.map((row) => (
+                    <tr key={`${row.row}-${row.title ?? ''}-${row.status}`}>
+                      <td className="px-6 py-4 text-gray-500">{row.row}</td>
+                      <td className="px-6 py-4">
+                        {row.status === 'success' ? (
+                          <span className="text-green-600 font-medium whitespace-nowrap">✓ Importado</span>
+                        ) : (
+                          <span className="text-red-600 font-medium whitespace-nowrap">✕ Error</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-gray-900 font-medium">{row.title || '—'}</td>
+                      <td className="px-6 py-4">
+                        <ul className="space-y-1 text-gray-600">
+                          {row.messages.map((message, index) => (
+                            <li key={`${row.row}-message-${index}`} className="flex items-start">
+                              <span className="mr-2 text-gray-400">•</span>
+                              <span>{message}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

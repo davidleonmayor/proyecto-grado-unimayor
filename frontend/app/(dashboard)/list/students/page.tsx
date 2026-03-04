@@ -32,9 +32,9 @@ type Student = {
 
 const columns = [
   { header: "Info", accessor: "info" },
-  { header: "Carrera", accessor: "carrera", className: "hidden md:table-cell" },
-  { header: "Opción de Grado", accessor: "opcionGrado", className: "hidden md:table-cell" },
-  { header: "Estado", accessor: "estado", className: "hidden md:table-cell" },
+  { header: "Carrera", accessor: "carrera" },
+  { header: "Opción de Grado", accessor: "opcionGrado" },
+  { header: "Estado", accessor: "estado" },
 ];
 
 const StudentListPageContent = () => {
@@ -154,10 +154,10 @@ const StudentListPageContent = () => {
           <p className="text-xs text-gray-500">{item.email}</p>
         </div>
       </td>
-      <td className="hidden md:table-cell">{item.carrera}</td>
-      <td className="hidden md:table-cell">{item.opcionGrado}</td>
-      <td className="hidden md:table-cell">{item.estado}</td>
-      <td>
+      <td className="p-4">{item.carrera}</td>
+      <td className="p-4">{item.opcionGrado}</td>
+      <td className="p-4">{item.estado}</td>
+      <td className="p-4">
         <div className="flex items-center gap-2">
           <Link href={`/list/students/${item.id}`}>
             <button className="w-7 h-7 flex items-center justify-center rounded-full bg-pastelBlue">
