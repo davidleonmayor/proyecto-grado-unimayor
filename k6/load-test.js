@@ -141,8 +141,8 @@ export default function (data) {
     sleep(0.3);
 
     group('06_Dashboard', function () {
-        const res = http.get(`${BASE_URL}/api/projects/dashboard-stats`, headers);
-        check(res, { 'dashboard accesible': (r) => r.status === 200 || r.status === 403 });
+        const res = http.get(`${BASE_URL}/api/projects/stats/dashboard`, headers);
+        check(res, { 'dashboard status 200': (r) => r.status === 200 });
     });
 
     sleep(0.5);
