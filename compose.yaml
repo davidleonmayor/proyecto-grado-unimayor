@@ -1,47 +1,30 @@
 services:
     backend:
-        container_name: proyecto_grado_backend
         build:
             context: ./backend
-            dockerfile: backend.dockerfile
+            dockerfile: Dockerfile
+        container_name: unimayor_backend
+        restart: always
         ports:
-            - "4000:4000"
+            - "5050:5050"
+        environment:
+            - NODE_ENV=production
+            - PORT=5050
         env_file:
             - ./backend/.env
-        environment:
-            DATABASE_URL: "mysql://${MYSQL_USER:-david}:${MYSQL_PASSWORD:-secret}@db:3306/${MYSQL_DATABASE:-money_up}"
-        restart: unless-stopped
-        depends_on:
-            db:
-                condition: service_healthy
 
-    db:
-        container_name: proyecto_grado_mysql
-        image: mysql:8.0
-        restart: unless-stopped
-        environment:
-            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-            MYSQL_DATABASE: ${MYSQL_DATABASE:-money_up}
-            MYSQL_USER: ${MYSQL_USER:-david}
-            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secret}
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: unimayor_frontend
+        restart: always
         ports:
-            - "3306:3306"
-        volumes:
-            - mysql_data:/var/lib/mysql
-        healthcheck:
-            test:
-                [
-                    "CMD",
-                    "mysqladmin",
-                    "ping",
-                    "-h",
-                    "localhost",
-                    "-uroot",
-                    "-proot",
-                ]
-            interval: 10s
-            timeout: 5s
-            retries: 15
-
-volumes:
-    mysql_data:
+            - "3000:3000"
+        environment:
+            - NODE_ENV=production
+            - PORT=3000
+        env_file:
+            - ./frontend/.env
+        depends_on:
+            - backend
