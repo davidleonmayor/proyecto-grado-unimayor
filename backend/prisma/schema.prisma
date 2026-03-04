@@ -8,37 +8,36 @@ datasource db {
 }
 
 model tipo_documento {
-  id_tipo_documento String    @id @default(cuid())
   documento         String    @db.VarChar(50)
+  id_tipo_documento String    @id @default(cuid())
   persona           persona[]
 
   @@map("TIPO_DOCUMENTO")
 }
 
 model persona {
-  id_persona            String    @id @default(cuid())
-  nombres               String    @db.VarChar(100)
-  apellidos             String    @db.VarChar(100)
+  apellidos             String              @db.VarChar(100)
+  bloqueado_hasta       DateTime?           @db.DateTime(0)
+  confirmed             Boolean             @default(false)
+  correo_electronico    String              @unique @db.VarChar(100)
+  fecha_registro        DateTime            @default(now()) @db.DateTime(0)
+  id_persona            String              @id @default(cuid())
   id_tipo_doc_identidad String
-  num_doc_identidad     String    @unique @db.VarChar(50)
-  numero_celular        String    @db.VarChar(20)
-  fecha_registro        DateTime  @default(now()) @db.DateTime(0)
-  correo_electronico    String    @unique @db.VarChar(100)
-  password              String?   @db.VarChar(60)
-  token                 String?   @unique @db.VarChar(6)
-  confirmed             Boolean   @default(false)
-  ultimo_acceso         DateTime? @db.DateTime(0)
-  intentos_fallidos     Int       @default(0)
-  bloqueado_hasta       DateTime? @db.DateTime(0)
-  id_facultad           String?   @db.VarChar(191)
-  id_programa_academico String?   @db.VarChar(191)
-
-  tipo_documento     tipo_documento      @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
-  facultad           facultad?           @relation(fields: [id_facultad], references: [id_facultad])
-  programa_academico programa_academico? @relation(fields: [id_programa_academico], references: [id_programa])
-  actores            actores[]
-  mensajes_enviados  mensaje[]           @relation("MensajesEnviados")
-  mensajes_recibidos mensaje_entrega[]   @relation("MensajesRecibidos")
+  intentos_fallidos     Int                 @default(0)
+  nombres               String              @db.VarChar(100)
+  num_doc_identidad     String              @unique @db.VarChar(50)
+  numero_celular        String              @db.VarChar(20)
+  password              String?             @db.VarChar(60)
+  token                 String?             @unique @db.VarChar(6)
+  ultimo_acceso         DateTime?           @db.DateTime(0)
+  id_facultad           String?
+  id_programa_academico String?
+  actores               actores[]
+  mensajes_enviados     mensaje[]           @relation("MensajesEnviados")
+  mensajes_recibidos    mensaje_entrega[]   @relation("MensajesRecibidos")
+  facultad              facultad?           @relation(fields: [id_facultad], references: [id_facultad])
+  programa_academico    programa_academico? @relation(fields: [id_programa_academico], references: [id_programa])
+  tipo_documento        tipo_documento      @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])
@@ -49,30 +48,30 @@ model persona {
 }
 
 model tipo_rol {
-  id_rol         String    @id @default(cuid())
-  nombre_rol     String    @db.VarChar(100)
+  activo         Boolean   @default(true)
   descripcion    String?   @db.Text
   fecha_creacion DateTime  @default(now()) @db.DateTime(0)
-  activo         Boolean   @default(true)
+  id_rol         String    @id @default(cuid())
+  nombre_rol     String    @db.VarChar(100)
   actores        actores[]
 
   @@map("TIPO_ROL")
 }
 
 model facultad {
+  codigo_facultad    String               @db.VarChar(20)
   id_facultad        String               @id @default(cuid())
   nombre_facultad    String               @db.VarChar(200)
-  codigo_facultad    String               @db.VarChar(20)
-  programa_academico programa_academico[]
   persona            persona[]
+  programa_academico programa_academico[]
 
   @@map("FACULTAD")
 }
 
 model nivel_formacion {
+  descripcion            String?                  @db.Text
   id_nivel               String                   @id @default(cuid())
   nombre_nivel           String                   @db.VarChar(100)
-  descripcion            String?                  @db.Text
   programa_academico     programa_academico[]
   opcion_grado_formacion opcion_grado_formacion[]
 
@@ -80,15 +79,15 @@ model nivel_formacion {
 }
 
 model programa_academico {
-  id_programa        String          @id @default(cuid())
-  nombre_programa    String          @db.VarChar(200)
-  id_nivel_formacion String
   estado             String          @db.VarChar(20)
   id_facultad        String
-  nivel_formacion    nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
-  facultad           facultad        @relation(fields: [id_facultad], references: [id_facultad])
-  trabajo_grado      trabajo_grado[]
+  id_nivel_formacion String
+  id_programa        String          @id @default(cuid())
+  nombre_programa    String          @db.VarChar(200)
   persona            persona[]
+  facultad           facultad        @relation(fields: [id_facultad], references: [id_facultad])
+  nivel_formacion    nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
+  trabajo_grado      trabajo_grado[]
 
   @@index([id_nivel_formacion])
   @@index([id_facultad])
@@ -96,12 +95,12 @@ model programa_academico {
 }
 
 model opcion_grado {
-  id_opcion_grado        String                   @id @default(cuid())
-  nombre_opcion_grado    String                   @db.VarChar(100)
   descripcion            String?                  @db.Text
   estado                 String                   @db.VarChar(20)
-  tipo_modalidad         String?                  @db.VarChar(50)
   fecha_creacion         DateTime                 @default(now()) @db.DateTime(0)
+  id_opcion_grado        String                   @id @default(cuid())
+  nombre_opcion_grado    String                   @db.VarChar(100)
+  tipo_modalidad         String?                  @db.VarChar(50)
   trabajo_grado          trabajo_grado[]
   opcion_grado_formacion opcion_grado_formacion[]
 
@@ -110,10 +109,10 @@ model opcion_grado {
 
 model opcion_grado_formacion {
   id_opcion_grado_formacion String          @id @default(cuid())
-  id_opcion_grado           String
   id_nivel_formacion        String
-  opcion_grado              opcion_grado    @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
+  id_opcion_grado           String
   nivel_formacion           nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
+  opcion_grado              opcion_grado    @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
 
   @@index([id_opcion_grado])
   @@index([id_nivel_formacion])
@@ -121,50 +120,50 @@ model opcion_grado_formacion {
 }
 
 model empresa {
+  direccion      String?         @db.VarChar(200)
+  email          String?         @db.VarChar(100)
+  estado         String          @db.VarChar(20)
   id_empresa     String          @id @default(cuid())
   nit_empresa    String          @db.VarChar(50)
   nombre_empresa String          @db.VarChar(200)
-  direccion      String?         @db.VarChar(200)
-  email          String?         @db.VarChar(100)
   telefono       String?         @db.VarChar(20)
-  estado         String          @db.VarChar(20)
   trabajo_grado  trabajo_grado[]
 
   @@map("EMPRESA")
 }
 
 model estado_tg {
+  descripcion          String?          @db.Text
   id_estado_tg         String           @id @default(cuid())
   nombre_estado        String           @db.VarChar(100)
-  descripcion          String?          @db.Text
   orden                Int
-  trabajo_grado        trabajo_grado[]
   seguimiento_anterior seguimiento_tg[] @relation("EstadoAnterior")
   seguimiento_nuevo    seguimiento_tg[] @relation("EstadoNuevo")
+  trabajo_grado        trabajo_grado[]
 
   @@map("ESTADO_TG")
 }
 
 model trabajo_grado {
-  id_trabajo_grado      String             @id @default(cuid())
-  titulo_trabajo        String             @db.VarChar(500)
-  objetivos             String?            @db.Text
   fecha_fin_estima      DateTime?          @db.Date
   fecha_inicio          DateTime           @db.Date
-  resumen               String?            @db.Text
-  id_opcion_grado       String
-  id_estado_actual      String
   fecha_registro        DateTime           @default(now()) @db.DateTime(0)
   id_empresa_practica   String?
+  id_estado_actual      String
+  id_opcion_grado       String
   id_programa_academico String
-  opcion_grado          opcion_grado       @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
-  estado_tg             estado_tg          @relation(fields: [id_estado_actual], references: [id_estado_tg])
-  empresa               empresa?           @relation(fields: [id_empresa_practica], references: [id_empresa])
-  programa_academico    programa_academico @relation(fields: [id_programa_academico], references: [id_programa])
+  id_trabajo_grado      String             @id @default(cuid())
+  resumen               String?            @db.Text
+  titulo_trabajo        String             @db.VarChar(500)
+  objetivos             String?            @db.Text
   actores               actores[]
-  seguimiento_tg        seguimiento_tg[]
   distincion_tg         distincion_tg[]
   eventos               evento[]
+  seguimiento_tg        seguimiento_tg[]
+  empresa               empresa?           @relation(fields: [id_empresa_practica], references: [id_empresa])
+  estado_tg             estado_tg          @relation(fields: [id_estado_actual], references: [id_estado_tg])
+  opcion_grado          opcion_grado       @relation(fields: [id_opcion_grado], references: [id_opcion_grado])
+  programa_academico    programa_academico @relation(fields: [id_programa_academico], references: [id_programa])
 
   @@index([id_opcion_grado])
   @@index([id_estado_actual])
@@ -174,17 +173,17 @@ model trabajo_grado {
 }
 
 model actores {
-  id_actor         String           @id @default(cuid())
-  id_persona       String
-  id_trabajo_grado String
-  id_tipo_rol      String
+  estado           String           @db.VarChar(20)
   fecha_asignacion DateTime         @default(now())
   fecha_retiro     DateTime?        @db.DateTime(0)
-  estado           String           @db.VarChar(20)
+  id_actor         String           @id @default(cuid())
+  id_persona       String
+  id_tipo_rol      String
+  id_trabajo_grado String
   observaciones    String?          @db.Text
   persona          persona          @relation(fields: [id_persona], references: [id_persona])
-  trabajo_grado    trabajo_grado    @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
   tipo_rol         tipo_rol         @relation(fields: [id_tipo_rol], references: [id_rol])
+  trabajo_grado    trabajo_grado    @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
   seguimiento_tg   seguimiento_tg[]
 
   @@index([id_persona])
@@ -194,38 +193,38 @@ model actores {
 }
 
 model accion_seg {
+  descripcion    String?          @db.Text
   id_accion      String           @id @default(cuid())
   tipo_accion    String           @db.VarChar(100)
-  descripcion    String?          @db.Text
   seguimiento_tg seguimiento_tg[]
 
   @@map("accion_seg")
 }
 
 model seguimiento_tg {
-  id_seguimiento     String          @id @default(cuid())
-  id_trabajo_grado   String
-  id_actor           String
-  fecha_registro     DateTime        @default(now()) @db.DateTime(0)
-  id_accion          String
-  resumen            String?         @db.Text
-  id_estado_anterior String?
-  id_estado_nuevo    String?
-  numero_oficio      String?         @db.VarChar(50)
-  fecha_oficio       DateTime?       @db.Date
-  nombre_documento   String?         @db.VarChar(200)
-  tipo_documento     String?         @db.VarChar(50)
-  archivo            Bytes?          @db.LongBlob
+  archivo            Bytes?
   calificacion       Decimal?        @db.Decimal(3, 2)
   distincion         String?         @db.VarChar(100)
   fecha              DateTime?       @db.Date
+  fecha_oficio       DateTime?       @db.Date
+  fecha_registro     DateTime        @default(now()) @db.DateTime(0)
+  id_accion          String
+  id_actor           String
+  id_estado_anterior String?
+  id_estado_nuevo    String?
+  id_seguimiento     String          @id @default(cuid())
+  id_trabajo_grado   String
+  nombre_documento   String?         @db.VarChar(200)
+  numero_oficio      String?         @db.VarChar(50)
   numero_resolucion  String?         @db.VarChar(50)
-  trabajo_grado      trabajo_grado   @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
-  actores            actores         @relation(fields: [id_actor], references: [id_actor])
+  resumen            String?         @db.Text
+  tipo_documento     String?         @db.VarChar(50)
+  distincion_tg      distincion_tg[]
   accion_seg         accion_seg      @relation(fields: [id_accion], references: [id_accion])
+  actores            actores         @relation(fields: [id_actor], references: [id_actor])
   estado_anterior    estado_tg?      @relation("EstadoAnterior", fields: [id_estado_anterior], references: [id_estado_tg])
   estado_nuevo       estado_tg?      @relation("EstadoNuevo", fields: [id_estado_nuevo], references: [id_estado_tg])
-  distincion_tg      distincion_tg[]
+  trabajo_grado      trabajo_grado   @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
 
   @@index([id_trabajo_grado])
   @@index([id_actor])
@@ -244,16 +243,16 @@ model distinciones {
 }
 
 model distincion_tg {
-  id_distincion_tg  String         @id @default(cuid())
   calificacion      Decimal        @db.Decimal(3, 2)
   fecha             DateTime       @db.Date
-  numero_resolucion String         @db.VarChar(50)
   id_distincion     String
-  id_trabajo_grado  String
+  id_distincion_tg  String         @id @default(cuid())
   id_seguimiento    String
+  id_trabajo_grado  String
+  numero_resolucion String         @db.VarChar(50)
   distinciones      distinciones   @relation(fields: [id_distincion], references: [id_distincion])
-  trabajo_grado     trabajo_grado  @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
   seguimiento_tg    seguimiento_tg @relation(fields: [id_seguimiento], references: [id_seguimiento])
+  trabajo_grado     trabajo_grado  @relation(fields: [id_trabajo_grado], references: [id_trabajo_grado])
 
   @@index([id_distincion])
   @@index([id_trabajo_grado])
@@ -269,7 +268,7 @@ model evento {
   fecha_fin        DateTime       @db.DateTime(0)
   hora_inicio      String?        @db.VarChar(10)
   hora_fin         String?        @db.VarChar(10)
-  prioridad        String         @db.VarChar(20) // "alta", "media", "baja"
+  prioridad        String         @db.VarChar(20)
   todo_el_dia      Boolean        @default(false)
   fecha_creacion   DateTime       @default(now()) @db.DateTime(0)
   activo           Boolean        @default(true)
@@ -283,14 +282,13 @@ model evento {
 }
 
 model mensaje {
-  id_mensaje  String   @id @default(cuid())
-  contenido   String   @db.Text
+  id_mensaje  String            @id @default(cuid())
+  contenido   String            @db.Text
   id_emisor   String
-  fecha_envio DateTime @default(now()) @db.DateTime(0)
-  target_rol  String?  @db.VarChar(100) // If the message was broadcasted to a role
-
-  emisor   persona           @relation("MensajesEnviados", fields: [id_emisor], references: [id_persona])
-  entregas mensaje_entrega[]
+  fecha_envio DateTime          @default(now()) @db.DateTime(0)
+  target_rol  String?           @db.VarChar(100)
+  emisor      persona           @relation("MensajesEnviados", fields: [id_emisor], references: [id_persona])
+  entregas    mensaje_entrega[]
 
   @@index([id_emisor])
   @@map("MENSAJE")
@@ -300,11 +298,10 @@ model mensaje_entrega {
   id_entrega    String    @id @default(cuid())
   id_mensaje    String
   id_receptor   String
-  estado        String    @default("PENDING") @db.VarChar(20) // PENDING, DELIVERED, READ
+  estado        String    @default("PENDING") @db.VarChar(20)
   fecha_lectura DateTime? @db.DateTime(0)
-
-  mensaje  mensaje @relation(fields: [id_mensaje], references: [id_mensaje])
-  receptor persona @relation("MensajesRecibidos", fields: [id_receptor], references: [id_persona])
+  mensaje       mensaje   @relation(fields: [id_mensaje], references: [id_mensaje])
+  receptor      persona   @relation("MensajesRecibidos", fields: [id_receptor], references: [id_persona])
 
   @@index([id_mensaje])
   @@index([id_receptor])

@@ -93,7 +93,6 @@ function NewProjectPageContent() {
                     document: userData.num_doc_identidad,
                 };
                 setCurrentUser(mappedUser);
-                setSelectedAdvisors([mappedUser.id]);
             }
         } catch (error) {
             Swal.fire('Error', 'No se pudo cargar los datos del formulario', 'error');
@@ -216,8 +215,6 @@ function NewProjectPageContent() {
     };
 
     const toggleAdvisor = (advisorId: string) => {
-        // Creator is always selected and cannot be removed
-        if (currentUser && advisorId === currentUser.id) return;
 
         if (selectedAdvisors.includes(advisorId)) {
             setSelectedAdvisors(selectedAdvisors.filter(id => id !== advisorId));
@@ -270,379 +267,388 @@ function NewProjectPageContent() {
         <div className="p-6 max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">Crear Nuevo Proyecto de Grado</h1>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                {/* Título */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Título del Proyecto *
-                    </label>
-                    <input
-                        type="text"
-                        required
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Ej: Sistema de gestión académica"
-                    />
-                </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
 
-                {/* Resumen */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Resumen
-                    </label>
-                    <textarea
-                        value={summary}
-                        onChange={(e) => setSummary(e.target.value)}
-                        rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Descripción breve del proyecto..."
-                    />
-                </div>
-
-                {/* Objetivos */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Objetivos del Proyecto
-                    </label>
-                    <textarea
-                        value={objectives}
-                        onChange={(e) => setObjectives(e.target.value)}
-                        rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Describe los objetivos principales del proyecto..."
-                    />
-                </div>
-
-                {/* Modalidad y Estado */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Modalidad *
-                        </label>
-                        <select
-                            required
-                            value={modalityId}
-                            onChange={(e) => setModalityId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        >
-                            <option value="">Seleccionar...</option>
-                            {formData?.modalities.map(m => (
-                                <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                        </select>
+                {/* 1. Información General */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                        <h2 className="text-lg font-medium text-gray-900">Información General</h2>
+                        <p className="text-sm text-gray-500 mt-1">Detalles principales del proyecto</p>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Estado *
-                        </label>
-                        <select
-                            required
-                            value={statusId}
-                            onChange={(e) => setStatusId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        >
-                            <option value="">Seleccionar...</option>
-                            {formData?.statuses.map(s => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
-
-                {/* Programa y Empresa */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Programa Académico *
-                        </label>
-                        <select
-                            required
-                            value={programId}
-                            onChange={(e) => setProgramId(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        >
-                            <option value="">Seleccionar...</option>
-                            {formData?.programs.map(p => (
-                                <option key={p.id} value={p.id}>{p.name} - {p.faculty}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Empresa (Opcional)
-                        </label>
-                        <div className="mb-3">
+                    <div className="p-6 space-y-6">
+                        {/* Título */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Título del Proyecto *
+                            </label>
                             <input
                                 type="text"
-                                value={companySearch}
-                                onChange={(e) => setCompanySearch(e.target.value)}
-                                placeholder="Buscar por nombre o ID..."
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                required
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="Ej: Sistema de gestión académica"
                             />
                         </div>
-                        <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                            {companies.length === 0 ? (
-                                <p className="text-gray-500 text-sm text-center py-4">
-                                    {companySearch
-                                        ? `No se encontraron empresas que coincidan con "${companySearch}"`
-                                        : 'No hay empresas disponibles'
-                                    }
-                                </p>
-                            ) : (
-                                <div className="space-y-2">
-                                    <label
-                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === ''
-                                            ? 'bg-primary-100 border-2 border-primary-500'
-                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <input
-                                            type="radio"
-                                            name="company"
-                                            checked={companyId === ''}
-                                            onChange={() => setCompanyId('')}
-                                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                                        />
-                                        <div className="ml-3 flex-1">
-                                            <div className="text-sm font-medium text-gray-900">Ninguna</div>
-                                        </div>
+
+                        {/* Resumen */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Resumen
+                            </label>
+                            <textarea
+                                value={summary}
+                                onChange={(e) => setSummary(e.target.value)}
+                                rows={4}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="Descripción breve del proyecto..."
+                            />
+                        </div>
+
+                        {/* Objetivos */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Objetivos del Proyecto
+                            </label>
+                            <textarea
+                                value={objectives}
+                                onChange={(e) => setObjectives(e.target.value)}
+                                rows={4}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                placeholder="Describe los objetivos principales del proyecto..."
+                            />
+                        </div>
+
+                    </div>
+
+                    {/* 2. Detalles Académicos */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h2 className="text-lg font-medium text-gray-900">Detalles Académicos y Fechas</h2>
+                            <p className="text-sm text-gray-500 mt-1">Programa, modalidad, fechas y empresa vinculada</p>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            {/* Modalidad y Estado */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Modalidad *
                                     </label>
-                                    {companies.map(company => (
-                                        <label
-                                            key={company.id}
-                                            className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === company.id
-                                                ? 'bg-primary-100 border-2 border-primary-500'
-                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="company"
-                                                checked={companyId === company.id}
-                                                onChange={() => setCompanyId(company.id)}
-                                                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                                            />
-                                            <div className="ml-3 flex-1">
-                                                <div className="text-sm font-medium text-gray-900">{company.name}</div>
-                                                <div className="text-xs text-gray-500">
-                                                    ID: {company.id}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    ))}
+                                    <select
+                                        required
+                                        value={modalityId}
+                                        onChange={(e) => setModalityId(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent selection:bg-primary-100"
+                                    >
+                                        <option value="">Seleccionar modalidad...</option>
+                                        {formData?.modalities.map(m => (
+                                            <option key={m.id} value={m.id}>{m.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                            )}
-                        </div>
-                        {companySearch && (
-                            <p className="text-xs text-gray-500 mt-1">
-                                {companies.length} resultado{companies.length !== 1 ? 's' : ''} encontrado{companies.length !== 1 ? 's' : ''}
-                            </p>
-                        )}
-                    </div>
-                </div>
 
-                {/* Fechas */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Fecha de Inicio *
-                        </label>
-                        <input
-                            type="date"
-                            required
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Fecha Estimada de Fin
-                        </label>
-                        <input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        />
-                    </div>
-                </div>
-
-                {/* Estudiantes */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Estudiantes * (Selecciona 1 o 2)
-                    </label>
-                    {!programId && (
-                        <p className="text-xs text-amber-600 mb-2">
-                            ⚠️ Selecciona un programa académico para ver los estudiantes asociados
-                        </p>
-                    )}
-                    {programId && (
-                        <div className="mb-3">
-                            <input
-                                type="text"
-                                value={studentSearch}
-                                onChange={(e) => setStudentSearch(e.target.value)}
-                                placeholder="Buscar por cédula, código o nombre..."
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                            />
-                        </div>
-                    )}
-                    <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        {!programId ? (
-                            <p className="text-gray-500 text-sm text-center py-4">
-                                Por favor selecciona un programa académico primero
-                            </p>
-                        ) : students.length === 0 ? (
-                            <p className="text-gray-500 text-sm text-center py-4">
-                                {studentSearch
-                                    ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
-                                    : 'No hay estudiantes disponibles para este programa'
-                                }
-                            </p>
-                        ) : (
-                            <div className="space-y-2">
-                                {students.map(student => (
-                                    <label
-                                        key={student.id}
-                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedStudents.includes(student.id)
-                                            ? 'bg-primary-100 border-2 border-primary-500'
-                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedStudents.includes(student.id)}
-                                            onChange={() => toggleStudent(student.id)}
-                                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                        />
-                                        <div className="ml-3 flex-1">
-                                            <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                            <div className="text-xs text-gray-500">
-                                                {student.document && `Cédula: ${student.document}`}
-                                                {student.document && ' • '}
-                                                Código: {student.id} • {student.email}
-                                            </div>
-                                        </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Estado Inicial *
                                     </label>
-                                ))}
+                                    <select
+                                        required
+                                        value={statusId}
+                                        onChange={(e) => setStatusId(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    >
+                                        <option value="">Seleccionar estado...</option>
+                                        {formData?.statuses.map(s => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                    <div className="flex justify-between items-center mt-1">
-                        <p className="text-xs text-gray-500">Seleccionados: {selectedStudents.length}/2</p>
-                        {programId && studentSearch && (
-                            <p className="text-xs text-gray-500">
-                                {students.length} resultado{students.length !== 1 ? 's' : ''} encontrado{students.length !== 1 ? 's' : ''}
-                            </p>
-                        )}
-                    </div>
-                </div>
 
-                {/* Asesores */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Asesores/Directores (Máximo 2, opcional)
-                    </label>
-                    {currentUser && (
-                        <div className="mb-3 border border-blue-200 bg-blue-50 rounded-lg p-3 flex items-center gap-3">
-                            <input
-                                type="checkbox"
-                                checked
-                                disabled
-                                className="h-4 w-4 text-blue-600 border-blue-300 rounded cursor-not-allowed"
-                            />
+                            {/* Programa y Empresa */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Programa Académico *
+                                    </label>
+                                    <select
+                                        required
+                                        value={programId}
+                                        onChange={(e) => setProgramId(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    >
+                                        <option value="">Seleccionar...</option>
+                                        {formData?.programs.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name} - {p.faculty}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Empresa (Opcional)
+                                    </label>
+                                    <div className="mb-3">
+                                        <input
+                                            type="text"
+                                            value={companySearch}
+                                            onChange={(e) => setCompanySearch(e.target.value)}
+                                            placeholder="Buscar por nombre o ID..."
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                        />
+                                    </div>
+                                    <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                        {companies.length === 0 ? (
+                                            <p className="text-gray-500 text-sm text-center py-4">
+                                                {companySearch
+                                                    ? `No se encontraron empresas que coincidan con "${companySearch}"`
+                                                    : 'No hay empresas disponibles'
+                                                }
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                <label
+                                                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === ''
+                                                        ? 'bg-primary-100 border-2 border-primary-500'
+                                                        : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="radio"
+                                                        name="company"
+                                                        checked={companyId === ''}
+                                                        onChange={() => setCompanyId('')}
+                                                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                                    />
+                                                    <div className="ml-3 flex-1">
+                                                        <div className="text-sm font-medium text-gray-900">Ninguna</div>
+                                                    </div>
+                                                </label>
+                                                {companies.map(company => (
+                                                    <label
+                                                        key={company.id}
+                                                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${companyId === company.id
+                                                            ? 'bg-primary-100 border-2 border-primary-500'
+                                                            : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="radio"
+                                                            name="company"
+                                                            checked={companyId === company.id}
+                                                            onChange={() => setCompanyId(company.id)}
+                                                            className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
+                                                        />
+                                                        <div className="ml-3 flex-1">
+                                                            <div className="text-sm font-medium text-gray-900">{company.name}</div>
+                                                            <div className="text-xs text-gray-500">
+                                                                ID: {company.id}
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {companySearch && (
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {companies.length} resultado{companies.length !== 1 ? 's' : ''} encontrado{companies.length !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Fechas */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Fecha de Inicio *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        required
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Fecha Estimada de Fin
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. Participantes */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h2 className="text-lg font-medium text-gray-900">Participantes</h2>
+                            <p className="text-sm text-gray-500 mt-1">Estudiantes y asesores del proyecto</p>
+                        </div>
+                        <div className="p-6 space-y-6">
+
+                            {/* Estudiantes */}
                             <div>
-                                <div className="text-sm font-semibold text-blue-800">
-                                    {currentUser.name} (Tú)
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Estudiantes * (Selecciona 1 o 2)
+                                </label>
+                                {!programId && (
+                                    <p className="text-sm text-blue-600 mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                        ⓘ Selecciona un programa académico para ver los estudiantes asociados
+                                    </p>
+                                )}
+                                {programId && (
+                                    <div className="mb-3">
+                                        <input
+                                            type="text"
+                                            value={studentSearch}
+                                            onChange={(e) => setStudentSearch(e.target.value)}
+                                            placeholder="Buscar por cédula, código o nombre..."
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                        />
+                                    </div>
+                                )}
+                                <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                    {!programId ? (
+                                        <p className="text-gray-500 text-sm text-center py-4">
+                                            Por favor selecciona un programa académico primero
+                                        </p>
+                                    ) : students.length === 0 ? (
+                                        <p className="text-gray-500 text-sm text-center py-4">
+                                            {studentSearch
+                                                ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
+                                                : 'No hay estudiantes disponibles para este programa'
+                                            }
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {students.map(student => (
+                                                <label
+                                                    key={student.id}
+                                                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedStudents.includes(student.id)
+                                                        ? 'bg-primary-100 border-2 border-primary-500'
+                                                        : 'bg-white border border-gray-200 hover:bg-gray-100'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedStudents.includes(student.id)}
+                                                        onChange={() => toggleStudent(student.id)}
+                                                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                                    />
+                                                    <div className="ml-3 flex-1">
+                                                        <div className="text-sm font-medium text-gray-900">{student.name}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {student.document && `Cédula: ${student.document}`}
+                                                            {student.document && ' • '}
+                                                            Código: {student.id} • {student.email}
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="text-xs text-blue-700">
-                                    {currentUser.document && `Cédula: ${currentUser.document} • `}
-                                    Código: {currentUser.id} • {currentUser.email}
+                                <div className="flex justify-between items-center mt-1">
+                                    <p className="text-xs text-gray-500">Seleccionados: {selectedStudents.length}/2</p>
+                                    {programId && studentSearch && (
+                                        <p className="text-xs text-gray-500">
+                                            {students.length} resultado{students.length !== 1 ? 's' : ''} encontrado{students.length !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
                                 </div>
-                                <p className="text-xs text-blue-700 mt-1">
-                                    Seleccionado automáticamente como Director. No se puede deseleccionar.
-                                </p>
+                            </div>
+
+                            {/* Asesores */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Asesores/Directores (Máximo 2, opcional)
+                                </label>
+                                <div className="mb-3">
+                                    <input
+                                        type="text"
+                                        value={advisorSearch}
+                                        onChange={(e) => setAdvisorSearch(e.target.value)}
+                                        placeholder="Buscar por cédula, código o nombre..."
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                                    />
+                                </div>
+                                <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                                    {advisors.length === 0 ? (
+                                        <p className="text-gray-500 text-sm text-center py-4">
+                                            {advisorSearch
+                                                ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
+                                                : 'No hay asesores disponibles'
+                                            }
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {advisors.map(advisor => (
+                                                <label
+                                                    key={advisor.id}
+                                                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-all ${selectedAdvisors.includes(advisor.id)
+                                                        ? 'bg-primary-50 border-2 border-primary-500 shadow-sm'
+                                                        : 'bg-white border border-gray-200 hover:border-primary-300 hover:bg-gray-50'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedAdvisors.includes(advisor.id)}
+                                                        onChange={() => toggleAdvisor(advisor.id)}
+                                                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                                                    />
+                                                    <div className="ml-3 flex-1">
+                                                        <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
+                                                        <div className="text-xs text-gray-500">
+                                                            {advisor.document && `Cédula: ${advisor.document}`}
+                                                            {advisor.document && ' • '}
+                                                            Código: {advisor.id} • {advisor.email}
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-center mt-1">
+                                    <p className="text-xs text-gray-500">Seleccionados: {selectedAdvisors.length}/2</p>
+                                    {advisorSearch && (
+                                        <p className="text-xs text-gray-500">
+                                            {advisors.length} resultado{advisors.length !== 1 ? 's' : ''} encontrado{advisors.length !== 1 ? 's' : ''}
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    )}
-                    <div className="mb-3">
-                        <input
-                            type="text"
-                            value={advisorSearch}
-                            onChange={(e) => setAdvisorSearch(e.target.value)}
-                            placeholder="Buscar por cédula, código o nombre..."
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                        />
-                    </div>
-                    <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                        {advisors.filter(a => a.id !== currentUser?.id).length === 0 ? (
-                            <p className="text-gray-500 text-sm text-center py-4">
-                                {advisorSearch
-                                    ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
-                                    : 'No hay asesores disponibles'
-                                }
-                            </p>
-                        ) : (
-                            <div className="space-y-2">
-                                {advisors
-                                    .filter(advisor => advisor.id !== currentUser?.id)
-                                    .map(advisor => (
-                                        <label
-                                            key={advisor.id}
-                                            className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedAdvisors.includes(advisor.id)
-                                                ? 'bg-blue-100 border-2 border-blue-500'
-                                                : 'bg-white border border-gray-200 hover:bg-gray-100'
-                                                }`}
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedAdvisors.includes(advisor.id)}
-                                                onChange={() => toggleAdvisor(advisor.id)}
-                                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                            />
-                                            <div className="ml-3 flex-1">
-                                                <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
-                                                <div className="text-xs text-gray-500">
-                                                    {advisor.document && `Cédula: ${advisor.document}`}
-                                                    {advisor.document && ' • '}
-                                                    Código: {advisor.id} • {advisor.email}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    ))}
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex justify-between items-center mt-1">
-                        <p className="text-xs text-gray-500">Seleccionados: {selectedAdvisors.length}/2</p>
-                        {advisorSearch && (
-                            <p className="text-xs text-gray-500">
-                                {advisors.length} resultado{advisors.length !== 1 ? 's' : ''} encontrado{advisors.length !== 1 ? 's' : ''}
-                            </p>
-                        )}
                     </div>
                 </div>
 
                 {/* Botones */}
-                <div className="flex justify-end gap-4 pt-4 border-t">
+                <div className="flex justify-end gap-4 pt-4">
                     <button
                         type="button"
                         onClick={() => router.back()}
-                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="px-6 py-2.5 border border-gray-300 bg-white rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium shadow-sm"
                     >
                         Cancelar
                     </button>
                     <button
                         type="submit"
-                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+                        className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm flex items-center gap-2"
                     >
-                        Crear Proyecto
+                        <span>Crear Proyecto</span>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
                     </button>
                 </div>
             </form>

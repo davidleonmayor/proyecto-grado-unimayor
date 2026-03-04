@@ -8,6 +8,9 @@ import InputField from '@/shared/components/ui/InputField';
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
 import { eventsService } from '@/modules/events/services/events.service';
+import { useEffect, useState } from "react";
+import { projectsService } from '@/modules/projects/services/projects.service';
+import { useUserRole } from '@/shared/hooks/useUserRole';
 
 const schema = z.object({
     titulo: z
@@ -37,10 +40,12 @@ const schema = z.object({
     todo_el_dia: z
         .boolean()
         .default(false),
+    id_trabajo_grado: z.string().optional(),
 });
 
 const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) => {
     const router = useRouter();
+    const { role } = useUserRole();
 
     // Format date for input (YYYY-MM-DD)
     const formatDateForInput = (dateString?: string) => {
@@ -54,6 +59,37 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
         if (!timeString) return '';
         return timeString.substring(0, 5); // Get HH:MM from HH:MM:SS or HH:MM
     };
+
+    const [projects, setProjects] = useState<any[]>([]);
+    const [isCoordinator, setIsCoordinator] = useState(false);
+
+    useEffect(() => {
+        const fetchProjects = async () => {
+            try {
+                if (role === 'admin' || role === 'dean') {
+                    const adminProjects = await projectsService.getAllProjects();
+                    if (adminProjects.length > 0) {
+                        setProjects(adminProjects);
+                        setIsCoordinator(true);
+                    }
+                } else {
+                    const allProjects = await projectsService.getProjects();
+                    const coordinatorProjects = allProjects.filter((p: any) => p.role === 'Coordinador de Carrera');
+
+                    if (coordinatorProjects.length > 0) {
+                        setProjects(coordinatorProjects);
+                        setIsCoordinator(true);
+                    }
+                }
+            } catch (error) {
+                console.error("Error al cargar proyectos:", error);
+            }
+        };
+
+        if ((type === "create" || type === "update") && role) {
+            fetchProjects();
+        }
+    }, [type, role]);
 
     const {
         register,
@@ -71,6 +107,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
             hora_fin: formatTimeForInput(data?.horaFin),
             prioridad: data?.prioridad || 'media',
             todo_el_dia: data?.allDay || false,
+            id_trabajo_grado: data?.id_trabajo_grado || '',
         },
     });
 
@@ -88,6 +125,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
                     hora_fin: formData.todo_el_dia ? null : (formData.hora_fin || null),
                     prioridad: formData.prioridad,
                     todo_el_dia: formData.todo_el_dia,
+                    id_trabajo_grado: formData.id_trabajo_grado || null,
                 });
                 Swal.fire('Éxito', 'Evento creado correctamente', 'success');
             } else {
@@ -100,6 +138,7 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
                     hora_fin: formData.todo_el_dia ? null : (formData.hora_fin || null),
                     prioridad: formData.prioridad,
                     todo_el_dia: formData.todo_el_dia,
+                    id_trabajo_grado: formData.id_trabajo_grado || null,
                 });
                 Swal.fire('Éxito', 'Evento actualizado correctamente', 'success');
             }
@@ -211,6 +250,24 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
                     </select>
                     {errors.prioridad && <p className="text-red-500 text-xs">{errors.prioridad.message as string}</p>}
                 </div>
+
+                {isCoordinator && (
+                    <div className="flex flex-col gap-2 w-full md:w-2/3">
+                        <label className="text-xs text-gray-500">Proyecto (Trabajo de Grado)</label>
+                        <select
+                            {...register("id_trabajo_grado")}
+                            className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full"
+                        >
+                            <option value="">-- Seleccionar proyecto --</option>
+                            {projects.map((project) => (
+                                <option key={project.id || project.id_trabajo_grado} value={project.id || project.id_trabajo_grado}>
+                                    {project.title || project.titulo}
+                                </option>
+                            ))}
+                        </select>
+                        {errors.id_trabajo_grado && <p className="text-red-500 text-xs">{errors.id_trabajo_grado.message as string}</p>}
+                    </div>
+                )}
             </div>
 
             {/* BUTTON */}

@@ -305,7 +305,7 @@ const TeacherListPageContent = () => {
                         </div>
 
                         {role === 'admin' && (
-                            <FormModal table="teacher" type="create" />
+                            <FormModal table="teacher" type="create" buttonText="Crear Profesor" />
                         )}
                     </div>
                 </div>

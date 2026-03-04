@@ -14,6 +14,9 @@ export class EventController {
 
             const page = parseInt(req.query.page as string) || 1;
             const limit = parseInt(req.query.limit as string) || 10;
+            const search = req.query.search as string | undefined;
+            const priority = req.query.priority as string | undefined;
+            const status = req.query.status as string | undefined;
             const skip = (page - 1) * limit;
 
             // Get user's roles and determine their type
@@ -59,6 +62,45 @@ export class EventController {
                 activo: true,
             };
 
+            // Add search filter
+            if (search && search.trim()) {
+                whereClause.AND = [
+                    {
+                        OR: [
+                            { titulo: { contains: search.trim() } },
+                            { descripcion: { contains: search.trim() } },
+                        ],
+                    },
+                ];
+            }
+
+            // Add priority filter
+            if (priority && priority !== 'all') {
+                whereClause.prioridad = priority;
+            }
+
+            // Add status/date filter
+            if (status && status !== 'all') {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                if (status === 'active') {
+                    // Events whose end date is today or in the future
+                    whereClause.fecha_fin = { gte: now };
+                } else if (status === 'past') {
+                    // Events whose end date is in the past
+                    whereClause.fecha_fin = { lt: now };
+                } else if (status === 'today') {
+                    // Events whose end date is today
+                    whereClause.fecha_fin = { gte: now, lt: tomorrow };
+                } else if (status === 'future') {
+                    // Events whose end date is after today
+                    whereClause.fecha_fin = { gte: tomorrow };
+                }
+            }
+
             if (isCoordinator) {
                 // Coordinators see all events from projects in their faculty
                 const coordinatorPersona = await prisma.persona.findUnique({
@@ -66,16 +108,39 @@ export class EventController {
                     select: { id_facultad: true }
                 });
 
-                if (coordinatorPersona?.id_facultad) {
-                    whereClause.trabajo_grado = {
-                        programa_academico: {
-                            id_facultad: coordinatorPersona.id_facultad
-                        }
+                let facultyId = coordinatorPersona?.id_facultad;
+
+                // If not found directly, get from their roles/projects
+                if (!facultyId) {
+                    const coordinatorProjects = userActors.filter(a => a.id_tipo_rol === coordinatorRole?.id_rol);
+                    if (coordinatorProjects.length > 0 && coordinatorProjects[0].trabajo_grado?.programa_academico?.id_facultad) {
+                        facultyId = coordinatorProjects[0].trabajo_grado.programa_academico.id_facultad;
+                    }
+                }
+
+                if (facultyId) {
+                    // Show events from faculty projects OR events without a project (global events)
+                    const facultyCondition = {
+                        OR: [
+                            {
+                                trabajo_grado: {
+                                    programa_academico: {
+                                        id_facultad: facultyId
+                                    }
+                                }
+                            },
+                            { id_trabajo_grado: null }
+                        ]
                     };
+                    whereClause.AND = [
+                        ...(whereClause.AND || []),
+                        facultyCondition,
+                    ];
                 } else {
                     // If coordinator has no faculty assigned, show no events
                     // Use a condition that will never match
                     whereClause.AND = [
+                        ...(whereClause.AND || []),
                         { id_trabajo_grado: { not: null } },
                         { id_trabajo_grado: null }
                     ];
@@ -85,14 +150,14 @@ export class EventController {
                 const studentProjectIds = userActors
                     .filter(a => a.id_tipo_rol === studentRole?.id_rol)
                     .map(a => a.id_trabajo_grado);
-                
+
                 if (studentProjectIds.length > 0) {
                     whereClause.id_trabajo_grado = {
                         in: studentProjectIds
                     };
                 } else {
-                    // No projects, no events - use condition that never matches
                     whereClause.AND = [
+                        ...(whereClause.AND || []),
                         { id_trabajo_grado: { not: null } },
                         { id_trabajo_grado: null }
                     ];
@@ -102,7 +167,7 @@ export class EventController {
                 const teacherProjectIds = userActors
                     .filter(a => teacherRoleIds.includes(a.id_tipo_rol))
                     .map(a => a.id_trabajo_grado);
-                
+
                 if (teacherProjectIds.length > 0) {
                     whereClause.id_trabajo_grado = {
                         in: teacherProjectIds
@@ -110,6 +175,7 @@ export class EventController {
                 } else {
                     // No projects, no events - use condition that never matches
                     whereClause.AND = [
+                        ...(whereClause.AND || []),
                         { id_trabajo_grado: { not: null } },
                         { id_trabajo_grado: null }
                     ];
@@ -117,6 +183,7 @@ export class EventController {
             } else {
                 // Unknown role, show no events
                 whereClause.AND = [
+                    ...(whereClause.AND || []),
                     { id_trabajo_grado: { not: null } },
                     { id_trabajo_grado: null }
                 ];
@@ -131,6 +198,13 @@ export class EventController {
                 where: whereClause,
                 skip,
                 take: limit,
+                include: {
+                    trabajo_grado: {
+                        select: {
+                            titulo_trabajo: true,
+                        },
+                    },
+                },
             });
 
             // Sort manually: alta first, then by days remaining (ascending for future, descending for past)
@@ -139,17 +213,21 @@ export class EventController {
                 const priorityOrder: { [key: string]: number } = { 'alta': 0, 'media': 1, 'baja': 2 };
                 const aPriority = priorityOrder[a.prioridad] ?? 3;
                 const bPriority = priorityOrder[b.prioridad] ?? 3;
-                
+
                 if (aPriority !== bPriority) {
                     return aPriority - bPriority;
                 }
-                
+
                 // If same priority, sort by date (future events first, then past)
-                const aDate = new Date(a.fecha_inicio);
-                const bDate = new Date(b.fecha_inicio);
-                const aDaysRemaining = Math.ceil((aDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                const bDaysRemaining = Math.ceil((bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                
+                const aDate = new Date(a.fecha_fin);
+                aDate.setHours(0, 0, 0, 0);
+                const bDate = new Date(b.fecha_fin);
+                bDate.setHours(0, 0, 0, 0);
+                const nowForSort = new Date();
+                nowForSort.setHours(0, 0, 0, 0);
+                const aDaysRemaining = Math.round((aDate.getTime() - nowForSort.getTime()) / (1000 * 60 * 60 * 24));
+                const bDaysRemaining = Math.round((bDate.getTime() - nowForSort.getTime()) / (1000 * 60 * 60 * 24));
+
                 // Future events first (ascending), then past events (descending)
                 if (aDaysRemaining >= 0 && bDaysRemaining >= 0) {
                     return aDaysRemaining - bDaysRemaining; // Future: ascending
@@ -162,9 +240,11 @@ export class EventController {
 
             // Calculate days remaining and add color based on priority and days
             const eventsWithColors = events.map(event => {
-                const now = new Date();
-                const eventDate = new Date(event.fecha_inicio);
-                const daysRemaining = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const eventDate = new Date(event.fecha_fin);
+                eventDate.setHours(0, 0, 0, 0);
+                const daysRemaining = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
                 let color = 'gray'; // default
                 let borderColor = 'border-gray-300';
@@ -222,6 +302,7 @@ export class EventController {
                     daysRemaining,
                     color,
                     borderColor,
+                    proyectoTitulo: event.trabajo_grado?.titulo_trabajo || null,
                 };
             });
 

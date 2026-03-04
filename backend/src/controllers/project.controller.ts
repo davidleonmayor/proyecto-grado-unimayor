@@ -717,11 +717,8 @@ export class ProjectController {
     }
 
     // Get available advisors (professors/directors)
-    // Excludes the current user since they will be automatically assigned as director
     async getAvailableAdvisors(req: Request, res: Response) {
         try {
-            const userId = req.user?.id_persona;
-
             // Get Director role
             const directorRole = await prisma.tipo_rol.findFirst({
                 where: { nombre_rol: "Director" }
@@ -734,8 +731,7 @@ export class ProjectController {
             // Get all people who have been directors at some point
             const directorActors = await prisma.actores.findMany({
                 where: {
-                    id_tipo_rol: directorRole.id_rol,
-                    id_persona: userId ? { not: userId } : undefined // Exclude current user
+                    id_tipo_rol: directorRole.id_rol
                 },
                 include: { persona: true },
                 distinct: ['id_persona']
@@ -953,7 +949,7 @@ export class ProjectController {
                 startDate,
                 endDate,
                 students, // Array of student IDs (1-2)
-                advisors  // Array of additional advisor IDs (max 1, since creator is already one)
+                advisors  // Array of additional advisor IDs (max 2)
             } = req.body;
 
             // Validate required fields
@@ -970,20 +966,18 @@ export class ProjectController {
                 });
             }
 
-            // Prepare directors list: creator + only one extra person (max 2 total)
-            const additionalAdvisors = Array.isArray(advisors)
-                ? advisors.filter((id: string) => id && id !== userId)
+            // Prepare directors list from advisors array
+            const allDirectors = Array.isArray(advisors)
+                ? advisors.filter((id: string) => id)
                 : [];
-            const allDirectors = Array.from(new Set([userId, ...additionalAdvisors]));
 
-            // Validate max 2 directors total (including creator) after deduplication
-            if (allDirectors.length > 2) {
+            // Validate max 2 directors total after deduplication
+            const uniqueDirectors = Array.from(new Set(allDirectors));
+            if (uniqueDirectors.length > 2) {
                 return res.status(400).json({
-                    error: "Máximo 2 directores permitidos por proyecto (incluyéndote a ti como creador)"
+                    error: "Máximo 2 directores permitidos por proyecto"
                 });
             }
-
-            // Check if any student already has an active project
             const studentRole = await prisma.tipo_rol.findFirst({
                 where: { nombre_rol: "Estudiante" }
             });
@@ -1060,8 +1054,8 @@ export class ProjectController {
                 });
             }
 
-            // Assign directors (including creator)
-            for (const directorId of allDirectors) {
+            // Assign directors (based on manual selection)
+            for (const directorId of uniqueDirectors) {
                 await prisma.actores.create({
                     data: {
                         id_persona: directorId,
@@ -1073,9 +1067,9 @@ export class ProjectController {
                 });
             }
 
-            logger.info(`Project created: ${project.id_trabajo_grado} by user ${userId} with ${students.length} students and ${allDirectors.length} directors`);
+            logger.info(`Project created: ${project.id_trabajo_grado} by user ${userId} with ${students.length} students and ${uniqueDirectors.length} directors`);
             return res.status(201).json({
-                message: "Proyecto creado exitosamente. Has sido asignado automáticamente como director.",
+                message: "Proyecto creado exitosamente.",
                 projectId: project.id_trabajo_grado
             });
         } catch (error) {

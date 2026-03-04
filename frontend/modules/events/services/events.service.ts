@@ -14,15 +14,22 @@ export interface EventsResponse {
 
 export class EventsService extends BaseApiClient {
   async getEvents(
-    params: PaginationParams = {}
+    params: PaginationParams & { search?: string; priority?: string; status?: string } = {}
   ): Promise<EventsResponse> {
-    const { page = 1, limit = 10 } = params;
-    return this.request<EventsResponse>(
-      `/api/events?page=${page}&limit=${limit}`,
-      {
-        requiresAuth: true,
-      }
-    );
+    const { page = 1, limit = 10, search, priority, status } = params;
+    let url = `/api/events?page=${page}&limit=${limit}`;
+    if (search && search.trim()) {
+      url += `&search=${encodeURIComponent(search.trim())}`;
+    }
+    if (priority && priority !== 'all') {
+      url += `&priority=${encodeURIComponent(priority)}`;
+    }
+    if (status && status !== 'all') {
+      url += `&status=${encodeURIComponent(status)}`;
+    }
+    return this.request<EventsResponse>(url, {
+      requiresAuth: true,
+    });
   }
 
   async createEvent(eventData: any): Promise<Event> {

@@ -40,6 +40,20 @@ export class PersonRoutes {
             this.authMiddleware.isAuthenticatedUser,
             this.controller.getPersonById
         );
+
+        // Create teacher
+        this.router.post(
+            "/teachers",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.createTeacher
+        );
+
+        // Create student
+        this.router.post(
+            "/students",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.createStudent
+        );
     }
 }
 

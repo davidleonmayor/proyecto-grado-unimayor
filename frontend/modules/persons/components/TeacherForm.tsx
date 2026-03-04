@@ -4,14 +4,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import InputField from '@/shared/components/ui/InputField';
-import Image from "next/image";
-import uploadImage from "@/public/upload.png";
-
 const schema = z.object({
     username: z
         .string()
         .min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres" })
         .max(20, { message: "El nombre de usuario no debe exceder los 20 caracteres" }),
+    document: z
+        .string()
+        .min(5, { message: "El documento debe tener al menos 5 caracteres" })
+        .max(20, { message: "El documento no debe exceder los 20 caracteres" }),
     email: z
         .string()
         .email({ message: "Correo electrónico inválido" }),
@@ -38,14 +39,15 @@ const schema = z.object({
     sex: z
         .enum(["Masculino", "Femenino"], {
             message: "Sexo inválido",
-        }),
-    img: z
-        .instanceof(File, { message: "Debe ser un archivo" })
+        })
 });
 
 
 
-const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) => {
+import { personsService } from "../services/persons.service";
+import Swal from "sweetalert2";
+
+const TeacherForm = ({ type, data, onSuccess }: { type: "create" | "update"; data?: any; onSuccess?: () => void }) => {
 
     const {
         register,
@@ -57,23 +59,32 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
 
     const onSubmit = handleSubmit(async (data) => {
         try {
-            // TODO: Implement API call to create/update teacher
-            console.log('Teacher form data:', data);
-            alert('La creación de profesores está en desarrollo. Por favor, contacte al administrador.');
+            if (type === "create") {
+                await personsService.createTeacher(data);
+                Swal.fire('Éxito', 'Profesor creado exitosamente', 'success');
+                if (onSuccess) onSuccess();
+            } else {
+                alert('La actualización de profesores está en desarrollo.');
+            }
         } catch (error: any) {
             console.error('Error submitting teacher form:', error);
-            alert('Error al guardar: ' + (error.message || 'Error desconocido'));
+            Swal.fire('Error', 'Error al guardar: ' + (error.message || 'Error desconocido'), 'error');
         }
     });
 
     return (
         <form className="flex flex-col gap-6 sm:gap-8 max-w-full" onSubmit={onSubmit}>
-            <h1 className="text-xl font-semibold">
-                {type === "create" ? "Crear nuevo profesor" : "Actualizar profesor"}
-            </h1>
+            <div className="border-b border-gray-200 pb-4">
+                <h1 className="text-2xl font-bold text-gray-800">
+                    {type === "create" ? "Crear nuevo profesor" : "Actualizar profesor"}
+                </h1>
+                <p className="text-sm text-gray-500 mt-1">
+                    Complete los campos a continuación para {type === "create" ? "registrar" : "actualizar"} la información.
+                </p>
+            </div>
 
             {/* AUTH INFO */}
-            <span className="text-xs text-gray-400 font-medium">Informacion de Autentificacion</span>
+            <h2 className="mt-2 text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-l-4 border-principal pl-2">Información de Autenticación</h2>
 
             <div className="flex justify-between gap-4 flex-wrap">
 
@@ -83,6 +94,13 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
                     defaultValue={data?.username}
                     register={register}
                     error={errors.username}
+                />
+                <InputField
+                    label="Identificación"
+                    name="document"
+                    defaultValue={data?.document}
+                    register={register}
+                    error={errors.document}
                 />
                 <InputField
                     label="Email"
@@ -104,9 +122,7 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
             </div>
 
             {/* PERSONAL INFO */}
-            <span className="text-xs text-gray-400 font-medium">
-                Informacion Personal
-            </span>
+            <h2 className="mt-4 text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 border-l-4 border-principal pl-2">Información Personal</h2>
 
             <div className="flex justify-between gap-4 flex-wrap">
                 <InputField
@@ -162,27 +178,14 @@ const TeacherForm = ({ type, data }: { type: "create" | "update"; data?: any }) 
                     {errors.role && <p className="text-red-500 text-xs">{errors.role.message as string}</p>}
                 </div>
 
-                {/* UPLOAD IMAGE */}
-                <div className="flex flex-col gap-2 w-full md:w-1/4 justify-center">
-                    <label className="text-xs text-gray-500 flex items-center gap-2 cursos-pointer" htmlFor="img">
-                        <Image src={uploadImage} alt="subir imagen" width={28} height={28} />
-                        <span>Subir Foto</span>
-                    </label>
-                    <input
-                        type="file"
-                        id="img"
-                        accept="image/*"
-                        {...register("img")}
-                        className="hidden"
-                    />
-                    {errors.img && <p className="text-red-500 text-xs">{errors.img.message as string}</p>}
-                </div>
             </div>
 
             {/* BUTTON */}
-            <button className="bg-blue-400 text-white p-2 rounded-md hover:bg-blue-700">
-                {type === "create" ? "Crear" : "Actualizar"}
-            </button>
+            <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
+                <button className={`font-semibold py-2.5 px-8 rounded-lg shadow-sm hover:opacity-90 transition-all duration-200 w-full md:w-auto ${type === "create" ? "bg-principal text-black" : "bg-pastelBlue text-black"}`}>
+                    {type === "create" ? "Crear Profesor" : "Actualizar Profesor"}
+                </button>
+            </div>
         </form>
     );
 };

@@ -72,10 +72,10 @@ function generateEmail(firstName: string, lastName: string, index: number, type:
 }
 
 async function main() {
-    console.log("🌱 Iniciando seed de la base de datos...");
+    console.log("Iniciando seed de la base de datos...");
 
     // LIMPIEZA DE DATOS EXISTENTES (en orden inverso de dependencias)
-    console.log("🧹 Limpiando datos existentes...");
+    console.log("Limpiando datos existentes...");
     await prisma.distincion_tg.deleteMany({});
     await prisma.seguimiento_tg.deleteMany({});
     await prisma.actores.deleteMany({});
@@ -96,10 +96,10 @@ async function main() {
     await prisma.facultad.deleteMany({});
     await prisma.tipo_rol.deleteMany({});
     await prisma.tipo_documento.deleteMany({});
-    console.log("✅ Datos existentes eliminados");
+    console.log("Datos existentes eliminados");
 
     // 1. TIPOS DE DOCUMENTO
-    console.log("📄 Creando tipos de documento...");
+    console.log("Creando tipos de documento...");
     const tiposDocumento = await Promise.all([
         prisma.tipo_documento.create({
             data: {
@@ -128,7 +128,7 @@ async function main() {
     ]);
 
     // 2. TIPOS DE ROL
-    console.log("👥 Creando tipos de rol...");
+    console.log("Creando tipos de rol...");
     const tiposRol = await Promise.all([
         prisma.tipo_rol.create({
             data: {
@@ -175,7 +175,7 @@ async function main() {
     ]);
 
     // 3. FACULTADES
-    console.log("🏛️ Creando facultades...");
+    console.log("Creando facultades...");
     const facultades = await Promise.all([
         prisma.facultad.create({
             data: { nombre_facultad: "Ingeniería", codigo_facultad: "ING" },
@@ -201,7 +201,7 @@ async function main() {
     ]);
 
     // 4. NIVELES DE FORMACIÓN
-    console.log("🎓 Creando niveles de formación...");
+    console.log("Creando niveles de formación...");
     const nivelesFormacion = await Promise.all([
         prisma.nivel_formacion.create({
             data: {
@@ -230,7 +230,7 @@ async function main() {
     ]);
 
     // 5. PROGRAMAS ACADÉMICOS
-    console.log("📚 Creando programas académicos...");
+    console.log("Creando programas académicos...");
     const programas = await Promise.all([
         // Facultad Ingeniería
         prisma.programa_academico.create({
@@ -335,7 +335,7 @@ async function main() {
     ]);
 
     // 6. OPCIONES DE GRADO
-    console.log("📝 Creando opciones de grado...");
+    console.log("Creando opciones de grado...");
     const opcionesGrado = await Promise.all([
         prisma.opcion_grado.create({
             data: {
@@ -372,7 +372,7 @@ async function main() {
     ]);
 
     // 7. EMPRESAS (100+)
-    console.log("🏢 Creando empresas (100+)...");
+    console.log("Creando empresas (100+)...");
     const empresasBase = await Promise.all([
         prisma.empresa.create({
             data: {
@@ -422,7 +422,7 @@ async function main() {
     const empresas = [...empresasBase, ...empresasAdicionalesCreadas];
 
     // 8. ESTADOS DE TRABAJO DE GRADO
-    console.log("✅ Creando estados...");
+    console.log("Creando estados...");
     const estados = await Promise.all([
         prisma.estado_tg.create({
             data: {
@@ -469,7 +469,7 @@ async function main() {
     ]);
 
     // 9. ACCIONES DE SEGUIMIENTO
-    console.log("⚡ Creando acciones de seguimiento...");
+    console.log("Creando acciones de seguimiento...");
     const acciones = await Promise.all([
         prisma.accion_seg.create({
             data: {
@@ -510,20 +510,20 @@ async function main() {
     ]);
 
     // 10. DISTINCIONES
-    console.log("🏆 Creando distinciones...");
+    console.log("Creando distinciones...");
     const distinciones = await Promise.all([
         prisma.distinciones.create({ data: { nombre: "Mención honorífica" } }),
         prisma.distinciones.create({ data: { nombre: "Laureado" } }),
     ]);
 
     // 11. PERSONAS CON AUTENTICACIÓN
-    console.log("👤 Creando personas con credenciales de acceso...");
+    console.log("Creando personas con credenciales de acceso...");
 
     // Contraseña por defecto para todos: "Password123!"
     const defaultPassword = await hashPassword("Password123!");
 
     // Crear estudiantes (100 por cada programa académico = 1200+ estudiantes)
-    console.log(`👨‍🎓 Creando estudiantes (100 por cada programa = ${programas.length * 100} estudiantes)...`);
+    console.log(`Creando estudiantes (100 por cada programa = ${programas.length * 100} estudiantes)...`);
     const estudiantesPromises: Promise<Awaited<ReturnType<typeof prisma.persona.create>>>[] = [];
     let estudianteGlobalIndex = 0;
 
@@ -588,7 +588,7 @@ async function main() {
     });
 
     // Crear profesores/directores (100+)
-    console.log("👨‍🏫 Creando profesores/directores (100+)...");
+    console.log("Creando profesores/directores (100+)...");
     const profesoresPromises: Promise<Awaited<ReturnType<typeof prisma.persona.create>>>[] = [];
     for (let i = 0; i < 100; i++) {
         const nombres = getRandomName();
@@ -616,7 +616,7 @@ async function main() {
     const profesores = await Promise.all(profesoresPromises);
 
     // Crear coordinadores (10)
-    console.log("👔 Creando coordinadores (10)...");
+    console.log("Creando coordinadores (10)...");
     const coordinadoresPromises: Promise<Awaited<ReturnType<typeof prisma.persona.create>>>[] = [];
     for (let i = 0; i < 10; i++) {
         const nombres = getRandomName();
@@ -644,7 +644,7 @@ async function main() {
     const coordinadores = await Promise.all(coordinadoresPromises);
 
     // Crear jurados externos (20)
-    console.log("⚖️ Creando jurados externos (20)...");
+    console.log("Creando jurados externos (20)...");
     const juradosPromises: Promise<Awaited<ReturnType<typeof prisma.persona.create>>>[] = [];
     for (let i = 0; i < 20; i++) {
         const nombres = getRandomName();
@@ -670,7 +670,7 @@ async function main() {
 
     const personas = [...estudiantes, ...profesores, ...coordinadores, ...jurados];
 
-    console.log("\n🔐 CREDENCIALES DE ACCESO CREADAS:");
+    console.log("\n CREDENCIALES DE ACCESO CREADAS:");
     console.log("================================");
     console.log("Contraseña para todos: Password123!");
     console.log(`\nTotal de usuarios creados: ${personas.length}`);
@@ -684,35 +684,35 @@ async function main() {
     console.log(`Usuarios sin acceso: ${personas.filter(p => !p.password).length}`);
 
     // Mostrar ejemplos de usuarios para iniciar sesión
-    console.log("\n📧 EJEMPLOS DE USUARIOS PARA INICIAR SESIÓN:");
+    console.log("\nEJEMPLOS DE USUARIOS PARA INICIAR SESIÓN:");
     console.log("===========================================");
 
     // Mostrar 5 estudiantes confirmados
     const estudiantesConfirmados = estudiantes.filter(e => e.confirmed && e.password).slice(0, 5);
-    console.log("\n👨‍🎓 Estudiantes (primeros 5):");
+    console.log("\nEstudiantes (primeros 5):");
     estudiantesConfirmados.forEach((est, idx) => {
         console.log(`   ${idx + 1}. Email: ${est.correo_electronico} | Contraseña: Password123!`);
     });
 
     // Mostrar 5 profesores
     const profesoresConfirmados = profesores.filter(p => p.confirmed && p.password).slice(0, 5);
-    console.log("\n👨‍🏫 Profesores/Directores (primeros 5):");
+    console.log("\n Profesores/Directores (primeros 5):");
     profesoresConfirmados.forEach((prof, idx) => {
         console.log(`   ${idx + 1}. Email: ${prof.correo_electronico} | Contraseña: Password123!`);
     });
 
     // Mostrar todos los coordinadores
     const coordinadoresConfirmados = coordinadores.filter(c => c.confirmed && c.password);
-    console.log("\n👔 Coordinadores:");
+    console.log("\n Coordinadores:");
     coordinadoresConfirmados.forEach((coord, idx) => {
         console.log(`   ${idx + 1}. Email: ${coord.correo_electronico} | Contraseña: Password123!`);
     });
 
-    console.log("\n💡 NOTA: Todos los usuarios con acceso tienen la misma contraseña: Password123!");
-    console.log("💡 Los usuarios pendientes de confirmación necesitan confirmar su cuenta primero.\n");
+    console.log("\nNOTA: Todos los usuarios con acceso tienen la misma contraseña: Password123!");
+    console.log("Los usuarios pendientes de confirmación necesitan confirmar su cuenta primero.\n");
 
     // 12. TRABAJOS DE GRADO (100+)
-    console.log("📖 Creando trabajos de grado (100+)...");
+    console.log("Creando trabajos de grado (100+)...");
     const temasProyectos = [
         "Sistema de información para gestión", "Análisis del impacto de", "Desarrollo de aplicación",
         "Diseño e implementación de", "Estudio comparativo de", "Propuesta de mejora para",
@@ -758,7 +758,7 @@ async function main() {
     const trabajos = await Promise.all(trabajosPromises);
 
     // 13. ACTORES (Asignaciones) (100+)
-    console.log("🎭 Creando asignaciones de actores (100+)...");
+    console.log("Creando asignaciones de actores (100+)...");
     const estudianteRole = tiposRol.find(r => r.nombre_rol === "Estudiante");
     const directorRole = tiposRol.find(r => r.nombre_rol === "Director");
     const juradoRole = tiposRol.find(r => r.nombre_rol === "Jurado");
@@ -863,7 +863,7 @@ async function main() {
     const actores = await Promise.all(actoresPromises);
 
     // 14. SEGUIMIENTOS (100+)
-    console.log("📋 Creando seguimientos (100+)...");
+    console.log("Creando seguimientos (100+)...");
     const seguimientosPromises: Promise<Awaited<ReturnType<typeof prisma.seguimiento_tg.create>>>[] = [];
     const tiposAccion = ["Registro", "Revisión", "Asignación jurado", "Sustentación", "Aprobación", "Entrega versión final"];
 
@@ -901,7 +901,7 @@ async function main() {
     await Promise.all(seguimientosPromises);
 
     // 15. EVENTOS PARA CADA PROYECTO DE GRADO
-    console.log("📅 Creando eventos para proyectos de grado...");
+    console.log("Creando eventos para proyectos de grado...");
     const eventosPromises: Promise<any>[] = [];
 
     const tiposEventos = [
@@ -976,9 +976,9 @@ async function main() {
 
     const eventos = await Promise.all(eventosPromises);
 
-    console.log("✅ Seed completado exitosamente!");
+    console.log("Seed completado exitosamente!");
     console.log(`
-📊 Resumen de datos creados:
+Resumen de datos creados:
 ================================
 - ${tiposDocumento.length} tipos de documento
 - ${tiposRol.length} tipos de rol
@@ -996,7 +996,7 @@ async function main() {
 - 100+ seguimientos registrados
 - ${eventos.length} eventos creados
 
-🔐 AUTENTICACIÓN:
+AUTENTICACIÓN:
 - ${personas.filter((p) => p.password && p.confirmed).length} usuarios con acceso (password: Password123!)
 - ${personas.filter((p) => p.password && !p.confirmed).length} usuarios pendientes de confirmación
 - ${personas.filter((p) => !p.password).length} usuarios sin acceso (jurados externos)
@@ -1005,7 +1005,7 @@ async function main() {
 
 main()
     .catch((e) => {
-        console.error("❌ Unexpected error clearing database:", e);
+        console.error("Unexpected error clearing database:", e);
         process.exit(1);
     })
     .finally(async () => {

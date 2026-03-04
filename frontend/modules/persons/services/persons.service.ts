@@ -51,6 +51,22 @@ export class PersonsService extends BaseApiClient {
       requiresAuth: true,
     });
   }
+
+  async createTeacher(data: any): Promise<any> {
+    return this.request<any>('/api/persons/teachers', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      requiresAuth: true,
+    });
+  }
+
+  async createStudent(data: any): Promise<any> {
+    return this.request<any>('/api/persons/students', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      requiresAuth: true,
+    });
+  }
 }
 
 export const personsService = new PersonsService();

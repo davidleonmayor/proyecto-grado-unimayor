@@ -30,6 +30,7 @@ interface Event {
   daysRemaining: number;
   color: string;
   borderColor: string;
+  proyectoTitulo?: string | null;
 }
 
 const columns = [
@@ -38,7 +39,7 @@ const columns = [
   { header: "Hora inicio", accessor: "horaInicio", className: "hidden md:table-cell" },
   { header: "Hora fin", accessor: "horaFin", className: "hidden md:table-cell" },
   { header: "Prioridad", accessor: "prioridad", className: "hidden md:table-cell" },
-  { header: "Días restantes", accessor: "daysRemaining", className: "hidden md:table-cell" },
+  { header: "Estado", accessor: "daysRemaining", className: "hidden md:table-cell" },
 ];
 
 const EventListPageContent = () => {
@@ -104,63 +105,46 @@ const EventListPageContent = () => {
   const loadEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await eventsService.getEvents({ page: currentPage, limit: 10 });
+      const response = await eventsService.getEvents({
+        page: currentPage,
+        limit: 10,
+        search: searchTerm,
+        priority: filterPriority,
+        status: filterDate,
+      });
       const eventsData = response.events;
 
-      // Apply client-side filters and sorting
-      let filtered = [...eventsData];
-
-      // Search filter
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase();
-        filtered = filtered.filter(event =>
-          event.title.toLowerCase().includes(search) ||
-          (event.description && event.description.toLowerCase().includes(search))
-        );
-      }
-
-      // Priority filter
-      if (filterPriority !== 'all') {
-        filtered = filtered.filter(event => event.prioridad === filterPriority);
-      }
-
-      // Date filter
-      if (filterDate === 'past') {
-        filtered = filtered.filter(event => event.daysRemaining < 0);
-      } else if (filterDate === 'today') {
-        filtered = filtered.filter(event => event.daysRemaining === 0);
-      } else if (filterDate === 'future') {
-        filtered = filtered.filter(event => event.daysRemaining > 0);
-      }
+      // Apply client-side sorting only (filters are handled server-side)
+      let sorted = [...eventsData];
 
       // Sorting
       if (sortBy === 'priority') {
         const priorityOrder = { 'alta': 0, 'media': 1, 'baja': 2 };
-        filtered.sort((a, b) => {
+        sorted.sort((a, b) => {
           const aPriority = priorityOrder[a.prioridad as keyof typeof priorityOrder] ?? 3;
           const bPriority = priorityOrder[b.prioridad as keyof typeof priorityOrder] ?? 3;
           if (aPriority !== bPriority) return aPriority - bPriority;
           return a.daysRemaining - b.daysRemaining;
         });
       } else if (sortBy === 'date-asc') {
-        filtered.sort((a, b) => {
+        sorted.sort((a, b) => {
           const aDate = new Date(a.start).getTime();
           const bDate = new Date(b.start).getTime();
           return aDate - bDate;
         });
       } else if (sortBy === 'date-desc') {
-        filtered.sort((a, b) => {
+        sorted.sort((a, b) => {
           const aDate = new Date(a.start).getTime();
           const bDate = new Date(b.start).getTime();
           return bDate - aDate;
         });
       } else if (sortBy === 'days-asc') {
-        filtered.sort((a, b) => a.daysRemaining - b.daysRemaining);
+        sorted.sort((a, b) => a.daysRemaining - b.daysRemaining);
       } else if (sortBy === 'days-desc') {
-        filtered.sort((a, b) => b.daysRemaining - a.daysRemaining);
+        sorted.sort((a, b) => b.daysRemaining - a.daysRemaining);
       }
 
-      setEvents(filtered);
+      setEvents(sorted);
       setPagination(response.pagination);
     } catch (error) {
       console.error('Error loading events:', error);
@@ -186,23 +170,44 @@ const EventListPageContent = () => {
     return `${days} días`;
   };
 
-  const getPriorityColor = (prioridad: string, daysRemaining: number) => {
-    if (daysRemaining < 0) return 'bg-gray-100 text-gray-700';
-    if (prioridad === 'alta') {
-      if (daysRemaining <= 1) return 'bg-red-100 text-red-700';
-      if (daysRemaining <= 3) return 'bg-orange-100 text-orange-700';
-      return 'bg-red-50 text-red-600';
-    }
-    if (prioridad === 'media') {
-      if (daysRemaining <= 1) return 'bg-orange-100 text-orange-700';
-      if (daysRemaining <= 7) return 'bg-yellow-100 text-yellow-700';
-      return 'bg-blue-100 text-blue-700';
-    }
-    // baja
-    if (daysRemaining <= 1) return 'bg-yellow-100 text-yellow-700';
-    if (daysRemaining <= 7) return 'bg-blue-100 text-blue-700';
-    return 'bg-green-100 text-green-700';
+  const getPriorityBadge = (prioridad: string) => {
+    const styles: Record<string, string> = {
+      alta: 'bg-red-50 text-red-700 border border-red-200',
+      media: 'bg-yellow-50 text-yellow-700 border border-yellow-200',
+      baja: 'bg-green-50 text-green-700 border border-green-200',
+    };
+    return (
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium capitalize ${styles[prioridad] || 'bg-gray-50 text-gray-600 border border-gray-200'}`}>
+        {prioridad}
+      </span>
+    );
   };
+
+  const getDaysRemainingBadge = (days: number) => {
+    let style = 'bg-gray-50 text-gray-600 border border-gray-200';
+    if (days < 0) {
+      style = 'bg-gray-100 text-gray-500 border border-gray-200';
+    } else if (days === 0) {
+      style = 'bg-orange-50 text-orange-700 border border-orange-200';
+    } else if (days <= 3) {
+      style = 'bg-yellow-50 text-yellow-700 border border-yellow-200';
+    } else if (days <= 7) {
+      style = 'bg-blue-50 text-blue-600 border border-blue-200';
+    } else {
+      style = 'bg-green-50 text-green-600 border border-green-200';
+    }
+    return (
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${style}`}>
+        {getDaysText(days)}
+      </span>
+    );
+  };
+
+  // Count active filters
+  const activeFilterCount = [
+    filterPriority !== 'all' ? 1 : 0,
+    filterDate !== 'all' ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
 
   const renderRow = (item: Event) => {
     const startDate = new Date(item.start);
@@ -211,7 +216,7 @@ const EventListPageContent = () => {
     return (
       <tr
         key={item.id}
-        className={`border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe] border-l-4 ${item.borderColor}`}
+        className={`border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe] transition-colors duration-150 border-l-4 ${item.borderColor}`}
       >
         <td className="p-4">
           <h3 className="font-semibold">{item.title}</h3>
@@ -220,6 +225,11 @@ const EventListPageContent = () => {
           </p>
           {item.description && (
             <p className="text-xs text-gray-400 mt-1">{item.description}</p>
+          )}
+          {item.proyectoTitulo && (
+            <p className="text-xs text-indigo-500 mt-1">
+              Proyecto: {item.proyectoTitulo}
+            </p>
           )}
         </td>
         <td className="hidden md:table-cell">
@@ -242,14 +252,10 @@ const EventListPageContent = () => {
           }))}
         </td>
         <td className="hidden md:table-cell">
-          <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${getPriorityColor(item.prioridad, item.daysRemaining)}`}>
-            {item.prioridad}
-          </span>
+          {getPriorityBadge(item.prioridad)}
         </td>
         <td className="hidden md:table-cell">
-          <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(item.prioridad, item.daysRemaining)}`}>
-            {getDaysText(item.daysRemaining)}
-          </span>
+          {getDaysRemainingBadge(item.daysRemaining)}
         </td>
         <td>
           <div className="flex items-center gap-2">
@@ -267,13 +273,13 @@ const EventListPageContent = () => {
 
   return (
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <h1 className="hidden md:block text-lg font-semibold ">
           Todos los eventos
         </h1>
         <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           <TableSearch onSearch={setSearchTerm} />
-          <div className="flex items-center gap-4 self-end relative">
+          <div className="flex items-center gap-3 self-end relative">
             {/* Filter Button */}
             <div className="relative filter-menu-container">
               <button
@@ -281,19 +287,28 @@ const EventListPageContent = () => {
                   setShowFilterMenu(!showFilterMenu);
                   setShowSortMenu(false);
                 }}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal ${showFilterMenu ? 'ring-2 ring-primary-500' : ''}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal hover:brightness-95 transition-all duration-200 ${showFilterMenu ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}
+                title="Filtrar"
               >
                 <Image src={filterImage} alt="Filtrar" width={14} height={14} />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
               </button>
               {showFilterMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <div className="p-2">
-                    <div className="mb-2">
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Prioridad</label>
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-600">Filtros</p>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Prioridad</label>
                       <select
                         value={filterPriority}
                         onChange={(e) => setFilterPriority(e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
                       >
                         <option value="all">Todas</option>
                         <option value="alta">Alta</option>
@@ -302,16 +317,16 @@ const EventListPageContent = () => {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Fecha</label>
+                      <label className="block text-xs font-medium text-gray-600 mb-1.5">Estado</label>
                       <select
                         value={filterDate}
                         onChange={(e) => setFilterDate(e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-300 rounded"
+                        className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
                       >
-                        <option value="all">Todas</option>
-                        <option value="past">Pasados</option>
+                        <option value="all">Todos</option>
+                        <option value="active">Activos</option>
+                        <option value="past">Vencidos</option>
                         <option value="today">Hoy</option>
-                        <option value="future">Futuros</option>
                       </select>
                     </div>
                     <button
@@ -320,7 +335,7 @@ const EventListPageContent = () => {
                         setFilterDate('all');
                         setShowFilterMenu(false);
                       }}
-                      className="mt-2 w-full px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                      className="w-full px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors border border-red-100"
                     >
                       Limpiar filtros
                     </button>
@@ -336,58 +351,38 @@ const EventListPageContent = () => {
                   setShowSortMenu(!showSortMenu);
                   setShowFilterMenu(false);
                 }}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal ${showSortMenu ? 'ring-2 ring-primary-500' : ''}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal hover:brightness-95 transition-all duration-200 ${showSortMenu ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}
+                title="Ordenar"
               >
                 <Image src={sortImage} alt="Ordenar" width={14} height={14} />
               </button>
               {showSortMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
-                  <div className="p-2">
-                    <button
-                      onClick={() => {
-                        setSortBy('priority');
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'priority' ? 'bg-primary-50 text-primary-700' : ''}`}
-                    >
-                      Por prioridad
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy('date-asc');
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'date-asc' ? 'bg-primary-50 text-primary-700' : ''}`}
-                    >
-                      Fecha (más antiguos)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy('date-desc');
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'date-desc' ? 'bg-primary-50 text-primary-700' : ''}`}
-                    >
-                      Fecha (más recientes)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy('days-asc');
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'days-asc' ? 'bg-primary-50 text-primary-700' : ''}`}
-                    >
-                      Días restantes (menos)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSortBy('days-desc');
-                        setShowSortMenu(false);
-                      }}
-                      className={`w-full text-left px-2 py-1 text-xs rounded hover:bg-gray-100 ${sortBy === 'days-desc' ? 'bg-primary-50 text-primary-700' : ''}`}
-                    >
-                      Días restantes (más)
-                    </button>
+                <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
+                  <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
+                    <p className="text-xs font-semibold text-gray-600">Ordenar por</p>
+                  </div>
+                  <div className="p-1.5">
+                    {[
+                      { key: 'priority', label: 'Prioridad' },
+                      { key: 'date-asc', label: 'Fecha (más antiguos)' },
+                      { key: 'date-desc', label: 'Fecha (más recientes)' },
+                      { key: 'days-asc', label: 'Días restantes (menos)' },
+                      { key: 'days-desc', label: 'Días restantes (más)' },
+                    ].map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => {
+                          setSortBy(option.key);
+                          setShowSortMenu(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 text-xs rounded-lg transition-colors duration-150 ${sortBy === option.key
+                          ? 'bg-gray-100 text-gray-900 font-semibold'
+                          : 'hover:bg-gray-50 text-gray-700'
+                          }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}

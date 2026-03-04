@@ -107,7 +107,7 @@ export const Navbar = () => {
   return (
     <div className="flex items-center justify-between p-4 relative z-[100]">
       {/* SEARCH BAR */}
-      <div className="hidden md:flex items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2">
+      <div className="hidden items-center gap-2 text-xs rounded-full ring-[1.5px] ring-gray-300 px-2" style={{ display: 'none' }}>
         <Image src={searchImage} alt="search image" width={14} height={14} />
         <input
           type="text"

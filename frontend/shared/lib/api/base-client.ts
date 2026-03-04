@@ -59,8 +59,8 @@ export class BaseApiClient {
 
       if (!response.ok) {
         throw new Error(
-          typeof data === 'object' && data.error
-            ? data.error
+          typeof data === 'object' && (data.error || data.message)
+            ? data.error || data.message
             : typeof data === 'string'
               ? data
               : 'Error en la solicitud'

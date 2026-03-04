@@ -296,7 +296,7 @@ const StudentListPageContent = () => {
             </div>
 
             {role === 'admin' && (
-              <FormModal table="student" type="create" />
+              <FormModal table="student" type="create" buttonText="Crear Estudiante" />
             )}
           </div>
         </div>

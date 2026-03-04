@@ -60,13 +60,9 @@ export class PersonController {
             }
 
             // Build where clause
+            // Un profesor/director no tiene id_programa_academico (los estudiantes sí lo tienen)
             let where: any = {
-                actores: {
-                    some: {
-                        id_tipo_rol: { in: teacherRoleIds },
-                        estado: 'Activo'
-                    }
-                }
+                id_programa_academico: null
             };
 
             // If user is coordinator, filter by their faculty
@@ -79,9 +75,9 @@ export class PersonController {
             // Search filter
             if (search) {
                 where.OR = [
-                    { nombres: { contains: search, mode: 'insensitive' } },
-                    { apellidos: { contains: search, mode: 'insensitive' } },
-                    { correo_electronico: { contains: search, mode: 'insensitive' } },
+                    { nombres: { contains: search } },
+                    { apellidos: { contains: search } },
+                    { correo_electronico: { contains: search } },
                     { num_doc_identidad: { contains: search } }
                 ];
             }
@@ -89,7 +85,6 @@ export class PersonController {
             // Get total count
             const total = await prisma.persona.count({ where });
 
-            // Get teachers with their roles and faculty
             // If filtering by role, add role filter to the query
             if (filterRole !== 'all') {
                 const specificRole = await prisma.tipo_rol.findFirst({
@@ -104,6 +99,9 @@ export class PersonController {
                     };
                 }
             }
+
+            // Recalculate total with role filter if applied
+            const filteredTotal = filterRole !== 'all' ? await prisma.persona.count({ where }) : total;
 
             const teachers = await prisma.persona.findMany({
                 where,
@@ -149,18 +147,18 @@ export class PersonController {
                     .filter(a => a.estado === 'Activo')
                     .map(a => a.tipo_rol?.nombre_rol)
                     .filter(Boolean);
-                
+
                 // Check if teacher has any projects assigned (Director, Asesor, or Asesor Externo)
                 const hasProjects = teacher.actores.some(
                     a => a.estado === 'Activo' &&
-                         a.trabajo_grado !== null &&
-                         (
-                             (directorRole && a.id_tipo_rol === directorRole.id_rol) ||
-                             (asesorRole && a.id_tipo_rol === asesorRole.id_rol) ||
-                             (asesorExternoRole && a.id_tipo_rol === asesorExternoRole.id_rol)
-                         )
+                        a.trabajo_grado !== null &&
+                        (
+                            (directorRole && a.id_tipo_rol === directorRole.id_rol) ||
+                            (asesorRole && a.id_tipo_rol === asesorRole.id_rol) ||
+                            (asesorExternoRole && a.id_tipo_rol === asesorExternoRole.id_rol)
+                        )
                 );
-                
+
                 // Determine primary role:
                 // - If has projects (as Director, Asesor, or Asesor Externo), show as "Director"
                 // - Otherwise, show as "Profesor" (no projects assigned yet)
@@ -171,10 +169,10 @@ export class PersonController {
                     // No projects assigned, they are "Profesor"
                     primaryRole = 'Profesor';
                 }
-                
+
                 return {
                     id: teacher.id_persona,
-                    nombre: `${teacher.nombres} ${teacher.apellidos}`,
+                    nombre: `${teacher.nombres} ${teacher.apellidos}`.toUpperCase(),
                     email: teacher.correo_electronico,
                     telefono: teacher.numero_celular,
                     rol: primaryRole,
@@ -186,20 +184,10 @@ export class PersonController {
                 };
             });
 
-            // Filter by role if specified (check if any role matches)
-            let filteredTeachers = formattedTeachers;
-            if (filterRole !== 'all') {
-                filteredTeachers = formattedTeachers.filter(t => 
-                    t.allRoles.includes(filterRole) || t.rol === filterRole
-                );
-            }
-
-            // Recalculate pagination for filtered results
-            const filteredTotal = filterRole !== 'all' ? filteredTeachers.length : total;
             const totalPages = Math.ceil(filteredTotal / limit);
 
             res.json({
-                teachers: filteredTeachers,
+                teachers: formattedTeachers,
                 pagination: {
                     page,
                     limit,
@@ -272,22 +260,22 @@ export class PersonController {
             }
 
             // Build where clause
+            // Los estudiantes siempre tienen un id_programa_academico asignado
             let where: any = {
-                actores: {
-                    some: {
-                        id_tipo_rol: studentRole.id_rol,
-                        estado: 'Activo'
-                    }
-                }
+                id_programa_academico: { not: null }
             };
 
             // Search filter
             if (search) {
-                where.OR = [
-                    { nombres: { contains: search, mode: 'insensitive' } },
-                    { apellidos: { contains: search, mode: 'insensitive' } },
-                    { correo_electronico: { contains: search, mode: 'insensitive' } },
-                    { num_doc_identidad: { contains: search } }
+                where.AND = [
+                    {
+                        OR: [
+                            { nombres: { contains: search } },
+                            { apellidos: { contains: search } },
+                            { correo_electronico: { contains: search } },
+                            { num_doc_identidad: { contains: search } }
+                        ]
+                    }
                 ];
             }
 
@@ -348,7 +336,7 @@ export class PersonController {
                 const activeProject = student.actores[0]?.trabajo_grado;
                 return {
                     id: student.id_persona,
-                    nombre: `${student.nombres} ${student.apellidos}`,
+                    nombre: `${student.nombres} ${student.apellidos}`.toUpperCase(),
                     email: student.correo_electronico,
                     carrera: student.programa_academico?.nombre_programa || 'N/A',
                     opcionGrado: activeProject?.opcion_grado?.nombre_opcion_grado || 'N/A',
@@ -440,7 +428,7 @@ export class PersonController {
 
             // Format response
             const isStudent = person.actores.some(a => a.tipo_rol.nombre_rol === 'Estudiante');
-            const isTeacher = person.actores.some(a => 
+            const isTeacher = person.actores.some(a =>
                 ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol.nombre_rol)
             );
 
@@ -451,8 +439,8 @@ export class PersonController {
 
             // Get projects for teachers (where they are directors/advisors)
             const teacherProjects = isTeacher ? person.actores
-                .filter(a => 
-                    ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol.nombre_rol) && 
+                .filter(a =>
+                    ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol.nombre_rol) &&
                     a.trabajo_grado
                 )
                 .map(a => a.trabajo_grado) : [];
@@ -472,9 +460,62 @@ export class PersonController {
     // Create teacher (admin only - will be protected by middleware)
     createTeacher = async (req: Request, res: Response) => {
         try {
-            // This endpoint should be implemented to create teachers
-            // For now, return a message indicating it needs to be implemented
-            res.status(501).json({ message: 'La creación de profesores está en desarrollo' });
+            const { firstName, lastName, document, email, phone, role, password } = req.body;
+            const userId = req.user?.id_persona;
+
+            const bcrypt = require('bcrypt');
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Check for duplicates before creating
+            if (document) {
+                const existingByDoc = await prisma.persona.findFirst({
+                    where: { num_doc_identidad: document }
+                });
+                if (existingByDoc) {
+                    return res.status(400).json({ message: 'Ya existe una persona con ese número de documento' });
+                }
+            }
+
+            if (email) {
+                const existingByEmail = await prisma.persona.findFirst({
+                    where: { correo_electronico: email }
+                });
+                if (existingByEmail) {
+                    return res.status(400).json({ message: 'Ya existe una persona con ese correo electrónico' });
+                }
+            }
+
+            let tipoDoc = await prisma.tipo_documento.findFirst({ where: { documento: 'CC' } });
+            if (!tipoDoc) {
+                tipoDoc = await prisma.tipo_documento.create({ data: { documento: 'CC' } });
+            }
+
+            // Get the creating user's faculty so the new teacher belongs to the same faculty
+            let facultyId: string | null = null;
+            if (userId) {
+                const creatingUser = await prisma.persona.findUnique({
+                    where: { id_persona: userId },
+                    select: { id_facultad: true }
+                });
+                facultyId = creatingUser?.id_facultad || null;
+            }
+
+            const newPersona = await prisma.persona.create({
+                data: {
+                    nombres: firstName.toUpperCase().trim(),
+                    apellidos: lastName.toUpperCase().trim(),
+                    num_doc_identidad: document || `DOC-${Date.now()}`,
+                    id_tipo_doc_identidad: tipoDoc.id_tipo_documento,
+                    correo_electronico: email,
+                    numero_celular: phone,
+                    password: hashedPassword,
+                    confirmed: true,
+                    ultimo_acceso: new Date(),
+                    id_facultad: facultyId,
+                }
+            });
+
+            res.status(201).json({ message: 'Profesor creado exitosamente', persona: newPersona });
         } catch (error: any) {
             console.error('Error creating teacher:', error);
             res.status(500).json({ message: 'Error al crear profesor', error: error.message });
@@ -484,9 +525,64 @@ export class PersonController {
     // Create student (admin only - will be protected by middleware)
     createStudent = async (req: Request, res: Response) => {
         try {
-            // This endpoint should be implemented to create students
-            // For now, return a message indicating it needs to be implemented
-            res.status(501).json({ message: 'La creación de estudiantes está en desarrollo' });
+            const { firstName, lastName, document, email, phone, password, programId } = req.body;
+            const userId = req.user?.id_persona;
+
+            const bcrypt = require('bcrypt');
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            // Check for duplicates before creating
+            if (document) {
+                const existingByDoc = await prisma.persona.findFirst({
+                    where: { num_doc_identidad: document }
+                });
+                if (existingByDoc) {
+                    return res.status(400).json({ message: 'Ya existe una persona con ese número de documento' });
+                }
+            }
+
+            if (email) {
+                const existingByEmail = await prisma.persona.findFirst({
+                    where: { correo_electronico: email }
+                });
+                if (existingByEmail) {
+                    return res.status(400).json({ message: 'Ya existe una persona con ese correo electrónico' });
+                }
+            }
+
+            // Validate programId
+            if (!programId) {
+                return res.status(400).json({ message: 'Debe seleccionar un programa académico' });
+            }
+
+            // Get the program to find its faculty
+            const program = await prisma.programa_academico.findUnique({
+                where: { id_programa: programId },
+                select: { id_facultad: true }
+            });
+
+            let tipoDoc = await prisma.tipo_documento.findFirst({ where: { documento: 'CC' } });
+            if (!tipoDoc) {
+                tipoDoc = await prisma.tipo_documento.create({ data: { documento: 'CC' } });
+            }
+
+            const newPersona = await prisma.persona.create({
+                data: {
+                    nombres: firstName.toUpperCase().trim(),
+                    apellidos: lastName.toUpperCase().trim(),
+                    num_doc_identidad: document || `DOC-${Date.now()}`,
+                    id_tipo_doc_identidad: tipoDoc.id_tipo_documento,
+                    correo_electronico: email,
+                    numero_celular: phone,
+                    password: hashedPassword,
+                    confirmed: true,
+                    ultimo_acceso: new Date(),
+                    id_programa_academico: programId,
+                    id_facultad: program?.id_facultad || null,
+                }
+            });
+
+            res.status(201).json({ message: 'Estudiante creado exitosamente', persona: newPersona });
         } catch (error: any) {
             console.error('Error creating student:', error);
             res.status(500).json({ message: 'Error al crear estudiante', error: error.message });

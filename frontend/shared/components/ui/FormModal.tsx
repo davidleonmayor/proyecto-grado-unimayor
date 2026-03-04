@@ -21,7 +21,8 @@ const EventForm = dynamic(() => import('@/modules/events/components/EventForm'),
     loading: () => <p>cargando...</p>,
 });
 
-const forms:{[key: string]:(type:"create"|"update", data?:any)=> JSX.Element;
+const forms: {
+    [key: string]: (type: "create" | "update", data?: any) => JSX.Element;
 
 } = {
     teacher: (type, data) => <TeacherForm type={type} data={data} />,
@@ -73,12 +74,13 @@ const DeleteForm = ({ table, id, onClose }: { table: string; id: number | string
     );
 };
 
-const FormModal = ({ table, type, data, id }:
+const FormModal = ({ table, type, data, id, buttonText }:
     {
         table: "teacher" | "student" | "project" | "advisor" | "degreeOption" | "evaluation" | "document" | "career" | "event";
         type: "create" | "update" | "delete";
         data?: any;
         id?: number | string;
+        buttonText?: string;
     }
 ) => {
 
@@ -99,18 +101,37 @@ const FormModal = ({ table, type, data, id }:
 
     return (
         <>
-            <button className={`${size} flex items-center justify-center rounded-full ${bgColor} cursor-pointer`}
-                onClick={() => setOpen(true)}
-            >
-                <Image src={`/${type}.png`} alt="" width={16} height={16} />
-            </button>
+            {buttonText ? (
+                <button className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg ${bgColor} hover:opacity-80 transition-all duration-200 shadow-sm`}
+                    onClick={() => setOpen(true)}
+                >
+                    <Image src={`/${type}.png`} alt="" width={16} height={16} />
+                    {buttonText}
+                </button>
+            ) : (
+                <button className={`${size} flex items-center justify-center rounded-full ${bgColor} hover:scale-105 transition-all duration-200 shadow-sm cursor-pointer`}
+                    onClick={() => setOpen(true)}
+                >
+                    <Image src={`/${type}.png`} alt="" width={16} height={16} />
+                </button>
+            )}
             {open && (
-                <div className="fixed inset-0 w-screen h-screen bg-black/60 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white p-4 sm:p-6 rounded-md relative w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 w-screen h-screen bg-black/50 backdrop-blur-sm z-[999] flex items-center justify-center p-4 transition-opacity duration-300">
+                    <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl relative w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all border border-gray-100">
                         <Form />
-                        <div className="absolute top-4 right-4 cursor-pointer hover:opacity-70 transition-opacity" onClick={() => setOpen(false)}>
-                            <Image src="/close.png" alt="close image" width={14} height={14} />
-                        </div>
+                        <button
+                            onClick={() => setOpen(false)}
+                            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-200 transition-colors duration-200 cursor-pointer shadow-sm group"
+                            aria-label="Cerrar modal"
+                        >
+                            <Image
+                                src="/close.png"
+                                alt="close image"
+                                width={12}
+                                height={12}
+                                className="opacity-60 group-hover:opacity-100 transition-opacity"
+                            />
+                        </button>
                     </div>
                 </div>
             )}
