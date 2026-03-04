@@ -7,7 +7,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY . .
 # We generate the Prisma client before building
-RUN pnpm run db:generate || npx prisma generate
+RUN pnpm run db:generate || npx prisma@6.18.0 generate
 
 # We need to compile the TS files manually if there's no build script
 RUN npx tsc || pnpm run build
@@ -30,7 +30,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
 # Generate the Prisma client in the prod image so it matches the environment
-RUN npx prisma generate
+RUN npx prisma@6.18.0 generate
 
 EXPOSE 5050
 CMD ["node", "dist/index.js"]
