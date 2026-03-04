@@ -367,7 +367,7 @@ export class PersonController {
     // Get person by ID (for profile view)
     getPersonById = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
 
             const person = await prisma.persona.findUnique({
                 where: { id_persona: id },

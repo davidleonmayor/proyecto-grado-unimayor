@@ -356,7 +356,7 @@ export class EventController {
     // Update event (coordinator only)
     updateEvent = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
             const { titulo, descripcion, fecha_inicio, fecha_fin, hora_inicio, hora_fin, prioridad, todo_el_dia, id_trabajo_grado } = req.body;
 
             const event = await prisma.evento.update({
@@ -384,7 +384,7 @@ export class EventController {
     // Delete event (admin only)
     deleteEvent = async (req: Request, res: Response) => {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
 
             await prisma.evento.update({
                 where: { id_evento: id },

@@ -177,7 +177,7 @@ export class ProjectController {
     // Get project history (iterations)
     async getProjectHistory(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
 
             const history = await prisma.seguimiento_tg.findMany({
                 where: { id_trabajo_grado: id },
@@ -222,7 +222,7 @@ export class ProjectController {
     // Create iteration (Student uploads file)
     async createIteration(req: Request, res: Response) {
         try {
-            const { id } = req.params; // Project ID
+            const id = req.params.id as string; // Project ID
             const userId = req.user?.id_persona;
             const file = req.file;
             const { description, numero_resolucion } = req.body;
@@ -273,7 +273,7 @@ export class ProjectController {
     // Review iteration (Privileged user comments/changes status)
     async reviewIteration(req: Request, res: Response) {
         try {
-            const { id } = req.params; // Project ID
+            const id = req.params.id as string; // Project ID
             const userId = req.user?.id_persona;
             const { description, newStatusId, numero_resolucion, actionType } = req.body;
             const file = req.file; // File is optional for reviews
@@ -397,7 +397,7 @@ export class ProjectController {
     // Download file
     async downloadFile(req: Request, res: Response) {
         try {
-            const { historyId } = req.params;
+            const historyId = req.params.historyId as string;
 
             const record = await prisma.seguimiento_tg.findUnique({
                 where: { id_seguimiento: historyId }
@@ -858,7 +858,7 @@ export class ProjectController {
     // Get project detail (Privileged)
     async getProjectById(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
 
             const project = await prisma.trabajo_grado.findUnique({
                 where: { id_trabajo_grado: id },
@@ -1081,7 +1081,7 @@ export class ProjectController {
     // Update project (Privileged only)
     async updateProject(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
             const {
                 title,
                 summary,
@@ -1311,7 +1311,7 @@ export class ProjectController {
     // Delete project (Privileged only)
     async deleteProject(req: Request, res: Response) {
         try {
-            const { id } = req.params;
+            const id = req.params.id as string;
 
             const project = await prisma.trabajo_grado.findUnique({
                 where: { id_trabajo_grado: id }
