@@ -10,8 +10,31 @@ services:
         environment:
             - NODE_ENV=production
             - PORT=5050
+            - DATABASE_URL=mysql://${MYSQL_USER:-david}:${MYSQL_PASSWORD:-secret}@db:3306/${MYSQL_DATABASE:-money_up}
         env_file:
             - ./backend/.env
+        depends_on:
+            db:
+                condition: service_healthy
+
+    db:
+        container_name: unimayor_mysql
+        image: mysql:8.0
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+            MYSQL_DATABASE: ${MYSQL_DATABASE:-money_up}
+            MYSQL_USER: ${MYSQL_USER:-david}
+            MYSQL_PASSWORD: ${MYSQL_PASSWORD:-secret}
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql_data:/var/lib/mysql
+        healthcheck:
+            test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot" ]
+            interval: 10s
+            timeout: 5s
+            retries: 15
 
     frontend:
         build:
@@ -28,3 +51,6 @@ services:
             - ./frontend/.env
         depends_on:
             - backend
+
+volumes:
+    mysql_data:
