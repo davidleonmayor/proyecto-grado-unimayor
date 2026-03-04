@@ -13,9 +13,9 @@ export const options = {
     },
 };
 
-const BASE_URL = 'http://localhost:5050';
-const TEST_EMAIL = 'k6test@loadtest.com';
-const TEST_PASSWORD = 'Password123!';
+const BASE_URL = __ENV.API_URL || 'http://localhost:5050';
+const TEST_EMAIL = __ENV.TEST_EMAIL || 'k6test@loadtest.com';
+const TEST_PASSWORD = __ENV.TEST_PASSWORD || 'Password123!';
 
 // setup() se ejecuta UNA sola vez antes de las pruebas
 export function setup() {
