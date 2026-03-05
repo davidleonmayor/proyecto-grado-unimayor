@@ -163,7 +163,7 @@ const EventCalendar = () => {
                     />
                     <button
                         onClick={() => router.push('/list/events')}
-                        className="w-full px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm font-medium"
+                        className="w-full px-4 py-2 bg-secondary-500 text-white rounded-lg hover:bg-secondary-600 transition-colors text-sm font-medium"
                     >
                         Ver todos los eventos ({allEvents.length})
                     </button>

@@ -9,46 +9,24 @@ import { personsService } from "../services/persons.service";
 import { projectsService } from "@/modules/projects/services/projects.service";
 import Swal from "sweetalert2";
 
-const schema = z.object({
-  username: z
-    .string()
-    .min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres" })
-    .max(20, { message: "El nombre de usuario no debe exceder los 20 caracteres" }),
-  email: z.string().email({ message: "Correo electrónico inválido" }),
-  document: z
-    .string()
-    .min(5, { message: "El documento debe tener al menos 5 caracteres" })
-    .max(20, { message: "El documento no debe exceder los 20 caracteres" }),
-  password: z
-    .string()
-    .min(6, { message: "La contraseña debe tener al menos 6 caracteres" })
-    .max(100, { message: "La contraseña no debe exceder los 100 caracteres" }),
-  role: z.enum(["Estudiante"], {
-    message: "Rol inválido",
-  }),
-  firstName: z
-    .string()
-    .min(1, { message: "El nombre es obligatorio" })
-    .max(50, { message: "El nombre no debe exceder los 50 caracteres" }),
-  lastName: z
-    .string()
-    .min(1, { message: "El apellido es obligatorio" })
-    .max(50, { message: "El apellido no debe exceder los 50 caracteres" }),
-  phone: z
-    .string()
-    .min(7, { message: "El teléfono debe tener al menos 7 caracteres" })
-    .max(15, { message: "El teléfono no debe exceder los 15 caracteres" }),
-  sex: z.enum(["Masculino", "Femenino"], {
-    message: "Sexo inválido",
-  }),
-  programId: z
-    .string()
-    .min(1, { message: "Debe seleccionar un programa académico" }),
-});
 
 const StudentForm = ({ type, data, onSuccess }: { type: "create" | "update"; data?: any; onSuccess?: () => void }) => {
   const [programs, setPrograms] = useState<Array<{ id: string; name: string; faculty: string }>>([]);
   const [loadingPrograms, setLoadingPrograms] = useState(true);
+
+  const schema = z.object({
+    username: type === "create" ? z.string().min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres" }).max(20) : z.string().optional().or(z.literal('')),
+    email: z.string().email({ message: "Correo electrónico inválido" }),
+    document: z.string().min(5, { message: "El documento debe tener al menos 5 caracteres" }).max(20),
+    codigoInstitucional: z.string().min(3, { message: "El código institucional es obligatorio" }).max(20),
+    password: type === "create" ? z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }).max(100) : z.string().optional().or(z.literal('')),
+    role: z.enum(["Estudiante"], { message: "Rol inválido" }).optional(),
+    firstName: z.string().min(1, { message: "El nombre es obligatorio" }).max(50),
+    lastName: z.string().min(1, { message: "El apellido es obligatorio" }).max(50),
+    phone: z.string().min(7, { message: "El teléfono debe tener al menos 7 caracteres" }).max(15),
+    sex: z.enum(["Masculino", "Femenino"], { message: "Sexo inválido" }).optional().or(z.literal('')),
+    programId: z.string().min(1, { message: "Debe seleccionar un programa académico" }),
+  });
 
   const {
     register,
@@ -79,10 +57,11 @@ const StudentForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
       if (type === "create") {
         await personsService.createStudent(formData);
         Swal.fire('Éxito', 'Estudiante creado exitosamente', 'success');
-        if (onSuccess) onSuccess();
       } else {
-        alert('La actualización de estudiantes está en desarrollo.');
+        await personsService.updatePerson(data.id, formData);
+        Swal.fire('Éxito', 'Estudiante actualizado exitosamente', 'success');
       }
+      if (onSuccess) onSuccess();
     } catch (error: any) {
       console.error('Error submitting student form:', error);
       Swal.fire('Error', 'Error al guardar: ' + (error.message || 'Error desconocido'), 'error');
@@ -117,6 +96,13 @@ const StudentForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
           defaultValue={data?.document}
           register={register}
           error={errors.document}
+        />
+        <InputField
+          label="Código Institucional"
+          name="codigoInstitucional"
+          defaultValue={data?.codigoInstitucional}
+          register={register}
+          error={errors.codigoInstitucional}
         />
         <InputField
           label="Email"
@@ -219,7 +205,7 @@ const StudentForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
 
       {/* BUTTON */}
       <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-        <button className={`font-semibold py-2.5 px-8 rounded-lg shadow-sm hover:opacity-90 transition-all duration-200 w-full md:w-auto ${type === "create" ? "bg-principal text-black" : "bg-pastelBlue text-black"}`}>
+        <button className={`font-semibold py-2.5 px-8 rounded-lg shadow-sm transition-all duration-200 w-full md:w-auto bg-secondary-500 text-white hover:bg-secondary-600`}>
           {type === "create" ? "Crear Estudiante" : "Actualizar Estudiante"}
         </button>
       </div>

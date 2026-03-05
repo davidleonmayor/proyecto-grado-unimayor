@@ -4,43 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import InputField from '@/shared/components/ui/InputField';
-const schema = z.object({
-    username: z
-        .string()
-        .min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres" })
-        .max(20, { message: "El nombre de usuario no debe exceder los 20 caracteres" }),
-    document: z
-        .string()
-        .min(5, { message: "El documento debe tener al menos 5 caracteres" })
-        .max(20, { message: "El documento no debe exceder los 20 caracteres" }),
-    email: z
-        .string()
-        .email({ message: "Correo electrónico inválido" }),
-    password: z
-        .string()
-        .min(6, { message: "La contraseña debe tener al menos 6 caracteres" })
-        .max(100, { message: "La contraseña no debe exceder los 100 caracteres" }),
-    role: z
-        .enum(["Director de Proyecto", "Tutor", "Docente"], {
-            message: "Rol inválido",
-        }),
-    firstName: z
-        .string()
-        .min(1, { message: "El nombre es obligatorio" })
-        .max(50, { message: "El nombre no debe exceder los 50 caracteres" }),
-    lastName: z
-        .string()
-        .min(1, { message: "El apellido es obligatorio" })
-        .max(50, { message: "El apellido no debe exceder los 50 caracteres" }),
-    phone: z
-        .string()
-        .min(7, { message: "El teléfono debe tener al menos 7 caracteres" })
-        .max(15, { message: "El teléfono no debe exceder los 15 caracteres" }),
-    sex: z
-        .enum(["Masculino", "Femenino"], {
-            message: "Sexo inválido",
-        })
-});
 
 
 
@@ -48,6 +11,18 @@ import { personsService } from "../services/persons.service";
 import Swal from "sweetalert2";
 
 const TeacherForm = ({ type, data, onSuccess }: { type: "create" | "update"; data?: any; onSuccess?: () => void }) => {
+
+    const schema = z.object({
+        username: type === "create" ? z.string().min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres" }).max(20) : z.string().optional().or(z.literal('')),
+        document: z.string().min(5, { message: "El documento debe tener al menos 5 caracteres" }).max(20),
+        email: z.string().email({ message: "Correo electrónico inválido" }),
+        password: type === "create" ? z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }).max(100) : z.string().optional().or(z.literal('')),
+        role: z.enum(["Director de Proyecto", "Tutor", "Docente", "Profesor", "Director", "Asesor", "Asesor Externo"], { message: "Rol inválido" }).optional(),
+        firstName: z.string().min(1, { message: "El nombre es obligatorio" }).max(50),
+        lastName: z.string().min(1, { message: "El apellido es obligatorio" }).max(50),
+        phone: z.string().min(7, { message: "El teléfono debe tener al menos 7 caracteres" }).max(15),
+        sex: z.enum(["Masculino", "Femenino"], { message: "Sexo inválido" }).optional().or(z.literal(''))
+    });
 
     const {
         register,
@@ -57,15 +32,16 @@ const TeacherForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
         resolver: zodResolver(schema),
     });
 
-    const onSubmit = handleSubmit(async (data) => {
+    const onSubmit = handleSubmit(async (formData) => {
         try {
             if (type === "create") {
-                await personsService.createTeacher(data);
+                await personsService.createTeacher(formData);
                 Swal.fire('Éxito', 'Profesor creado exitosamente', 'success');
-                if (onSuccess) onSuccess();
             } else {
-                alert('La actualización de profesores está en desarrollo.');
+                await personsService.updatePerson(data.id, formData);
+                Swal.fire('Éxito', 'Profesor actualizado exitosamente', 'success');
             }
+            if (onSuccess) onSuccess();
         } catch (error: any) {
             console.error('Error submitting teacher form:', error);
             Swal.fire('Error', 'Error al guardar: ' + (error.message || 'Error desconocido'), 'error');
@@ -167,13 +143,15 @@ const TeacherForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
                     <label className="text-xs text-gray-500">Rol</label>
                     <select
                         {...register("role")}
-                        defaultValue={data?.role}
+                        defaultValue={data?.rol}
                         className="ring-[1.5px] ring-gray-300 p-2 rounded-md text-sm w-full "
                     >
                         <option value="">Seleccionar</option>
                         <option value="Director de Proyecto">Director de Proyecto</option>
-                        <option value="Tutor">Tutor</option>
-                        <option value="Docente">Docente</option>
+                        <option value="Profesor">Profesor</option>
+                        <option value="Director">Director</option>
+                        <option value="Asesor">Asesor</option>
+                        <option value="Asesor Externo">Asesor Externo</option>
                     </select>
                     {errors.role && <p className="text-red-500 text-xs">{errors.role.message as string}</p>}
                 </div>
@@ -182,7 +160,7 @@ const TeacherForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
 
             {/* BUTTON */}
             <div className="flex justify-end mt-4 pt-4 border-t border-gray-100">
-                <button className={`font-semibold py-2.5 px-8 rounded-lg shadow-sm hover:opacity-90 transition-all duration-200 w-full md:w-auto ${type === "create" ? "bg-principal text-black" : "bg-pastelBlue text-black"}`}>
+                <button className={`font-semibold py-2.5 px-8 rounded-lg shadow-sm transition-all duration-200 w-full md:w-auto bg-secondary-500 text-white hover:bg-secondary-600`}>
                     {type === "create" ? "Crear Profesor" : "Actualizar Profesor"}
                 </button>
             </div>

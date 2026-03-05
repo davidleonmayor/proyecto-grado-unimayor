@@ -26,12 +26,15 @@ type Student = {
   opcionGrado: string;
   estado: string;
   documento: string;
+  codigoInstitucional?: string;
   programaId?: string;
   facultad?: string;
 };
 
 const columns = [
   { header: "Info", accessor: "info" },
+  { header: "Identidad", accessor: "documento" },
+  { header: "Cód. Institucional", accessor: "codigoInstitucional" },
   { header: "Carrera", accessor: "carrera" },
   { header: "Opción de Grado", accessor: "opcionGrado" },
   { header: "Estado", accessor: "estado" },
@@ -137,7 +140,7 @@ const StudentListPageContent = () => {
   const renderRow = (item: Student) => (
     <tr
       key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe]"
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-indigo-50"
     >
       <td className="flex items-center gap-4 p-4">
         <div className="md:hidden xl:block relative w-10 h-10 rounded-full overflow-hidden bg-primary-200">
@@ -154,9 +157,11 @@ const StudentListPageContent = () => {
           <p className="text-xs text-gray-500">{item.email}</p>
         </div>
       </td>
-      <td className="p-4">{item.carrera}</td>
-      <td className="p-4">{item.opcionGrado}</td>
-      <td className="p-4">{item.estado}</td>
+      <td className="p-4 text-xs font-medium text-gray-600">{item.documento}</td>
+      <td className="p-4 text-xs"><span className="bg-slate-100 text-slate-600 px-2 py-1 rounded font-mono">{item.codigoInstitucional || '-'}</span></td>
+      <td className="p-4 text-xs max-w-[200px] truncate" title={item.carrera}>{item.carrera}</td>
+      <td className="p-4 text-xs">{item.opcionGrado}</td>
+      <td className="p-4 text-xs">{item.estado}</td>
       <td className="p-4">
         <div className="flex items-center gap-2">
           <Link href={`/list/students/${item.id}`}>

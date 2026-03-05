@@ -75,17 +75,20 @@ export class AuthController {
                 password,
             );
 
-            // TODO: solve brevo error, they closed me the permission
-            // await AuthEmail.sendConfirmationEmail({
-            //     name: persona.nombres,
-            //     email: persona.correo_electronico,
-            //     token: persona.token,
-            // });
+            // Ya fue solucionado el API en Brevo, se activan los correos
+            try {
+                await AuthEmail.sendConfirmationEmail({
+                    name: persona.nombres,
+                    email: persona.correo_electronico,
+                    token: persona.token,
+                });
+            } catch (error) {
+                console.error("Error enviando email de confirmacion:", error);
+            }
 
             // ✅ Devolver string directamente
             return res.status(201).json(
-                // `Usuario creado correctamente, confirma tu cuenta. Token: ${persona.token}`,
-                `Usuario creado correctamente, confirma tu cuenta. Token: ${persona.token}`,
+                `Usuario creado correctamente, confirma tu cuenta revisando tu correo.`,
             );
         } catch (error: any) {
             console.error("Error en register:", error);

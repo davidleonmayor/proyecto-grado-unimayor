@@ -27,6 +27,7 @@ model persona {
   nombres               String              @db.VarChar(100)
   num_doc_identidad     String              @unique @db.VarChar(50)
   numero_celular        String              @db.VarChar(20)
+  codigo_institucional  String?             @unique @db.VarChar(50)
   password              String?             @db.VarChar(60)
   token                 String?             @unique @db.VarChar(6)
   ultimo_acceso         DateTime?           @db.DateTime(0)
@@ -35,6 +36,8 @@ model persona {
   actores               actores[]
   mensajes_enviados     mensaje[]           @relation("MensajesEnviados")
   mensajes_recibidos    mensaje_entrega[]   @relation("MensajesRecibidos")
+  anuncios_creados      anuncio[]           @relation("AnunciosCreados")
+  anuncios_leidos       anuncio_leido[]
   facultad              facultad?           @relation(fields: [id_facultad], references: [id_facultad])
   programa_academico    programa_academico? @relation(fields: [id_programa_academico], references: [id_programa])
   tipo_documento        tipo_documento      @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
@@ -320,4 +323,33 @@ model webhook_subscription {
   @@index([topic])
   @@index([is_active])
   @@map("WEBHOOK_SUBSCRIPTION")
+}
+
+model anuncio {
+  id_anuncio     String          @id @default(cuid())
+  titulo         String          @db.VarChar(200)
+  contenido      String          @db.Text
+  fecha_creacion DateTime        @default(now()) @db.DateTime(0)
+  id_autor       String
+  autor          persona         @relation("AnunciosCreados", fields: [id_autor], references: [id_persona])
+  lecturas       anuncio_leido[]
+
+  @@index([id_autor])
+  @@index([fecha_creacion])
+  @@map("ANUNCIO")
+}
+
+model anuncio_leido {
+  id_lectura     String   @id @default(cuid())
+  id_anuncio     String
+  id_persona     String
+  fecha_lectura  DateTime @default(now()) @db.DateTime(0)
+  
+  anuncio        anuncio  @relation(fields: [id_anuncio], references: [id_anuncio])
+  persona        persona  @relation(fields: [id_persona], references: [id_persona])
+
+  @@unique([id_anuncio, id_persona])
+  @@index([id_anuncio])
+  @@index([id_persona])
+  @@map("ANUNCIO_LEIDO")
 }

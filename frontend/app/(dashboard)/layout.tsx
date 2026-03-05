@@ -19,7 +19,7 @@ export default function DashboardLayout({
             href="/"
             className="flex items-center justify-center gap-2 lg:justify-start pt-2"
           >
-            <div className="shrink-0 bg-primary-50 p-1.5 md:p-2 rounded-xl">
+            <div className="shrink-0 p-1.5 md:p-2 rounded-xl">
               <Image src={Logo} alt="logo" width={32} height={32} />
             </div>
             <span className="hidden lg:block font-bold text-gray-800 text-sm xl:text-base leading-tight">Gestor Proyectos<br />Grado</span>

@@ -262,6 +262,14 @@ export class ProjectController {
                 }
             });
 
+            // Enviar notificación por email a los directores
+            try {
+                const { ProjectNotificationService } = require("../email/ProjectNotificationService");
+                await ProjectNotificationService.notifyNewIteration(id, userId, description || "Entrega de avance");
+            } catch (emailError) {
+                console.error("Error calling notifyNewIteration in createIteration:", emailError);
+            }
+
             return res.status(201).json({ message: "Entrega creada exitosamente" });
 
         } catch (error) {
@@ -379,6 +387,23 @@ export class ProjectController {
                     data: { id_estado_actual: normalizedStatusId }
                 });
             }
+
+            // ==========================================
+            // SEND EMAIL NOTIFICATION TO STUDENTS
+            // ==========================================
+            try {
+                const { ProjectNotificationService } = require("../email/ProjectNotificationService");
+                await ProjectNotificationService.notifyReview(
+                    id,
+                    userId,
+                    normalizedStatusId,
+                    numero_resolucion || null,
+                    description || null
+                );
+            } catch (emailError) {
+                console.error("Failed sending email notification on reviewIteration:", emailError);
+            }
+            // ==========================================
 
             return res.status(201).json({ message: "Revisión registrada exitosamente" });
 

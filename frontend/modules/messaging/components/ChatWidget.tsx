@@ -213,7 +213,7 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
         <div className="fixed bottom-0 right-10 w-80 bg-white rounded-t-xl shadow-[0_4px_30px_rgb(0,0,0,0.15)] border border-gray-200 z-[9999] flex flex-col overflow-hidden" style={{ height: '450px' }}>
 
             {/* HEADER */}
-            <div className="bg-primary-600 text-white px-4 py-3 flex justify-between items-center shadow-sm">
+            <div className="bg-secondary-500 text-white px-4 py-3 flex justify-between items-center shadow-sm">
                 <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => activeChatUser && setActiveChatUser(null)}>
                     {activeChatUser && (
                         <svg className="w-4 h-4 text-primary-100 hover:text-white transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,7 +339,7 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
                             const isMe = msgBase.soy_emisor;
                             return (
                                 <div key={msgBase.id_entrega} className={`flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`}>
-                                    <div className={`px-3 py-2 rounded-2xl text-[13px] shadow-sm ${isMe ? 'bg-primary-600 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm border border-gray-200'}`}>
+                                    <div className={`px-3 py-2 rounded-2xl text-[13px] shadow-sm ${isMe ? 'bg-secondary-500 text-white rounded-br-sm' : 'bg-gray-100 text-gray-800 rounded-bl-sm border border-gray-200'}`}>
                                         {msgBase.contenido}
                                     </div>
                                     <span className="text-[9px] text-gray-400 mt-1 px-1">{new Date(msgBase.fecha).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -361,7 +361,7 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
                             <button
                                 onClick={handleSendMessage}
                                 disabled={!inputMessage.trim()}
-                                className="w-8 h-8 rounded-full bg-primary-600 text-white flex items-center justify-center shrink-0 hover:bg-primary-700 disabled:bg-gray-300 transition-colors"
+                                className="w-8 h-8 rounded-full bg-secondary-500 text-white flex items-center justify-center shrink-0 hover:bg-secondary-600 disabled:bg-gray-300 transition-colors"
                             >
                                 <svg className="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

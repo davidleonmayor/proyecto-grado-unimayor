@@ -29,7 +29,7 @@ const DegreeOptionsListPage = () => {
   const renderRow = (item: DegreeOption) => (
     <tr
       key={item.id}
-      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe]"
+      className="border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-indigo-50"
     >
       <td className="p-4 font-semibold">{item.nombre}</td>
       <td className="hidden md:table-cell">{item.descripcion}</td>

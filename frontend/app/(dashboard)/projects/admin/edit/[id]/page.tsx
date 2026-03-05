@@ -753,7 +753,7 @@ function EditProjectPageContent() {
                     <button
                         type="submit"
                         disabled={isSaving}
-                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-primary-400"
+                        className="px-6 py-2 bg-secondary-500 text-white rounded-lg hover:bg-secondary-600 transition-colors font-medium disabled:bg-secondary-400"
                     >
                         {isSaving ? 'Guardando...' : 'Guardar Cambios'}
                     </button>

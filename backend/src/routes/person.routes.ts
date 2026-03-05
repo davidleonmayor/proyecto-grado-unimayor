@@ -54,6 +54,20 @@ export class PersonRoutes {
             this.authMiddleware.isAuthenticatedUser,
             this.controller.createStudent
         );
+
+        // Update person
+        this.router.put(
+            "/:id",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.updatePerson
+        );
+
+        // Delete person
+        this.router.delete(
+            "/:id",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.deletePerson
+        );
     }
 }
 

@@ -5,6 +5,7 @@ import { ProjectRoutes } from "./project.routes";
 import { EventRoutes } from "./event.routes";
 import { PersonRoutes } from "./person.routes";
 import { MessagingRoutes } from "../messaging/messaging.routes";
+import { AnnouncementRoutes } from "./announcement.routes";
 
 /**
  * Este archivo centraliza todas las rutas de la aplicación.
@@ -35,6 +36,7 @@ export class Routes {
         const eventRoutes = new EventRoutes();
         const personRoutes = new PersonRoutes();
         const messagingRoutes = new MessagingRoutes();
+        const announcementRoutes = new AnnouncementRoutes();
         messagingRoutes.initRoutes();
 
         app.get("/api", (req, res) => {
@@ -46,5 +48,6 @@ export class Routes {
         app.use("/api/events", eventRoutes.router);
         app.use("/api/persons", personRoutes.router);
         app.use("/api/messaging", messagingRoutes.router);
+        app.use("/api/announcement", announcementRoutes.router);
     }
 }

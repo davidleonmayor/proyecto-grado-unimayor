@@ -502,7 +502,7 @@ function NewProjectPageContent() {
                                     Estudiantes * (Selecciona 1 o 2)
                                 </label>
                                 {!programId && (
-                                    <p className="text-sm text-blue-600 mb-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                    <p className="text-sm text-gray-500 mb-3 p-3 rounded-lg border border-blue-100">
                                         ⓘ Selecciona un programa académico para ver los estudiantes asociados
                                     </p>
                                 )}
@@ -643,7 +643,7 @@ function NewProjectPageContent() {
                     </button>
                     <button
                         type="submit"
-                        className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium shadow-sm flex items-center gap-2"
+                        className="px-6 py-2.5 bg-secondary-500 text-white rounded-lg hover:bg-secondary-600 transition-colors font-medium shadow-sm flex items-center gap-2"
                     >
                         <span>Crear Proyecto</span>
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -16,6 +16,7 @@ import { useMessaging } from '@/modules/messaging/hooks/useMessaging';
 import { ChatWidget } from '@/modules/messaging/components/ChatWidget';
 import { PersonaMin } from '@/modules/messaging/services/messaging.service';
 import Swal from 'sweetalert2';
+import { announcementService, Announcement } from '@/modules/dashboard/services/announcement.service';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
@@ -29,6 +30,10 @@ export const Navbar = () => {
   const [showAnnouncements, setShowAnnouncements] = useState(false);
   const [showChatWidget, setShowChatWidget] = useState(false);
   const [selectedPeer, setSelectedPeer] = useState<PersonaMin | null>(null);
+
+  // Announcements state
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [unreadAnnouncementsCount, setUnreadAnnouncementsCount] = useState(0);
 
   // Refs for click-outside handles
   const menuRef = useRef<HTMLDivElement>(null);
@@ -50,6 +55,37 @@ export const Navbar = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const loadAnnouncements = async () => {
+    try {
+      if (user) {
+        const res = await announcementService.getAnnouncements();
+        setAnnouncements(res);
+        const unread = res.filter((a: Announcement) => !a.leido).length;
+        setUnreadAnnouncementsCount(unread);
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadAnnouncements();
+  }, [user]);
+
+  const handleMarkAsRead = async (announcement: Announcement) => {
+    if (announcement.leido) return;
+    try {
+      await announcementService.markAsRead(announcement.id_anuncio);
+      // Update local state instead of reloading everything
+      setAnnouncements(prev => prev.map(a =>
+        a.id_anuncio === announcement.id_anuncio ? { ...a, leido: true } : a
+      ));
+      setUnreadAnnouncementsCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
+  };
 
   const handleLogout = async () => {
     const result = await Swal.fire({
@@ -102,6 +138,14 @@ export const Navbar = () => {
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return `${hrs}h`;
     return `${Math.floor(hrs / 24)}d`;
+  };
+
+  const markAllAsRead = async () => {
+    const unread = announcements.filter(a => !a.leido);
+    for (const ann of unread) {
+      await announcementService.markAsRead(ann.id_anuncio).catch(() => { });
+    }
+    loadAnnouncements();
   };
 
   return (
@@ -206,10 +250,17 @@ export const Navbar = () => {
               setShowAnnouncements(!showAnnouncements);
               setShowMessages(false);
               setShowMenu(false);
+              if (!showAnnouncements) {
+                loadAnnouncements();
+              }
             }}
           >
             <Image src={announcementImage} alt="announcement image" width={20} height={20} className="opacity-70" />
-            <div className="absolute -top-1.5 -right-1 w-5 h-5 flex items-center justify-center bg-amber-500 text-white rounded-full text-[10px] font-bold shadow-sm ring-2 ring-white">1</div>
+            {unreadAnnouncementsCount > 0 && (
+              <div className="absolute -top-1.5 -right-1 w-5 h-5 flex items-center justify-center bg-amber-500 text-white rounded-full text-[10px] font-bold shadow-sm ring-2 ring-white">
+                {unreadAnnouncementsCount}
+              </div>
+            )}
           </div>
 
           {/* Dropdown Box for Announcements */}
@@ -217,31 +268,51 @@ export const Navbar = () => {
             <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-0 z-50 border border-gray-100 overflow-hidden flex flex-col">
               <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-slate-50/50">
                 <h3 className="text-[15px] font-semibold text-gray-800">Notificaciones</h3>
-                <span className="text-[11px] font-medium text-gray-400 cursor-pointer hover:text-gray-700 transition-colors">Marcar como leídas</span>
+                {unreadAnnouncementsCount > 0 && (
+                  <span
+                    onClick={markAllAsRead}
+                    className="text-[11px] font-medium text-gray-400 cursor-pointer hover:text-gray-700 transition-colors"
+                  >
+                    Marcar todas como leídas
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-col max-h-[320px] overflow-y-auto">
-                <div className="px-5 py-4 cursor-pointer border-l-[3px] border-amber-400 bg-amber-50/30 hover:bg-amber-50/60 transition-colors">
-                  <div className="flex justify-between items-start mb-1.5 gap-2">
-                    <h4 className="text-[13px] font-medium text-gray-800 leading-snug">Actualización de Listados</h4>
-                    <span className="text-[10px] font-medium text-amber-600 whitespace-nowrap bg-amber-100/50 px-1.5 py-0.5 rounded">Nuevo</span>
+                {announcements.length === 0 ? (
+                  <div className="px-5 py-8 text-center bg-white cursor-default">
+                    <p className="text-[14px] font-medium text-gray-800 mb-1">Sin Anuncios</p>
+                    <p className="text-[12px] text-gray-400">No hay notificaciones globales<br />en este momento.</p>
                   </div>
-                  <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">Hemos implementado mejoras visuales en todas las tablas de proyectos. Ahora puedes gestionar...</p>
-                  <span className="text-[10px] text-gray-400 mt-2 block font-light">Hace 2 horas</span>
-                </div>
-
-                <div className="px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer border-l-[3px] border-transparent border-t border-gray-50">
-                  <div className="flex justify-between items-start mb-1.5">
-                    <h4 className="text-[13px] font-medium text-gray-700 leading-snug">Bienvenido al nuevo sistema</h4>
-                  </div>
-                  <p className="text-[12px] text-gray-500 line-clamp-2 leading-relaxed font-light">Gracias por conectarte a la nueva plataforma de administración de proyectos del Colegio Mayor...</p>
-                  <span className="text-[10px] text-gray-400 mt-2 block font-light">Hace 3 días</span>
-                </div>
+                ) : (
+                  announcements.map((announcement) => (
+                    <div
+                      key={announcement.id_anuncio}
+                      onClick={() => handleMarkAsRead(announcement)}
+                      className={`px-5 py-4 cursor-pointer transition-colors border-l-[3px] border-t border-t-gray-50 ${!announcement.leido ? 'border-l-amber-400 bg-amber-50/30 hover:bg-amber-50/60' : 'border-l-transparent hover:bg-slate-50'}`}
+                    >
+                      <div className="flex justify-between items-start mb-1.5 gap-2">
+                        <h4 className={`text-[13px] leading-snug ${!announcement.leido ? 'font-medium text-gray-800' : 'font-medium text-gray-700'}`}>{announcement.titulo}</h4>
+                        {!announcement.leido && (
+                          <span className="text-[10px] font-medium text-amber-600 whitespace-nowrap bg-amber-100/50 px-1.5 py-0.5 rounded">Nuevo</span>
+                        )}
+                      </div>
+                      <p className={`text-[12px] line-clamp-2 leading-relaxed ${!announcement.leido ? 'text-gray-600 font-light' : 'text-gray-500 font-light'}`}>
+                        {announcement.contenido}
+                      </p>
+                      <span className="text-[10px] text-gray-400 mt-2 block font-light">
+                        {new Date(announcement.fecha_creacion).toLocaleDateString('es-CO')} - {announcement.autor_nombre}
+                      </span>
+                    </div>
+                  ))
+                )}
               </div>
 
-              <div className="px-5 py-3 border-t border-gray-50 text-center bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors mt-auto">
-                <span className="text-[12px] font-medium text-primary-600">Ver todas las notificaciones</span>
-              </div>
+              {((user as any)?.rol === "Coordinador" || (user as any)?.rol === "Administrador" || (user as any)?.rol === "Decano") && (
+                <div onClick={() => window.location.href = '/announcements'} className="px-5 py-3 border-t border-gray-50 text-center bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-colors mt-auto">
+                  <span className="text-[12px] font-medium text-primary-600">Crear Anuncio</span>
+                </div>
+              )}
             </div>
           )}
         </div>

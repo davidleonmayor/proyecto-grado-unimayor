@@ -173,6 +173,9 @@ export class PersonController {
                 return {
                     id: teacher.id_persona,
                     nombre: `${teacher.nombres} ${teacher.apellidos}`.toUpperCase(),
+                    firstName: teacher.nombres,
+                    lastName: teacher.apellidos,
+                    phone: teacher.numero_celular,
                     email: teacher.correo_electronico,
                     telefono: teacher.numero_celular,
                     rol: primaryRole,
@@ -181,6 +184,7 @@ export class PersonController {
                     facultad: teacher.facultad?.nombre_facultad || null,
                     facultadId: teacher.id_facultad,
                     documento: teacher.num_doc_identidad,
+                    document: teacher.num_doc_identidad,
                 };
             });
 
@@ -337,11 +341,16 @@ export class PersonController {
                 return {
                     id: student.id_persona,
                     nombre: `${student.nombres} ${student.apellidos}`.toUpperCase(),
+                    firstName: student.nombres,
+                    lastName: student.apellidos,
+                    phone: student.numero_celular,
                     email: student.correo_electronico,
                     carrera: student.programa_academico?.nombre_programa || 'N/A',
                     opcionGrado: activeProject?.opcion_grado?.nombre_opcion_grado || 'N/A',
                     estado: activeProject?.estado_tg?.nombre_estado || 'Sin proyecto',
                     documento: student.num_doc_identidad,
+                    codigoInstitucional: student.codigo_institucional,
+                    document: student.num_doc_identidad,
                     programaId: student.id_programa_academico,
                     facultad: student.programa_academico?.facultad?.nombre_facultad || null,
                 };
@@ -485,6 +494,11 @@ export class PersonController {
                 }
             }
 
+            const crypto = require("crypto");
+            // Generar token numérico de 6 dígitos para que quepa en @db.VarChar(6)
+            const token = crypto.randomInt(100000, 999999).toString();
+            const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
             let tipoDoc = await prisma.tipo_documento.findFirst({ where: { documento: 'CC' } });
             if (!tipoDoc) {
                 tipoDoc = await prisma.tipo_documento.create({ data: { documento: 'CC' } });
@@ -509,13 +523,26 @@ export class PersonController {
                     correo_electronico: email,
                     numero_celular: phone,
                     password: hashedPassword,
-                    confirmed: true,
+                    confirmed: false,
+                    token: token,
                     ultimo_acceso: new Date(),
                     id_facultad: facultyId,
                 }
             });
 
-            res.status(201).json({ message: 'Profesor creado exitosamente', persona: newPersona });
+            // Enviar email de confirmación
+            try {
+                const { AuthEmail } = require("../email/AuthEmail");
+                await AuthEmail.sendConfirmationEmail({
+                    name: newPersona.nombres,
+                    email: newPersona.correo_electronico,
+                    token: newPersona.token,
+                });
+            } catch (emailError) {
+                console.error("Error enviando correo de confirmación en createTeacher", emailError);
+            }
+
+            res.status(201).json({ message: 'Profesor creado exitosamente. Se ha enviado un correo de confirmación.', persona: newPersona });
         } catch (error: any) {
             console.error('Error creating teacher:', error);
             res.status(500).json({ message: 'Error al crear profesor', error: error.message });
@@ -525,7 +552,7 @@ export class PersonController {
     // Create student (admin only - will be protected by middleware)
     createStudent = async (req: Request, res: Response) => {
         try {
-            const { firstName, lastName, document, email, phone, password, programId } = req.body;
+            const { firstName, lastName, document, email, phone, password, programId, codigoInstitucional } = req.body;
             const userId = req.user?.id_persona;
 
             const bcrypt = require('bcrypt');
@@ -550,6 +577,15 @@ export class PersonController {
                 }
             }
 
+            if (codigoInstitucional) {
+                const existingByCodigo = await prisma.persona.findFirst({
+                    where: { codigo_institucional: codigoInstitucional }
+                });
+                if (existingByCodigo) {
+                    return res.status(400).json({ message: 'Ya existe un estudiante con ese código institucional' });
+                }
+            }
+
             // Validate programId
             if (!programId) {
                 return res.status(400).json({ message: 'Debe seleccionar un programa académico' });
@@ -561,6 +597,11 @@ export class PersonController {
                 select: { id_facultad: true }
             });
 
+            const crypto = require("crypto");
+            // Generar token numérico de 6 dígitos para que quepa en @db.VarChar(6)
+            const token = crypto.randomInt(100000, 999999).toString();
+            const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
             let tipoDoc = await prisma.tipo_documento.findFirst({ where: { documento: 'CC' } });
             if (!tipoDoc) {
                 tipoDoc = await prisma.tipo_documento.create({ data: { documento: 'CC' } });
@@ -571,21 +612,163 @@ export class PersonController {
                     nombres: firstName.toUpperCase().trim(),
                     apellidos: lastName.toUpperCase().trim(),
                     num_doc_identidad: document || `DOC-${Date.now()}`,
+                    codigo_institucional: codigoInstitucional || null,
                     id_tipo_doc_identidad: tipoDoc.id_tipo_documento,
                     correo_electronico: email,
                     numero_celular: phone,
                     password: hashedPassword,
-                    confirmed: true,
+                    confirmed: false,
+                    token: token,
                     ultimo_acceso: new Date(),
                     id_programa_academico: programId,
                     id_facultad: program?.id_facultad || null,
                 }
             });
 
-            res.status(201).json({ message: 'Estudiante creado exitosamente', persona: newPersona });
+            // Enviar email de confirmación
+            try {
+                const { AuthEmail } = require("../email/AuthEmail");
+                await AuthEmail.sendConfirmationEmail({
+                    name: newPersona.nombres,
+                    email: newPersona.correo_electronico,
+                    token: newPersona.token,
+                });
+            } catch (emailError) {
+                console.error("Error enviando correo de confirmación en createStudent", emailError);
+            }
+
+            res.status(201).json({ message: 'Estudiante creado exitosamente. Se ha enviado un correo de confirmación.', persona: newPersona });
         } catch (error: any) {
             console.error('Error creating student:', error);
             res.status(500).json({ message: 'Error al crear estudiante', error: error.message });
+        }
+    };
+
+    // Update person
+    updatePerson = async (req: Request, res: Response) => {
+        try {
+            const id = req.params.id as string;
+            const { firstName, lastName, document, email, phone, programId, role, codigoInstitucional } = req.body;
+
+            // Verificamos si la persona existe
+            const existingPerson = await prisma.persona.findUnique({
+                where: { id_persona: id }
+            });
+
+            if (!existingPerson) {
+                return res.status(404).json({ message: 'Persona no encontrada' });
+            }
+
+            // Datos a actualizar base
+            const updateData: any = {
+                nombres: firstName ? firstName.toUpperCase().trim() : undefined,
+                apellidos: lastName ? lastName.toUpperCase().trim() : undefined,
+                num_doc_identidad: document || undefined,
+                codigo_institucional: codigoInstitucional !== undefined ? codigoInstitucional : undefined,
+                correo_electronico: email || undefined,
+                numero_celular: phone || undefined,
+            };
+
+            // Solo si mandaron un correo distinto, validamos duplicidad
+            if (email && email !== existingPerson.correo_electronico) {
+                const existingEmail = await prisma.persona.findFirst({
+                    where: { correo_electronico: email, id_persona: { not: id } }
+                });
+                if (existingEmail) {
+                    return res.status(400).json({ message: 'El correo electrónico ya está en uso' });
+                }
+            }
+
+            // Validar si mandaron el document distinto
+            if (document && document !== existingPerson.num_doc_identidad) {
+                const existingDoc = await prisma.persona.findFirst({
+                    where: { num_doc_identidad: document, id_persona: { not: id } }
+                });
+                if (existingDoc) {
+                    return res.status(400).json({ message: 'El documento de identidad ya está en uso' });
+                }
+            }
+
+            // Validar si mandaron un codigo distinto
+            if (codigoInstitucional && codigoInstitucional !== existingPerson.codigo_institucional) {
+                const existingCodigo = await prisma.persona.findFirst({
+                    where: { codigo_institucional: codigoInstitucional, id_persona: { not: id } }
+                });
+                if (existingCodigo) {
+                    return res.status(400).json({ message: 'El código institucional ya está en uso' });
+                }
+            }
+
+            // Si envían un programId, actualizamos programa y su respectiva facultad (suele ser usado en estudiantes)
+            if (programId) {
+                const program = await prisma.programa_academico.findUnique({
+                    where: { id_programa: programId },
+                    select: { id_facultad: true }
+                });
+                if (program) {
+                    updateData.id_programa_academico = programId;
+                    updateData.id_facultad = program.id_facultad;
+                }
+            }
+
+            const updatedPerson = await prisma.persona.update({
+                where: { id_persona: id },
+                data: updateData
+            });
+
+            res.json({ message: 'Persona actualizada exitosamente', persona: updatedPerson });
+        } catch (error: any) {
+            console.error('Error updating person:', error);
+            res.status(500).json({ message: 'Error al actualizar persona', error: error.message });
+        }
+    };
+
+    // Delete person
+    deletePerson = async (req: Request, res: Response) => {
+        try {
+            const id = req.params.id as string;
+
+            // Revisar si existe
+            const person = await prisma.persona.findUnique({
+                where: { id_persona: id },
+                include: {
+                    actores: {
+                        include: {
+                            trabajo_grado: true
+                        }
+                    }
+                }
+            });
+
+            if (!person) {
+                return res.status(404).json({ message: 'Persona no encontrada' });
+            }
+
+            // Validar si tiene proyectos activos
+            const hasActiveProjects = person.actores.some((a: any) =>
+                a.estado === 'Activo' && a.trabajo_grado !== null
+            );
+
+            if (hasActiveProjects) {
+                return res.status(400).json({
+                    message: 'No se puede eliminar esta persona porque tiene participaciones en trabajos de grado activos. Por favor, remuévalo de los proyectos primero.'
+                });
+            }
+
+            // Realizamos hard delete porque si no tiene proyectos importantes y activos, no hay integridad rota significativa
+            await prisma.persona.delete({
+                where: { id_persona: id }
+            });
+
+            res.json({ message: 'Persona eliminada exitosamente' });
+
+        } catch (error: any) {
+            console.error('Error deleting person:', error);
+            // El código P2003 de Prisma es de Violación de Restricción de Integridad Referencial
+            if (error.code === 'P2003') {
+                return res.status(400).json({ message: 'No se puede eliminar la persona debido a que existen registros que dependen de ella. Desactive su rol.' });
+            }
+            res.status(500).json({ message: 'Error al eliminar persona', error: error.message });
         }
     };
 }

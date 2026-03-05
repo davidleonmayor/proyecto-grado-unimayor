@@ -8,14 +8,14 @@ export default function NotFound() {
 
     // Common links available to all users
     const links = [
-        { href: '/', label: 'Inicio', icon: '🏠' },
-        { href: '/projects', label: 'Proyectos de Grado', icon: '📝' },
-        { href: '/student', label: 'Panel de Estudiante', icon: '🎓' },
-        { href: '/teacher', label: 'Panel de Profesor', icon: '📚' },
-        { href: '/admin', label: 'Panel de Administración', icon: '📊' },
-        { href: '/list/students', label: 'Estudiantes', icon: '👨‍🎓' },
-        { href: '/list/teachers', label: 'Profesores', icon: '👨‍🏫' },
-        { href: '/list/events', label: 'Eventos', icon: '📅' },
+        { href: '/', label: 'Inicio', icon: '' },
+        { href: '/projects', label: 'Proyectos de Grado', icon: '' },
+        { href: '/student', label: 'Panel de Estudiante', icon: '' },
+        { href: '/teacher', label: 'Panel de Profesor', icon: '' },
+        { href: '/admin', label: 'Panel de Administración', icon: '' },
+        { href: '/list/students', label: 'Estudiantes', icon: '' },
+        { href: '/list/teachers', label: 'Profesores', icon: '' },
+        { href: '/list/events', label: 'Eventos', icon: '' },
     ];
 
     return (
@@ -87,7 +87,7 @@ export default function NotFound() {
                 <div className="mt-8">
                     <button
                         onClick={() => router.back()}
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-secondary-500 text-white rounded-lg font-medium hover:bg-secondary-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                     >
                         <svg
                             className="w-5 h-5"

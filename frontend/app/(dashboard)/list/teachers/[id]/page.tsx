@@ -139,35 +139,35 @@ const SingleTeacherPageContent = () => {
                     {/* SMALL CARDS */}
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {/* CARD */}
-                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4">
-                            <Image src={singleAttendanceImage} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
+                            <Image src={singleAttendanceImage} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold">{totalProjects}</h1>
-                                <span className="text-xs sm:text-sm text-gray-400">Proyectos dirigidos</span>
+                                <span className="text-xs sm:text-sm text-white/80">Proyectos dirigidos</span>
                             </div>
                         </div>
                         {/* CARD */}
-                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4">
-                            <Image src={singleClass} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
+                            <Image src={singleClass} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold">{totalStudents}</h1>
-                                <span className="text-xs sm:text-sm text-gray-400">Estudiantes asignados</span>
+                                <span className="text-xs sm:text-sm text-white/80">Estudiantes asignados</span>
                             </div>
                         </div>
                         {/* CARD */}
-                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4">
-                            <Image src={singleBranch} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
+                            <Image src={singleBranch} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold">{uniqueModalities}</h1>
-                                <span className="text-xs sm:text-sm text-gray-400">Opciones de Grado supervisadas</span>
+                                <span className="text-xs sm:text-sm text-white/80">Opciones de Grado supervisadas</span>
                             </div>
                         </div>
                         {/* CARD */}
-                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4">
-                            <Image src={singleLesson} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
+                            <Image src={singleLesson} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold truncate">{faculty}</h1>
-                                <span className="text-xs sm:text-sm text-gray-400">Facultad</span>
+                                <span className="text-xs sm:text-sm text-white/80">Facultad</span>
                             </div>
                         </div>
                     </div>

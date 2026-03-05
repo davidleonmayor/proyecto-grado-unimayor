@@ -67,6 +67,21 @@ export class PersonsService extends BaseApiClient {
       requiresAuth: true,
     });
   }
+
+  async updatePerson(id: string | number, data: any): Promise<any> {
+    return this.request<any>(`/api/persons/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      requiresAuth: true,
+    });
+  }
+
+  async deletePerson(id: string | number): Promise<any> {
+    return this.request<any>(`/api/persons/${id}`, {
+      method: 'DELETE',
+      requiresAuth: true,
+    });
+  }
 }
 
 export const personsService = new PersonsService();

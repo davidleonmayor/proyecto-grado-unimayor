@@ -216,7 +216,7 @@ const EventListPageContent = () => {
     return (
       <tr
         key={item.id}
-        className={`border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-[#dbdafe] transition-colors duration-150 border-l-4 ${item.borderColor}`}
+        className={`border-b border-gray-200 even:bg-slate-50 text-sm hover:bg-primary-50 transition-colors duration-150 border-l-4 ${item.borderColor}`}
       >
         <td className="p-4">
           <h3 className="font-semibold">{item.title}</h3>

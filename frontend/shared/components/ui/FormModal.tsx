@@ -8,6 +8,7 @@ import Swal from "sweetalert2";
 // import TeacherForm from '@/modules/persons/components/TeacherForm';
 // import StudentForm from '@/modules/persons/components/StudentForm';
 import { eventsService } from '@/modules/events/services/events.service';
+import { personsService } from '@/modules/persons/services/persons.service';
 
 const TeacherForm = dynamic(() => import('@/modules/persons/components/TeacherForm'), {
     loading: () => <p>cargando...</p>,
@@ -37,9 +38,8 @@ const DeleteForm = ({ table, id, onClose }: { table: string; id: number | string
                 await eventsService.deleteEvent(String(id));
                 Swal.fire('Éxito', 'Evento eliminado correctamente', 'success');
             } else if (table === "teacher" || table === "student") {
-                // TODO: Implement delete person endpoint
-                Swal.fire('Info', 'La eliminación de personas está en desarrollo. Por favor, contacte al administrador.', 'info');
-                return;
+                await personsService.deletePerson(String(id));
+                Swal.fire('Éxito', table === "teacher" ? 'Profesor eliminado correctamente' : 'Estudiante eliminado correctamente', 'success');
             } else {
                 Swal.fire('Error', 'Función de eliminación no implementada para este tipo', 'error');
                 return;
@@ -85,7 +85,7 @@ const FormModal = ({ table, type, data, id, buttonText }:
 ) => {
 
     const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
-    const bgColor = type === "create" ? "bg-principal" : type === "update" ? "bg-pastelBlue" : "bg-pastelRed";
+    const bgColor = type === "create" ? "bg-secondary-500" : type === "update" ? "bg-secondary-400" : "bg-red-500";
 
     const [open, setOpen] = useState(false);
 
