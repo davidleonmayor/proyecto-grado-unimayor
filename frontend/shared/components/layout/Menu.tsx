@@ -55,6 +55,12 @@ const menuItems: MenuSection[] = [
         href: '/list/events',
         visible: ['teacher', 'dean', 'admin'],
       },
+      {
+        icon: '/message.png',
+        label: 'Anuncios',
+        href: '/announcements',
+        visible: ['admin', 'dean'],
+      },
     ],
   },
 

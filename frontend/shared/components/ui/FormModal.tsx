@@ -85,7 +85,8 @@ const FormModal = ({ table, type, data, id, buttonText }:
 ) => {
 
     const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
-    const bgColor = type === "create" ? "bg-secondary-500" : type === "update" ? "bg-secondary-400" : "bg-red-500";
+    const createClasses = "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50";
+    const otherBgColor = type === "update" ? "bg-secondary-400 text-white" : "bg-red-500 text-white";
 
     const [open, setOpen] = useState(false);
 
@@ -102,17 +103,17 @@ const FormModal = ({ table, type, data, id, buttonText }:
     return (
         <>
             {buttonText ? (
-                <button className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg ${bgColor} hover:opacity-80 transition-all duration-200 shadow-sm`}
+                <button className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 shadow-sm ${type === "create" ? createClasses : `${otherBgColor} hover:opacity-80`}`}
                     onClick={() => setOpen(true)}
                 >
-                    <Image src={`/${type}.png`} alt="" width={16} height={16} />
+                    <Image src={`/${type}.png`} alt="" width={16} height={16} className={type === "create" ? "opacity-70" : ""} />
                     {buttonText}
                 </button>
             ) : (
-                <button className={`${size} flex items-center justify-center rounded-full ${bgColor} hover:scale-105 transition-all duration-200 shadow-sm cursor-pointer`}
+                <button className={`${size} flex items-center justify-center rounded-full transition-all duration-200 shadow-sm cursor-pointer ${type === "create" ? createClasses : `${otherBgColor} hover:scale-105`}`}
                     onClick={() => setOpen(true)}
                 >
-                    <Image src={`/${type}.png`} alt="" width={16} height={16} />
+                    <Image src={`/${type}.png`} alt="" width={16} height={16} className={type === "create" ? "opacity-70" : ""} />
                 </button>
             )}
             {open && (

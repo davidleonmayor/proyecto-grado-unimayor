@@ -340,13 +340,13 @@ model anuncio {
 }
 
 model anuncio_leido {
-  id_lectura     String   @id @default(cuid())
-  id_anuncio     String
-  id_persona     String
-  fecha_lectura  DateTime @default(now()) @db.DateTime(0)
-  
-  anuncio        anuncio  @relation(fields: [id_anuncio], references: [id_anuncio])
-  persona        persona  @relation(fields: [id_persona], references: [id_persona])
+  id_lectura    String   @id @default(cuid())
+  id_anuncio    String
+  id_persona    String
+  fecha_lectura DateTime @default(now()) @db.DateTime(0)
+
+  anuncio anuncio @relation(fields: [id_anuncio], references: [id_anuncio])
+  persona persona @relation(fields: [id_persona], references: [id_persona])
 
   @@unique([id_anuncio, id_persona])
   @@index([id_anuncio])

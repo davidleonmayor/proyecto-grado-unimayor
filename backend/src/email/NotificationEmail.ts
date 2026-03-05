@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { envs, logger } from "../config";
-import { getNotificationEmailTemplate, getDirectMessageTemplate } from "./templates";
+import { getNotificationEmailTemplate, getDirectMessageTemplate, getEventNotificationTemplate } from "./templates";
 
 export class NotificationEmail {
     private transporter;
@@ -43,7 +43,7 @@ export class NotificationEmail {
                 from: `"Gestión de Proyectos - Unimayor" <${envs.NODEMAILER_USER}>`,
                 to: envs.NODEMAILER_USER, // Envío al mismo SMTP_USER para no tener un campo To vacío o inválido.
                 bcc: to,
-                subject: `📢 ${title} - Nuevo Anuncio de Coordinación`,
+                subject: `${title} - Nuevo Anuncio de Coordinación`,
                 html,
             });
 
@@ -84,6 +84,35 @@ export class NotificationEmail {
             return { success: true };
         } catch (error) {
             logger.error(`Error sending direct message email: ${error}`);
+            return { success: false };
+        }
+    }
+
+    public async sendEventCreatedEmail(
+        to: string[],
+        eventName: string,
+        eventDescription: string,
+        eventDate: string,
+        eventTime: string,
+        isUrgent: boolean,
+        projectTitle: string
+    ) {
+        if (!to || to.length === 0) return;
+        try {
+            const html = getEventNotificationTemplate(eventName, eventDescription, eventDate, eventTime, isUrgent, projectTitle);
+
+            await this.transporter.sendMail({
+                from: `"Gestión de Proyectos - Unimayor" <${envs.NODEMAILER_USER}>`,
+                to: envs.NODEMAILER_USER, // Usar BCC
+                bcc: to,
+                subject: `${isUrgent ? '🔴 URGENTE: ' : '📅 '}Nuevo Evento: ${eventName}`,
+                html,
+            });
+
+            logger.info("Correos de evento enviados exitosamente a " + to.length + " usuarios.");
+            return { success: true };
+        } catch (error) {
+            logger.error(`Error sending event email: ${error}`);
             return { success: false };
         }
     }

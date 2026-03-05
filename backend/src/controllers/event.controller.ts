@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
+import { NotificationEmail } from '../email/NotificationEmail';
 
 const prisma = new PrismaClient();
 
@@ -344,7 +345,54 @@ export class EventController {
                     todo_el_dia: todo_el_dia || false,
                     id_trabajo_grado: id_trabajo_grado || null,
                 },
+                include: {
+                    trabajo_grado: {
+                        include: {
+                            actores: {
+                                include: {
+                                    persona: true
+                                }
+                            }
+                        }
+                    }
+                }
             });
+
+            // Enviar notificaciones si está asociado a un proyecto de grado
+            if (id_trabajo_grado && event.trabajo_grado?.actores) {
+                // Determinar si es urgente (Hoy o Mañana)
+                const eventDate = new Date(fecha_inicio);
+                eventDate.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const diffTime = eventDate.getTime() - today.getTime();
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const isUrgent = diffDays === 0 || diffDays === 1;
+
+                // Obtener correos
+                const emailsToNotify: string[] = [];
+                event.trabajo_grado.actores.forEach((actor: any) => {
+                    if (actor.persona?.correo_electronico && actor.estado === 'Activo') {
+                        emailsToNotify.push(actor.persona.correo_electronico);
+                    }
+                });
+
+                if (emailsToNotify.length > 0) {
+                    const notifyDate = new Date(fecha_inicio).toLocaleDateString("es-CO", { dateStyle: "long" });
+                    const notifyTime = hora_inicio || (todo_el_dia ? "Todo el día" : "Hora no especificada");
+                    const projectTitle = event.trabajo_grado.titulo_trabajo || 'Proyecto de Grado';
+
+                    NotificationEmail.getInstance().sendEventCreatedEmail(
+                        emailsToNotify,
+                        titulo,
+                        descripcion || '',
+                        notifyDate,
+                        notifyTime,
+                        isUrgent,
+                        projectTitle
+                    ).catch(e => console.error("Error dispatching event email:", e));
+                }
+            }
 
             res.status(201).json(event);
         } catch (error: any) {

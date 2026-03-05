@@ -92,7 +92,7 @@ const AnnouncementsPageContent = () => {
             {/* LADO IZQUIERDO: Formulario de Creación */}
             <div className="w-full xl:w-1/3 flex flex-col gap-4">
                 <div className="bg-white p-6 rounded-md shadow-sm">
-                    <h1 className="text-xl font-bold text-gray-800 mb-4">📢 Crear Nuevo Anuncio</h1>
+                    <h1 className="text-xl font-bold text-gray-800 mb-4">Crear Nuevo Anuncio</h1>
                     <p className="text-sm text-gray-500 mb-6">
                         Publica un anuncio que será visible en la plataforma. Si eres <strong>Coordinador</strong>, este anuncio y su correo de notificación se enviarán <strong>solo a tu facultad</strong>. Si eres Administrador o Decano, se enviará a todo el sistema de forma global.
                     </p>
@@ -145,7 +145,6 @@ const AnnouncementsPageContent = () => {
                             </div>
                         ) : announcements.length === 0 ? (
                             <div className="text-center py-10 opacity-60">
-                                <span className="text-4xl mb-2 block">📭</span>
                                 <p>No hay anuncios publicados aún.</p>
                             </div>
                         ) : (
