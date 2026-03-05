@@ -13,8 +13,29 @@ export class AnnouncementController {
                 return res.status(401).json({ message: "No autorizado" });
             }
 
+            const me = await prisma.persona.findUnique({
+                where: { id_persona: userId },
+                include: { actores: { include: { tipo_rol: true } } }
+            });
+
+            if (!me) return res.status(404).json({ message: "Usuario no encontrado" });
+
+            const isPrivileged = me.actores.some(a => ["admin", "Administrador", "Admin", "Decano"].includes(a.tipo_rol.nombre_rol));
+
+            let filter: any = {};
+            if (!isPrivileged) {
+                // Si no es un admin/decano, solo ve los anuncios globales o los de su misma facultad
+                filter = {
+                    OR: [
+                        { autor: { actores: { some: { tipo_rol: { nombre_rol: { in: ["admin", "Administrador", "Admin", "Decano"] } } } } } },
+                        { autor: { id_facultad: me.id_facultad } }
+                    ]
+                };
+            }
+
             // Conseguir todos los anuncios ordenados del más reciente al más antiguo
             const anuncios = await prisma.anuncio.findMany({
+                where: filter,
                 orderBy: { fecha_creacion: "desc" },
                 include: {
                     autor: {
@@ -56,6 +77,20 @@ export class AnnouncementController {
                 return res.status(400).json({ message: "El título y contenido son obligatorios" });
             }
 
+            const authorInfo = await prisma.persona.findUnique({
+                where: { id_persona: authorId },
+                include: { actores: { include: { tipo_rol: true } } }
+            });
+
+            if (!authorInfo) return res.status(404).json({ message: "Autor no encontrado" });
+
+            const isGlobal = authorInfo.actores.some(a => ["admin", "Administrador", "Admin", "Decano"].includes(a.tipo_rol.nombre_rol));
+            const isCoordinator = authorInfo.actores.some(a => ["Coordinador de Carrera", "Coordinador"].includes(a.tipo_rol.nombre_rol));
+
+            if (!isGlobal && !isCoordinator) {
+                return res.status(403).json({ message: "No tienes permisos para crear anuncios" });
+            }
+
             const newAnnouncement = await prisma.anuncio.create({
                 data: {
                     titulo,
@@ -72,9 +107,10 @@ export class AnnouncementController {
             // --- Disparar Correos Asíncronamente ---
             (async () => {
                 try {
-                    // Obtener correos de todos los usuarios
-                    // NOTA: Para no enviar a cuentas inválidas, podemos filtrar por correo not null
+                    const emailFilter = isGlobal ? {} : { id_facultad: authorInfo.id_facultad };
+
                     const allUsers = await prisma.persona.findMany({
+                        where: emailFilter,
                         select: { correo_electronico: true }
                     });
 

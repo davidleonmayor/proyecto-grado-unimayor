@@ -94,7 +94,7 @@ const AnnouncementsPageContent = () => {
                 <div className="bg-white p-6 rounded-md shadow-sm">
                     <h1 className="text-xl font-bold text-gray-800 mb-4">📢 Crear Nuevo Anuncio</h1>
                     <p className="text-sm text-gray-500 mb-6">
-                        Publica un anuncio que será visible para todo el sistema en la barra superior. Además, se enviará un <strong>correo electrónico</strong> masivo inmediatamente.
+                        Publica un anuncio que será visible en la plataforma. Si eres <strong>Coordinador</strong>, este anuncio y su correo de notificación se enviarán <strong>solo a tu facultad</strong>. Si eres Administrador o Decano, se enviará a todo el sistema de forma global.
                     </p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">

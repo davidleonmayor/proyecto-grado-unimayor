@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import { envs, logger } from "../config";
-import { getNotificationEmailTemplate } from "./templates";
+import { getNotificationEmailTemplate, getDirectMessageTemplate } from "./templates";
 
 export class NotificationEmail {
     private transporter;
@@ -59,6 +59,32 @@ export class NotificationEmail {
                 success: false,
                 message: "Error sending email",
             };
+        }
+    }
+
+    public async sendDirectMessageEmail(
+        to: string,
+        senderName: string,
+        recipientName: string,
+        content: string,
+        date: string
+    ) {
+        if (!to) return;
+        try {
+            const html = getDirectMessageTemplate(senderName, recipientName, content, date);
+
+            await this.transporter.sendMail({
+                from: `"Gestión de Proyectos - Unimayor" <${envs.NODEMAILER_USER}>`,
+                to: to,
+                subject: `💬 Nuevo mensaje de ${senderName}`,
+                html,
+            });
+
+            logger.info("Correo de mensaje directo enviado exitosamente a " + to);
+            return { success: true };
+        } catch (error) {
+            logger.error(`Error sending direct message email: ${error}`);
+            return { success: false };
         }
     }
 }

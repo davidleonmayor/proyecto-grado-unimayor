@@ -197,9 +197,10 @@ const StudentListPageContent = () => {
                   setShowFilterMenu(!showFilterMenu);
                   setShowSortMenu(false);
                 }}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal cursor-pointer hover:bg-principalDark ${showFilterMenu ? 'ring-2 ring-primary-500' : ''}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer ${showFilterMenu ? 'ring-2 ring-primary-500' : ''}`}
               >
-                <Image src={filterImage} alt="Filtrar" width={14} height={14} />
+                <Image src={filterImage} alt="Filtrar" width={14} height={14} className="opacity-70" />
+                <span className="hidden sm:inline font-medium">Filtrar</span>
               </button>
               {showFilterMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
@@ -252,9 +253,10 @@ const StudentListPageContent = () => {
                   setShowSortMenu(!showSortMenu);
                   setShowFilterMenu(false);
                 }}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal cursor-pointer hover:bg-principalDark ${showSortMenu ? 'ring-2 ring-primary-500' : ''}`}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-md border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition-colors shadow-sm cursor-pointer ${showSortMenu ? 'ring-2 ring-primary-500' : ''}`}
               >
-                <Image src={sortImage} alt="Ordenar" width={14} height={14} />
+                <Image src={sortImage} alt="Ordenar" width={14} height={14} className="opacity-70" />
+                <span className="hidden sm:inline font-medium">Ordenar</span>
               </button>
               {showSortMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">

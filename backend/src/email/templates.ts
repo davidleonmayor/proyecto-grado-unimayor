@@ -244,3 +244,50 @@ export const getNotificationEmailTemplate = (name: string, title: string, conten
     </body>
     </html>
 `;
+
+export const getDirectMessageTemplate = (senderName: string, recipientName: string, messageContent: string, date: string) => `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
+        .wrapper { padding: 40px 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #10b981; }
+        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
+        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
+        .content { padding: 30px; }
+        .message-box { background-color: #ecfdf5; padding: 20px; border-radius: 6px; border-left: 4px solid #10b981; margin: 25px 0; font-style: italic; color: #047857; }
+        .button { background-color: #10b981; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
+        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
+        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: #059669; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
+        </style>
+    </head>
+    <body>
+      <div class="wrapper">
+        <div class="container">
+        <div class="header">
+            <h1>Nuevo Mensaje Recibido</h1>
+        </div>
+        <div class="content">
+            <p style="color: #111827; font-size: 16px;">Hola <strong>\${recipientName}</strong>,</p>
+            <p><strong>\${senderName}</strong> te ha enviado un nuevo mensaje directo en la plataforma (\${date}):</p>
+            
+            <div class="message-box">
+               "\${messageContent}"
+            </div>
+
+            <p>Para responder a este mensaje, ingresa a la plataforma web e interactúa desde el widget de chat o notificaciones.</p>
+            
+            <div style="text-align: center;">
+            <a href="\${envs.FRONTEND_URL}/dashboard" class="button">Ver Mensaje en el Sistema</a>
+            </div>
+        </div>
+        <div class="footer">
+            <p>© \${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
+        </div>
+        </div>
+      </div>
+    </body>
+    </html>
+`;

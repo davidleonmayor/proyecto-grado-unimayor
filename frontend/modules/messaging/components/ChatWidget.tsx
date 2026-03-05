@@ -25,6 +25,7 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
     const [activeChatUser, setActiveChatUser] = useState<PersonaMin | null>(null);
     const [messages, setMessages] = useState<DirectMessage[]>([]);
     const [inputMessage, setInputMessage] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -213,11 +214,11 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
         <div className="fixed bottom-0 right-10 w-80 bg-white rounded-t-xl shadow-[0_4px_30px_rgb(0,0,0,0.15)] border border-gray-200 z-[9999] flex flex-col overflow-hidden" style={{ height: '450px' }}>
 
             {/* HEADER */}
-            <div className="bg-secondary-500 text-white px-4 py-3 flex justify-between items-center shadow-sm">
+            <div className="bg-principal text-gray-800 px-4 py-3 flex justify-between items-center shadow-sm">
                 <div className="flex items-center gap-2.5 cursor-pointer min-w-0" onClick={() => activeChatUser && setActiveChatUser(null)}>
                     {activeChatUser && (
-                        <svg className="w-4 h-4 text-primary-100 hover:text-white transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <svg className="w-5 h-5 text-gray-600 hover:text-gray-900 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                         </svg>
                     )}
                     {activeChatUser && (
@@ -226,18 +227,18 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
                             onClick={(e) => { e.stopPropagation(); goToProfile(activeChatUser.id_persona); }}
                             title="Ver perfil"
                         >
-                            <Image src={avatarImage} alt="avatar" width={28} height={28} className="rounded-full ring-2 ring-primary-400 hover:ring-white transition-all" />
+                            <Image src={avatarImage} alt="avatar" width={28} height={28} className="rounded-full ring-2 ring-white/50 hover:ring-white transition-all" />
                         </div>
                     )}
-                    <h3 className="font-medium text-[14px] truncate">
+                    <h3 className="font-semibold text-[14px] truncate">
                         {activeChatUser
                             ? `${(activeChatUser.nombres || '').split(' ')[0]} ${(activeChatUser.apellidos || '').split(' ')[0]}`.trim() || 'Chat'
                             : 'Mensajes'}
                     </h3>
                 </div>
-                <button onClick={onClose} className="text-primary-100 hover:text-white transition-colors shrink-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <button onClick={onClose} className="text-gray-600 hover:text-gray-900 transition-colors shrink-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -299,30 +300,61 @@ export const ChatWidget = ({ isOpen, onClose, initialPeer, onMessageSent }: Chat
                                 )
                             ) : (
                                 // CONTACTS TAB (role-based)
-                                loading ? (
-                                    <div className="p-4 text-center text-xs text-gray-500">Cargando contactos...</div>
-                                ) : peers.length === 0 ? (
-                                    <div className="p-6 text-center text-xs text-gray-500 flex flex-col items-center gap-3 mt-4">
-                                        <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        <p>No tienes contactos disponibles.<br />Los contactos se asignan según<br />tus proyectos de grado.</p>
-                                    </div>
-                                ) : (
-                                    peers.map(peer => (
-                                        <div
-                                            key={peer.id_persona}
-                                            className="px-4 py-3 hover:bg-slate-100 cursor-pointer transition-colors flex items-center gap-3 bg-white border-b border-gray-50"
-                                            onClick={() => setActiveChatUser(peer)}
-                                        >
-                                            <Image src={avatarImage} alt={`${peer.nombres} ${peer.apellidos}`} width={36} height={36} className="rounded-full ring-2 ring-white shadow-sm shrink-0" />
-                                            <div className="flex flex-col overflow-hidden">
-                                                <span className="text-[13px] font-medium text-gray-800 truncate">{peer.nombres} {peer.apellidos}</span>
-                                                <span className="text-[11px] text-gray-500 truncate">{peer.correo_electronico}</span>
-                                            </div>
+                                <div className="flex flex-col h-full">
+                                    <div className="p-3 border-b border-gray-100">
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                placeholder="Buscar persona..."
+                                                className="w-full bg-slate-100 border-none rounded-md px-8 py-2 text-[12px] outline-none focus:ring-1 focus:ring-primary-300"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
+                                            <svg className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
                                         </div>
-                                    ))
-                                )
+                                    </div>
+                                    {loading ? (
+                                        <div className="p-4 text-center text-xs text-gray-500">Cargando contactos...</div>
+                                    ) : peers.length === 0 ? (
+                                        <div className="p-6 text-center text-xs text-gray-500 flex flex-col items-center gap-3 mt-4">
+                                            <svg className="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <p>No tienes contactos disponibles.<br />Los contactos se asignan según<br />tus proyectos de grado.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 overflow-y-auto">
+                                            {peers.filter(peer => {
+                                                if (!searchQuery) return true;
+                                                const searchToLower = searchQuery.toLowerCase();
+                                                const fullName = `${peer.nombres} ${peer.apellidos}`.toLowerCase();
+                                                return fullName.includes(searchToLower) || (peer.correo_electronico && peer.correo_electronico.toLowerCase().includes(searchToLower));
+                                            }).map(peer => (
+                                                <div
+                                                    key={peer.id_persona}
+                                                    className="px-4 py-3 hover:bg-slate-100 cursor-pointer transition-colors flex items-center gap-3 bg-white border-b border-gray-50"
+                                                    onClick={() => setActiveChatUser(peer)}
+                                                >
+                                                    <Image src={avatarImage} alt={`${peer.nombres} ${peer.apellidos}`} width={36} height={36} className="rounded-full ring-2 ring-white shadow-sm shrink-0" />
+                                                    <div className="flex flex-col overflow-hidden">
+                                                        <span className="text-[13px] font-medium text-gray-800 truncate">{peer.nombres} {peer.apellidos}</span>
+                                                        <span className="text-[11px] text-gray-500 truncate">{peer.correo_electronico}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {peers.filter(peer => {
+                                                if (!searchQuery) return true;
+                                                const searchToLower = searchQuery.toLowerCase();
+                                                const fullName = `${peer.nombres} ${peer.apellidos}`.toLowerCase();
+                                                return fullName.includes(searchToLower) || (peer.correo_electronico && peer.correo_electronico.toLowerCase().includes(searchToLower));
+                                            }).length === 0 && searchQuery && (
+                                                    <div className="text-center p-4 text-xs text-gray-500">Ningún contacto coincide con tu búsqueda.</div>
+                                                )}
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>

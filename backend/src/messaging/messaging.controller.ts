@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { WebhookService } from './webhook.service';
+import { NotificationEmail } from '../email/NotificationEmail';
 
 const prisma = new PrismaClient();
 const webhookService = new WebhookService();
@@ -66,6 +67,26 @@ export class MessagingController {
                 });
 
                 console.log(`[sendMessage] Direct message delivered: ${sender.id_persona} -> ${targetUserId}`);
+
+                // Send Email Notification Asynchronously
+                try {
+                    const senderName = `${sender.nombres || ''} ${sender.apellidos || ''}`.trim();
+                    const recipientName = `${targetUser.nombres || ''} ${targetUser.apellidos || ''}`.trim();
+                    const formattedDate = new Date().toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" });
+
+                    if (targetUser.correo_electronico) {
+                        NotificationEmail.getInstance().sendDirectMessageEmail(
+                            targetUser.correo_electronico,
+                            senderName || "Usuario",
+                            recipientName || "Usuario",
+                            content,
+                            formattedDate
+                        ).catch(e => console.error("Error dispatching email:", e));
+                    }
+                } catch (emailErr) {
+                    console.error("Non-fatal email error:", emailErr);
+                }
+
             } else {
                 // 3. For BROADCAST messages, use the webhook pipeline
                 const webhookPayload = {
