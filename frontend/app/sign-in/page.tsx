@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useAuth } from '@/modules/auth';
 import Swal from 'sweetalert2';
 
@@ -79,9 +80,14 @@ export default function SignIn() {
 
           {/* Contraseña */}
           <div>
-            <label htmlFor="password" className="block text-xs font-medium text-gray-600 mb-1.5">
-              Contraseña
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label htmlFor="password" className="block text-xs font-medium text-gray-600">
+                Contraseña
+              </label>
+              <Link href="/forgot-password" className="text-xs font-medium text-blue-500 hover:text-blue-600 transition-colors">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
