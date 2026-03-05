@@ -71,9 +71,9 @@ export const getPasswordResetTemplate = (name: string, token: string) => `
         <div class="content">
             <p style="color: #111827; font-size: 16px;">Hola <strong>${name}</strong>,</p>
             <p>Recibimos una solicitud para restablecer tu contraseña en el sistema de Gestión de Proyectos de Grado.</p>
-            <p>Para crear una contraseña nueva, visita el siguiente enlace e ingresa este código:</p>
+            <p>Para crear una contraseña nueva, haz clic en el siguiente enlace. Alternativamente, puedes ingresar el código manualmente:</p>
             <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/reset-password" class="button">Restablecer mi contraseña</a>
+            <a href="${envs.FRONTEND_URL}/reset-password/${token}" class="button">Restablecer mi contraseña</a>
             <br/>
             <div class="token">${token}</div>
             </div>
