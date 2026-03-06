@@ -239,11 +239,17 @@ export class AuthController {
                 data: { token },
             });
 
-            await AuthEmail.sendPasswordResetToken({
-                email: persona.correo_electronico,
-                name: persona.nombres,
-                token: token,
-            });
+            console.log("[DEBUG-FORGOT] Enviando correo de reset a:", persona.correo_electronico);
+            try {
+                await AuthEmail.sendPasswordResetToken({
+                    email: persona.correo_electronico,
+                    name: persona.nombres,
+                    token: token,
+                });
+                console.log("[DEBUG-FORGOT] Correo de reset enviado OK");
+            } catch (emailError: any) {
+                console.error("[DEBUG-FORGOT] Error enviando correo:", emailError.message);
+            }
 
             // ✅ Devolver string directamente
             return res

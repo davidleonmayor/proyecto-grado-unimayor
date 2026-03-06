@@ -531,15 +531,18 @@ export class PersonController {
             });
 
             // Enviar email de confirmación
+            console.log("[DEBUG-TEACHER] Enviando correo a:", newPersona.correo_electronico, "token:", newPersona.token);
             try {
                 const { AuthEmail } = require("../email/AuthEmail");
-                await AuthEmail.sendConfirmationEmail({
+                console.log("[DEBUG-TEACHER] AuthEmail cargado OK");
+                const emailResult = await AuthEmail.sendConfirmationEmail({
                     name: newPersona.nombres,
                     email: newPersona.correo_electronico,
                     token: newPersona.token,
                 });
-            } catch (emailError) {
-                console.error("Error enviando correo de confirmación en createTeacher", emailError);
+                console.log("[DEBUG-TEACHER] Email enviado:", emailResult ? emailResult.messageId : "null/undefined");
+            } catch (emailError: any) {
+                console.error("[DEBUG-TEACHER] ERROR:", emailError.message, emailError.stack);
             }
 
             res.status(201).json({ message: 'Profesor creado exitosamente. Se ha enviado un correo de confirmación.', persona: newPersona });
@@ -626,15 +629,18 @@ export class PersonController {
             });
 
             // Enviar email de confirmación
+            console.log("[DEBUG-STUDENT] Enviando correo a:", newPersona.correo_electronico, "token:", newPersona.token);
             try {
                 const { AuthEmail } = require("../email/AuthEmail");
-                await AuthEmail.sendConfirmationEmail({
+                console.log("[DEBUG-STUDENT] AuthEmail cargado OK");
+                const emailResult = await AuthEmail.sendConfirmationEmail({
                     name: newPersona.nombres,
                     email: newPersona.correo_electronico,
                     token: newPersona.token,
                 });
-            } catch (emailError) {
-                console.error("Error enviando correo de confirmación en createStudent", emailError);
+                console.log("[DEBUG-STUDENT] Email enviado:", emailResult ? emailResult.messageId : "null/undefined");
+            } catch (emailError: any) {
+                console.error("[DEBUG-STUDENT] ERROR:", emailError.message, emailError.stack);
             }
 
             res.status(201).json({ message: 'Estudiante creado exitosamente. Se ha enviado un correo de confirmación.', persona: newPersona });
