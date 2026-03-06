@@ -666,10 +666,7 @@ export class ProjectController {
             );
 
             // Build query for students
-            let studentsWhere: any = {
-                confirmed: true,
-                password: { not: null }
-            };
+            let studentsWhere: any = {};
 
             // If programId is provided, filter by program
             if (programId) {

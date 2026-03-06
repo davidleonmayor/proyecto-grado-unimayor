@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { prisma } from "../config/prisma";
-import { NotificationEmail } from "../email/NotificationEmail";
 import { logger } from "../config";
 
 export class AnnouncementController {
@@ -104,34 +103,7 @@ export class AnnouncementController {
                 anuncio: newAnnouncement
             });
 
-            // --- Disparar Correos Asíncronamente ---
-            (async () => {
-                try {
-                    const emailFilter = isGlobal ? {} : { id_facultad: authorInfo.id_facultad };
 
-                    const allUsers = await prisma.persona.findMany({
-                        where: emailFilter,
-                        select: { correo_electronico: true }
-                    });
-
-                    const emails = allUsers
-                        .map(u => u.correo_electronico)
-                        .filter(Boolean); // filtra los vacíos o nulos
-
-                    if (emails.length > 0) {
-                        const mailer = NotificationEmail.getInstance();
-                        const dateString = new Date().toLocaleDateString("es-CO");
-                        // chunking en 100 para no hacer throw del SMTP limit
-                        const chunkSize = 100;
-                        for (let i = 0; i < emails.length; i += chunkSize) {
-                            const chunk = emails.slice(i, i + chunkSize);
-                            await mailer.sendAnnouncementEmail(chunk, "Usuario de Unimayor", titulo, contenido, dateString);
-                        }
-                    }
-                } catch (emailError: any) {
-                    logger.error(`Error enviando email masivo post-creación: ${emailError.message}`);
-                }
-            })();
 
         } catch (error: any) {
             logger.error(`createAnnouncement Error: ${error.message}`);

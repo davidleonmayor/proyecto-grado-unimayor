@@ -43,7 +43,7 @@ export class AuthService extends BaseApiClient {
   }
 
   async resetPassword(token: string, password: string): Promise<string> {
-    return this.request<string>(`/api/auth/${token}/reset-password`, {
+    return this.request<string>(`/api/auth/reset-password/${token}`, {
       method: 'POST',
       body: JSON.stringify({ password, confirmPassword: password }),
     });

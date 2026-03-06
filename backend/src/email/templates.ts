@@ -270,21 +270,21 @@ export const getDirectMessageTemplate = (senderName: string, recipientName: stri
             <h1>Nuevo Mensaje Recibido</h1>
         </div>
         <div class="content">
-            <p style="color: #111827; font-size: 16px;">Hola <strong>\${recipientName}</strong>,</p>
-            <p>Te informamos que <strong>\${senderName}</strong> te ha enviado el siguiente mensaje directo a través de nuestra plataforma (\${date}):</p>
+            <p style="color: #111827; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
+            <p>Te informamos que <strong>${senderName}</strong> te ha enviado el siguiente mensaje directo a través de nuestra plataforma (${date}):</p>
             
             <div class="message-box">
-               "\${messageContent}"
+               "${messageContent}"
             </div>
 
             <p>Para responder a este mensaje, ingresa a la plataforma web e interactúa desde el widget de chat o notificaciones.</p>
             
             <div style="text-align: center;">
-            <a href="\${envs.FRONTEND_URL}/dashboard" class="button">Ver Mensaje en el Sistema</a>
+            <a href="${envs.FRONTEND_URL}/dashboard" class="button">Ver Mensaje en el Sistema</a>
             </div>
         </div>
         <div class="footer">
-            <p>© \${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
+            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
         </div>
         </div>
       </div>
@@ -300,14 +300,14 @@ export const getEventNotificationTemplate = (eventName: string, eventDescription
         <style>
         body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
         .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid \${isUrgent ? '#ef4444' : '#3b82f6'}; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid ${isUrgent ? '#ef4444' : '#3b82f6'}; }
         .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
         .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
         .content { padding: 30px; }
-        .info-box { background-color: \${isUrgent ? '#fef2f2' : '#eff6ff'}; padding: 20px; border-radius: 6px; border-left: 4px solid \${isUrgent ? '#ef4444' : '#3b82f6'}; margin: 25px 0; }
-        .button { background-color: \${isUrgent ? '#ef4444' : '#3b82f6'}; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
+        .info-box { background-color: ${isUrgent ? '#fef2f2' : '#eff6ff'}; padding: 20px; border-radius: 6px; border-left: 4px solid ${isUrgent ? '#ef4444' : '#3b82f6'}; margin: 25px 0; }
+        .button { background-color: ${isUrgent ? '#ef4444' : '#3b82f6'}; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
         .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: \${isUrgent ? '#b91c1c' : '#1d4ed8'}; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
+        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: ${isUrgent ? '#b91c1c' : '#1d4ed8'}; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
         .urgent-badge { display: inline-block; background-color: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 15px; }
         </style>
     </head>
@@ -315,26 +315,26 @@ export const getEventNotificationTemplate = (eventName: string, eventDescription
       <div class="wrapper">
         <div class="container">
         <div class="header">
-            <h1>Evento Programado: \${projectTitle}</h1>
+            <h1>Evento Programado: ${projectTitle}</h1>
         </div>
         <div class="content">
-            \${isUrgent ? '<div class="urgent-badge">¡ATENCIÓN! ESTE EVENTO ES PRONTO</div>' : ''}
+            ${isUrgent ? '<div class="urgent-badge">¡ATENCIÓN! ESTE EVENTO ES PRONTO</div>' : ''}
             <p style="color: #111827; font-size: 16px;">Se ha programado un nuevo evento para el proyecto de grado al que estás adscrito.</p>
             
             <div class="info-box">
-               <p style="margin-top: 0; color: #4b5563;"><span class="label">Asunto</span><br/> <strong style="color: #111827;">\${eventName}</strong></p>
-               \${eventDescription ? \`<p style="color: #4b5563;"><span class="label">Descripción</span><br/> \${eventDescription}</p>\` : ''}
-               <p style="margin-bottom: 0; color: #4b5563;"><span class="label">Fecha y Hora</span><br/> \${eventDate} a las \${eventTime}</p>
+               <p style="margin-top: 0; color: #4b5563;"><span class="label">Asunto</span><br/> <strong style="color: #111827;">${eventName}</strong></p>
+               ${eventDescription ? `<p style="color: #4b5563;"><span class="label">Descripción</span><br/> ${eventDescription}</p>` : ''}
+               <p style="margin-bottom: 0; color: #4b5563;"><span class="label">Fecha y Hora</span><br/> ${eventDate} a las ${eventTime}</p>
             </div>
 
             <p>Por favor, revisa el calendario en la plataforma y organízate para asistir si es requerido.</p>
             
             <div style="text-align: center;">
-            <a href="\${envs.FRONTEND_URL}/dashboard" class="button">Ver en el Calendario</a>
+            <a href="${envs.FRONTEND_URL}/dashboard" class="button">Ver en el Calendario</a>
             </div>
         </div>
         <div class="footer">
-            <p>© \${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
+            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
         </div>
         </div>
       </div>
