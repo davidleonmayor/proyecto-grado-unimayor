@@ -76,6 +76,11 @@ async function main() {
 
     // LIMPIEZA DE DATOS EXISTENTES (en orden inverso de dependencias)
     console.log("Limpiando datos existentes...");
+    // Clean anuncio tables (FK to persona)
+    await (prisma as any).anuncio_leido.deleteMany({});
+    await (prisma as any).anuncio.deleteMany({});
+    // Clean evento table (FK to trabajo_grado)
+    await (prisma as any).evento.deleteMany({});
     await prisma.distincion_tg.deleteMany({});
     await prisma.seguimiento_tg.deleteMany({});
     await prisma.actores.deleteMany({});
