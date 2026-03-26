@@ -12,14 +12,14 @@
         "db:generate": "prisma generate --schema=./prisma/schema.prisma",
         "db:migrate": "prisma migrate dev --name init",
         "db:studio": "prisma studio",
-        "db:seed": "ts-node prisma/seed.ts",
-        "db:clear": "ts-node prisma/clear.ts",
-        "db:fix": "ts-node prisma/fix-data.ts",
+        "db:seed": "pnpm exec ts-node prisma/seed.ts",
+        "db:clear": "pnpm exec ts-node prisma/clear.ts",
+        "db:fix": "pnpm exec ts-node prisma/fix-data.ts",
         "test": "dotenv -e .env.test -- pnpm db:generate && dotenv -e .env.test -- jest",
         "test:coverage": "npm run pretest && jest --coverage"
     },
     "engines": {
-        "node": ">=22.18.0",
+        "node": ">=20.0.0",
         "pnpm": ">=10.6.5"
     },
     "browserslist": {
