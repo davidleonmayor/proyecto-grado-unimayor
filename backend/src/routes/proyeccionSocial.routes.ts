@@ -18,11 +18,29 @@ export class ProyeccionSocialRoutes {
     }
 
     public initRoutes() {
+        this.router.get(
+            "/search",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.searchByName,
+        );
+
         this.router.post(
             "/",
             this.authMiddleware.isAuthenticatedUser,
             proyeccionSocialUpload.single("archivo"),
             this.controller.create,
+        );
+
+        this.router.get(
+            "/by-name/:nombre/download",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.downloadByName,
+        );
+
+        this.router.get(
+            "/:id/download",
+            this.authMiddleware.isAuthenticatedUser,
+            this.controller.downloadById,
         );
     }
 }
