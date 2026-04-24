@@ -39,6 +39,7 @@ model persona {
   actores            actores[]
   mensajes_enviados  mensaje[]           @relation("MensajesEnviados")
   mensajes_recibidos mensaje_entrega[]   @relation("MensajesRecibidos")
+  proyectos_proyeccion_social proyecto_proyeccion_social[]
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])
@@ -310,6 +311,22 @@ model mensaje_entrega {
   @@index([id_receptor])
   @@index([estado])
   @@map("MENSAJE_ENTREGA")
+}
+
+model proyecto_proyeccion_social {
+  id_proyecto_social   String    @id @default(cuid())
+  nombre               String    @db.VarChar(200)
+  descripcion          String?   @db.Text
+  fecha_registro       DateTime  @default(now()) @db.DateTime(0)
+  tipo_mime            String    @db.VarChar(100)
+  archivo              Bytes     @db.LongBlob
+  id_persona_registra  String?
+
+  persona_registra     persona?  @relation(fields: [id_persona_registra], references: [id_persona])
+
+  @@index([id_persona_registra])
+  @@index([fecha_registro])
+  @@map("PROYECTO_PROYECCION_SOCIAL")
 }
 
 model webhook_subscription {

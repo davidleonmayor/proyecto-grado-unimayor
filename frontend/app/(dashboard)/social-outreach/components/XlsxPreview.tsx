@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Download, Trash2 } from "lucide-react"
+import { Download, Save, Trash2 } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card"
 import { Badge } from "@/shared/components/ui/badge"
@@ -34,6 +34,8 @@ type XlsxPreviewProps = {
   addEstudianteBaseData: (dataId: string, baseData: { nombre: string; codigo: string; cedula: string }) => void
   removeAllFiles: () => void
   exportToXLSX: () => void
+  saveToDatabase: () => Promise<void>
+  isSavingToDb: boolean
   isProcessing: boolean
 }
 
@@ -81,6 +83,8 @@ export const XlsxPreview = ({
   addEstudianteBaseData,
   removeAllFiles,
   exportToXLSX,
+  saveToDatabase,
+  isSavingToDb,
   isProcessing,
 }: XlsxPreviewProps) => {
 
@@ -233,11 +237,20 @@ export const XlsxPreview = ({
           <Button
             size="sm"
             onClick={exportToXLSX}
-            disabled={extractedData.length === 0}
+            disabled={extractedData.length === 0 || isSavingToDb || isProcessing}
             className="bg-[#107c41] hover:bg-[#0c5a2f] text-white"
           >
             <Download className="mr-2 h-4 w-4" />
             Descargar XLSX
+          </Button>
+          <Button
+            size="sm"
+            onClick={saveToDatabase}
+            disabled={extractedData.length === 0 || isSavingToDb || isProcessing}
+            className="bg-[#0f6cbd] hover:bg-[#0b4f8a] text-white"
+          >
+            <Save className="mr-2 h-4 w-4" />
+            {isSavingToDb ? "Guardando..." : "Guardar en DB"}
           </Button>
         </div>
       </CardHeader>

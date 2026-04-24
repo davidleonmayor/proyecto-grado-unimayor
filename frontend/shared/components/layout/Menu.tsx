@@ -3,11 +3,11 @@
  * Sidebar navigation menu with role-based visibility
  */
 
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useUserRole } from '@/shared/hooks/useUserRole';
+import Image from "next/image";
+import Link from "next/link";
+import { useUserRole } from "@/shared/hooks/useUserRole";
 
 interface MenuItem {
   icon: string;
@@ -23,62 +23,67 @@ interface MenuSection {
 
 const menuItems: MenuSection[] = [
   {
-    title: 'MENÚ',
+    title: "MENÚ",
     items: [
       {
-        icon: '/home.png',
-        label: 'Inicio',
-        href: '/',
-        visible: ['admin', 'teacher', 'dean', 'student'],
+        icon: "/home.png",
+        label: "Inicio",
+        href: "/",
+        visible: ["admin", "teacher", "dean", "student"],
       },
       {
-        icon: '/teacher.png',
-        label: 'Profesores',
-        href: '/list/teachers',
-        visible: ['admin', 'dean'],
+        icon: "/teacher.png",
+        label: "Profesores",
+        href: "/list/teachers",
+        visible: ["admin", "dean"],
       },
       {
-        icon: '/student.png',
-        label: 'Estudiantes',
-        href: '/list/students',
-        visible: ['admin', 'teacher', 'dean'],
+        icon: "/student.png",
+        label: "Estudiantes",
+        href: "/list/students",
+        visible: ["admin", "teacher", "dean"],
       },
       {
-        icon: '/project.png',
-        label: 'Proyectos de Grado',
-        href: '/projects',
-        visible: ['admin', 'teacher', 'dean', 'student'],
+        icon: "/project.png",
+        label: "Proyectos de Grado",
+        href: "/projects",
+        visible: ["admin", "teacher", "dean", "student"],
       },
       {
-        icon: '/calendar.png',
-        label: 'Eventos',
-        href: '/list/events',
-        visible: ['teacher', 'dean', 'admin'],
-      },
-    ],
-  },
-
-
-  {
-    title: 'PROYECCIÓN SOCIAL',
-    items: [
-      {
-        icon: '/calendar.png',
-        label: 'Primer .xslx',
-        href: '/social-outreach',
-        visible: ['teacher', 'dean', 'admin'],
+        icon: "/calendar.png",
+        label: "Eventos",
+        href: "/list/events",
+        visible: ["teacher", "dean", "admin"],
       },
     ],
   },
 
   {
-    title: 'CONFIGURACIÓN',
+    title: "PROYECCIÓN SOCIAL",
     items: [
       {
-        icon: '/profile.png',
-        label: 'Perfil',
-        href: '/profile',
-        visible: ['admin', 'teacher', 'dean', 'student'],
+        icon: "/calendar.png",
+        label: "Extracción",
+        href: "/social-outreach",
+        visible: ["teacher", "dean", "admin"],
+      },
+      {
+        icon: "/search.png",
+        label: "Filtrar",
+        href: "/social-outreach/filter",
+        visible: ["teacher", "dean", "admin"],
+      },
+    ],
+  },
+
+  {
+    title: "CONFIGURACIÓN",
+    items: [
+      {
+        icon: "/profile.png",
+        label: "Perfil",
+        href: "/profile",
+        visible: ["admin", "teacher", "dean", "student"],
       },
     ],
   },
@@ -95,13 +100,13 @@ export const Menu = () => {
     );
   }
 
-  const currentRole = role || 'student';
+  const currentRole = role || "student";
 
   return (
     <div className="mt-4 text-sm">
       {menuItems.map((section) => {
         const hasVisibleItems = section.items.some((item) =>
-          item.visible.includes(currentRole)
+          item.visible.includes(currentRole),
         );
         if (!hasVisibleItems) return null;
 

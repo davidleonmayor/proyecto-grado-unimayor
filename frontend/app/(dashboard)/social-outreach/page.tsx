@@ -2,13 +2,16 @@
 import { useState, useRef, useEffect } from "react"
 import { GripVertical } from "lucide-react"
 import { TooltipProvider } from "@/shared/components/ui/tooltip"
+import Swal from "sweetalert2"
 import { PdfFileList } from "./components/PdfFileList"
 import { XlsxPreview } from "./components/XlsxPreview"
 import { PdfViewer } from "./components/PdfViewer"
 import { useSocialOutreach } from "./useSocialOutreach"
+import { socialOutreachService } from "./services/socialOutreach.service"
 
 export default function SocialOutreachGenerator() {
   const outreach = useSocialOutreach()
+  const [isSavingToDb, setIsSavingToDb] = useState(false)
 
   // Resizable panel state
   const [leftWidth, setLeftWidth] = useState(320)
@@ -101,6 +104,68 @@ export default function SocialOutreachGenerator() {
     ? outreach.files.find(f => f.id === viewingPdfId)
     : null
 
+  const handleSaveToDatabase = async () => {
+    try {
+      const generatedFile = outreach.buildXlsxFileForDb()
+
+      if (!generatedFile) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Sin datos",
+          text: "No hay datos para guardar en la base de datos.",
+          confirmButtonColor: "#107c41",
+        })
+        return
+      }
+
+      const defaultName = outreach.extractedData[0]?.titulo?.trim() || "proyecto proyeccion social"
+
+      const { value: nombre } = await Swal.fire({
+        title: "Guardar en DB",
+        input: "text",
+        inputLabel: "Nombre del registro",
+        inputValue: defaultName,
+        inputPlaceholder: "Ej: Proyecto Proyección Social 2026",
+        showCancelButton: true,
+        confirmButtonText: "Guardar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#0f6cbd",
+        inputValidator: (value) => {
+          if (!value || !value.trim()) {
+            return "El nombre es obligatorio"
+          }
+          return undefined
+        },
+      })
+
+      if (!nombre) return
+
+      setIsSavingToDb(true)
+      const response = await socialOutreachService.saveXlsxToDatabase({
+        file: generatedFile,
+        nombre: nombre.trim(),
+        descripcion: `Generado desde Social Outreach (${outreach.extractedData.length} proyecto(s))`,
+      })
+
+      await Swal.fire({
+        icon: "success",
+        title: "Guardado correctamente",
+        text: response.message,
+        confirmButtonColor: "#107c41",
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "No se pudo guardar el archivo en la base de datos"
+      await Swal.fire({
+        icon: "error",
+        title: "Error al guardar",
+        text: message,
+        confirmButtonColor: "#d33",
+      })
+    } finally {
+      setIsSavingToDb(false)
+    }
+  }
+
   const dividerLeft = Math.min(
     leftWidth,
     Math.max(containerWidth - dividerWidth, 0)
@@ -163,6 +228,8 @@ export default function SocialOutreachGenerator() {
             addEstudianteBaseData={outreach.addEstudianteBaseData}
             removeAllFiles={outreach.removeAllFiles}
             exportToXLSX={outreach.exportToXLSX}
+            saveToDatabase={handleSaveToDatabase}
+            isSavingToDb={isSavingToDb}
             isProcessing={outreach.isProcessing}
           />
         </div>

@@ -55,6 +55,7 @@ type UseSocialOutreachResult = {
   ) => void
   removeEstudiante: (dataId: string, estudianteIndex: number) => void
   exportToXLSX: () => void
+  buildXlsxFileForDb: () => File | null
 }
 
 export const useSocialOutreach = (): UseSocialOutreachResult => {
@@ -838,6 +839,55 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     XLSX.writeFile(wb, "proyeccion_social.xlsx")
   }
 
+  const buildXlsxFileForDb = (): File | null => {
+    if (extractedData.length === 0) return null
+
+    const rows = extractedData.flatMap((project) => {
+      const estudiantes = project.estudiantes.length > 0
+        ? project.estudiantes
+        : [{ nombre: "", codigo: "", cedula: "" }]
+
+      return estudiantes.map((est, index) => ({
+        titulo: project.titulo,
+        descripcion: project.descripcion,
+        educacion: project.lineasAccion.educacion ? "X" : "",
+        convivencia_cultura: project.lineasAccion.convivenciaCultura ? "X" : "",
+        medio_ambiente: project.lineasAccion.medioAmbiente ? "X" : "",
+        emprendimiento: project.lineasAccion.emprendimiento ? "X" : "",
+        servicio_social: project.lineasAccion.servicioSocial ? "X" : "",
+        estudiante: est.nombre,
+        codigo: est.codigo,
+        cedula: est.cedula,
+        profesor: project.profesor,
+        tipo_contratacion: project.tipoContratacion,
+        email_profesor: project.emailProfesor,
+        descripcion_poblacion: project.descripcionPoblacion,
+        rango_edades: project.rangoEdades,
+        beneficiarios_directos: project.beneficiariosDirectos,
+        lugar_organizacion: project.lugarOrganizacion,
+        fecha_inicio: project.fechaInicio,
+        valor: project.valor,
+        observaciones: project.observaciones,
+        fila_estudiante: index + 1,
+      }))
+    })
+
+    const wb = XLSX.utils.book_new()
+    const ws = XLSX.utils.json_to_sheet(rows)
+    XLSX.utils.book_append_sheet(wb, ws, "Proyeccion Social")
+
+    const arrayBuffer = XLSX.write(wb, {
+      type: "array",
+      bookType: "xlsx",
+    }) as ArrayBuffer
+
+    return new File(
+      [arrayBuffer],
+      "proyeccion_social.xlsx",
+      { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+    )
+  }
+
   return {
     files,
     extractedData,
@@ -855,6 +905,7 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     addEstudianteBaseData,
     removeEstudiante,
     exportToXLSX,
+    buildXlsxFileForDb,
     updateModalidad,
     updateConvenio
   }
