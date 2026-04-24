@@ -3,7 +3,7 @@ import { AuthRoutes } from "../auth/auth.routes";
 import { ExampleRoutes } from "../example/example.routes";
 import { ProjectRoutes } from "./project.routes";
 import { EventRoutes } from "./event.routes";
-import { PersonRoutes } from "./person.routes";
+import { PersonRoutes } from "../person/person.routes";
 import { MessagingRoutes } from "../messaging/messaging.routes";
 import { ProyeccionSocialRoutes } from "../social-projection/socialProjection.routes";
 
