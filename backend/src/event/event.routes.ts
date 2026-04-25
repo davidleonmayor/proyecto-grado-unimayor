@@ -1,7 +1,14 @@
 import { Router } from "express";
-import { EventController } from "../controllers/event.controller";
+import { EventController } from "./event.controller";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware";
 import { RoleMiddleware } from "../common/middleware/RoleMiddleware";
+import { validateSchema } from "../common/middleware/validateSchema";
+import {
+    CreateEventSchema,
+    DeleteEventSchema,
+    GetEventsSchema,
+    UpdateEventSchema,
+} from "./event.schema";
 
 export class EventRoutes {
     public router: Router;
@@ -21,6 +28,7 @@ export class EventRoutes {
         // Get all events (Protected - all authenticated users)
         this.router.get(
             "/",
+            validateSchema(GetEventsSchema),
             this.authMiddleware.isAuthenticatedUser,
             this.controller.getEvents
         );
@@ -28,6 +36,7 @@ export class EventRoutes {
         // Create event (Protected - coordinator only)
         this.router.post(
             "/",
+            validateSchema(CreateEventSchema),
             this.authMiddleware.isAuthenticatedUser,
             this.roleMiddleware.isCoordinator,
             this.controller.createEvent
@@ -36,6 +45,7 @@ export class EventRoutes {
         // Update event (Protected - coordinator only)
         this.router.put(
             "/:id",
+            validateSchema(UpdateEventSchema),
             this.authMiddleware.isAuthenticatedUser,
             this.roleMiddleware.isCoordinator,
             this.controller.updateEvent
@@ -44,6 +54,7 @@ export class EventRoutes {
         // Delete event (Protected - coordinator only)
         this.router.delete(
             "/:id",
+            validateSchema(DeleteEventSchema),
             this.authMiddleware.isAuthenticatedUser,
             this.roleMiddleware.isCoordinator,
             this.controller.deleteEvent
