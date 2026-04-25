@@ -10,7 +10,6 @@ import { requestTimeout } from "./common/middleware/timeout";
 import { errorHandler, notFound } from "./common/middleware/errorHandler";
 
 import { AuthRoutes } from "./auth/auth.routes";
-import { ExampleRoutes } from "./example/example.routes";
 import { ProjectRoutes } from "./project/project.routes";
 import { EventRoutes } from "./event/event.routes";
 import { PersonRoutes } from "./person/person.routes";
@@ -107,7 +106,6 @@ export default class Server {
     }
 
     // Rutas de la aplicación
-    const exampleRoutes = new ExampleRoutes();
     const authRoutes = new AuthRoutes();
     const projectRoutes = new ProjectRoutes();
     const eventRoutes = new EventRoutes();
@@ -120,7 +118,6 @@ export default class Server {
     });
 
     this.app.use("/api/auth", authRoutes.router);
-    this.app.use("/api/example", exampleRoutes.router);
     this.app.use("/api/projects", projectRoutes.router);
     this.app.use("/api/events", eventRoutes.router);
     this.app.use("/api/persons", personRoutes.router);
