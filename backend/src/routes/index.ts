@@ -1,7 +1,7 @@
 import { Application, Router } from "express";
 import { AuthRoutes } from "../auth/auth.routes";
 import { ExampleRoutes } from "../example/example.routes";
-import { ProjectRoutes } from "./project.routes";
+import { ProjectRoutes } from "../project/project.routes";
 import { EventRoutes } from "./event.routes";
 import { PersonRoutes } from "../person/person.routes";
 import { MessagingRoutes } from "../messaging/messaging.routes";
