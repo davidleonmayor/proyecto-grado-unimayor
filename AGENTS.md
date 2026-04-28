@@ -13,6 +13,7 @@
 | `skill-creator` | Creates new AI agent skills following the Agent Skills spec. Trigger: When user asks to create a new skill, add agent instructions, or document patterns for AI. | [SKILL.md](skills/skill-creator/SKILL.md) |
 | `skill-sync` | Synchronizes skill metadata to AGENTS.md Auto-invoke sections. Trigger: When syncing skill metadata to AGENTS.md. | [SKILL.md](skills/skill-sync/SKILL.md) |
 | `skill-commit` | Creates professional git commits following conventional-commits format. Trigger: When creating commits, after completing code changes, when user asks to commit. | [SKILL.md](skills/skill-commit/SKILL.md) |
+| `express-mocks-testing` | Unit testing pattern for Express 5 controllers using node-mocks-http and @prisma/client mocks. Trigger: When writing unit tests for backend controllers, testing Express routes, or avoiding Supertest/Server instantiation. | [SKILL.md](skills/express-mocks-testing/SKILL.md) |
 
 ### Auto-invoke Skills
 
