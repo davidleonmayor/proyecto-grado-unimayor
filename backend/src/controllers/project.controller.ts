@@ -665,8 +665,10 @@ export class ProjectController {
                 studentsWithActiveProjects.map(a => a.id_persona)
             );
 
-            // Build query for students
-            let studentsWhere: any = {};
+            // Build query for students - only confirmed users
+            let studentsWhere: any = {
+                confirmed: true
+            };
 
             // If programId is provided, filter by program
             if (programId) {
@@ -753,7 +755,8 @@ export class ProjectController {
             // Get all people who have been directors at some point
             const directorActors = await prisma.actores.findMany({
                 where: {
-                    id_tipo_rol: directorRole.id_rol
+                    id_tipo_rol: directorRole.id_rol,
+                    persona: { confirmed: true }
                 },
                 include: { persona: true },
                 distinct: ['id_persona']
@@ -2161,8 +2164,40 @@ export class ProjectController {
     // Get dashboard statistics (Privileged only)
     async getDashboardStats(req: Request, res: Response) {
         try {
+            const userId = req.user?.id_persona;
+            if (!userId) return res.status(401).json({ error: "No autorizado" });
+
+            // Get user roles and faculty
+            const user = await prisma.persona.findUnique({
+                where: { id_persona: userId },
+                select: {
+                    id_facultad: true,
+                    actores: {
+                        include: { tipo_rol: true }
+                    }
+                }
+            });
+
+            const userRoles = user?.actores.map(a => a.tipo_rol.nombre_rol) || [];
+            const isAdmin = userRoles.some(role => ["admin", "Administrador", "Admin"].includes(role));
+            const isCoordinatorOrDean = userRoles.some(role => ["Coordinador de Carrera", "Coordinador", "Decano"].includes(role));
+            
+            // Faculty filter logic
+            const userFacultyId = user?.id_facultad;
+            const projectFacultyFilter = !isAdmin && isCoordinatorOrDean && userFacultyId ? {
+                programa_academico: {
+                    id_facultad: userFacultyId
+                }
+            } : {};
+
+            const personFacultyFilter = !isAdmin && isCoordinatorOrDean && userFacultyId ? {
+                id_facultad: userFacultyId
+            } : {};
+
             // Get total projects
-            const totalProjects = await prisma.trabajo_grado.count();
+            const totalProjects = await prisma.trabajo_grado.count({
+                where: projectFacultyFilter
+            });
 
             // Get active projects (not finished/rejected)
             // MySQL doesn't support case-insensitive mode, so we check both cases
@@ -2182,6 +2217,7 @@ export class ProjectController {
 
             const proyectosEnCurso = await prisma.trabajo_grado.count({
                 where: {
+                    ...projectFacultyFilter,
                     NOT: {
                         id_estado_actual: { in: estadosTerminadosIds }
                     }
@@ -2191,9 +2227,8 @@ export class ProjectController {
             // Get finished projects
             const proyectosFinalizados = await prisma.trabajo_grado.count({
                 where: {
-                    OR: [
-                        { id_estado_actual: { in: estadosTerminadosIds } }
-                    ]
+                    ...projectFacultyFilter,
+                    id_estado_actual: { in: estadosTerminadosIds }
                 }
             });
 
@@ -2206,7 +2241,8 @@ export class ProjectController {
             const profesoresActivos = directorRole ? (await prisma.actores.findMany({
                 where: {
                     id_tipo_rol: directorRole.id_rol,
-                    estado: "Activo"
+                    estado: "Activo",
+                    persona: personFacultyFilter
                 },
                 select: {
                     id_persona: true
@@ -2223,7 +2259,8 @@ export class ProjectController {
             const totalEstudiantes = studentRole ? (await prisma.actores.findMany({
                 where: {
                     id_tipo_rol: studentRole.id_rol,
-                    estado: "Activo"
+                    estado: "Activo",
+                    persona: personFacultyFilter
                 },
                 select: {
                     id_persona: true
@@ -2231,24 +2268,28 @@ export class ProjectController {
                 distinct: ['id_persona']
             })).length : 0;
 
-            // Get students with deliveries (entregado)
-            const entregaAccion = await prisma.accion_seg.findFirst({
+            // Get students with deliveries (entregado means project is in review or approved)
+            const estadosEntregado = await prisma.estado_tg.findMany({
                 where: {
                     OR: [
-                        { tipo_accion: { contains: 'Entrega' } },
-                        { tipo_accion: { contains: 'entrega' } }
+                        { nombre_estado: { contains: 'Revisión' } },
+                        { nombre_estado: { contains: 'revisión' } },
+                        { nombre_estado: { contains: 'Aprobado' } },
+                        { nombre_estado: { contains: 'aprobado' } },
+                        { nombre_estado: { contains: 'Finalizado' } },
+                        { nombre_estado: { contains: 'finalizado' } }
                     ]
                 }
             });
+            const entregadoIds = estadosEntregado.map(e => e.id_estado_tg);
 
-            const estudiantesConEntrega = entregaAccion && studentRole ? (await prisma.actores.findMany({
+            const estudiantesConEntrega = studentRole ? (await prisma.actores.findMany({
                 where: {
                     id_tipo_rol: studentRole.id_rol,
                     estado: "Activo",
-                    seguimiento_tg: {
-                        some: {
-                            id_accion: entregaAccion.id_accion
-                        }
+                    persona: personFacultyFilter,
+                    trabajo_grado: {
+                        id_estado_actual: { in: entregadoIds }
                     }
                 },
                 select: {
@@ -2283,16 +2324,21 @@ export class ProjectController {
             const aprobadosIds = estadosAprobado.map(e => e.id_estado_tg);
             const rechazadosIds = estadosRechazado.map(e => e.id_estado_tg);
 
-            // Get weekly data
-            const proyectosPorSemana = await prisma.trabajo_grado.findMany({
+            // Get weekly data from status changes in tracking table
+            const statusChangesWeekly = await prisma.seguimiento_tg.findMany({
                 where: {
                     fecha_registro: {
                         gte: cuatroSemanasAtras
-                    }
+                    },
+                    trabajo_grado: projectFacultyFilter,
+                    OR: [
+                        { id_estado_nuevo: { in: aprobadosIds } },
+                        { id_estado_nuevo: { in: rechazadosIds } }
+                    ]
                 },
                 select: {
                     fecha_registro: true,
-                    id_estado_actual: true
+                    id_estado_nuevo: true
                 }
             });
 
@@ -2306,24 +2352,19 @@ export class ProjectController {
                 semanas[`Semana ${i}`] = { aprobado: 0, rechazado: 0 };
             }
 
-            proyectosPorSemana.forEach(proyecto => {
-                const fecha = new Date(proyecto.fecha_registro);
+            statusChangesWeekly.forEach(change => {
+                const fecha = new Date(change.fecha_registro);
                 fecha.setHours(0, 0, 0, 0);
 
-                // Calculate days difference
                 const diffTime = hoy.getTime() - fecha.getTime();
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                let semanaNum = Math.floor(diffDays / 7) + 1;
 
-                // Determine which week (1-4)
-                let semanaNum = Math.ceil(diffDays / 7);
-
-                // Only count if within last 4 weeks
                 if (semanaNum >= 1 && semanaNum <= 4) {
                     const nombreSemana = `Semana ${semanaNum}`;
-
-                    if (aprobadosIds.includes(proyecto.id_estado_actual)) {
+                    if (aprobadosIds.includes(change.id_estado_nuevo as string)) {
                         semanas[nombreSemana].aprobado++;
-                    } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
+                    } else if (rechazadosIds.includes(change.id_estado_nuevo as string)) {
                         semanas[nombreSemana].rechazado++;
                     }
                 }
@@ -2332,7 +2373,7 @@ export class ProjectController {
             const weeklyData = Object.keys(semanas).sort((a, b) => {
                 const numA = parseInt(a.replace('Semana ', ''));
                 const numB = parseInt(b.replace('Semana ', ''));
-                return numA - numB;
+                return numB - numA; // Show Week 4 to Week 1 (Current to Past) or vice-versa
             }).map(name => ({
                 name,
                 aprobado: semanas[name].aprobado,
@@ -2343,40 +2384,46 @@ export class ProjectController {
             const doceMesesAtras = new Date();
             doceMesesAtras.setMonth(doceMesesAtras.getMonth() - 12);
 
-            const proyectosPorMes = await prisma.trabajo_grado.findMany({
+            // Get monthly data from tracking table
+            const statusChangesMonthly = await prisma.seguimiento_tg.findMany({
                 where: {
                     fecha_registro: {
                         gte: doceMesesAtras
-                    }
+                    },
+                    trabajo_grado: projectFacultyFilter,
+                    OR: [
+                        { id_estado_nuevo: { in: aprobadosIds } },
+                        { id_estado_nuevo: { in: rechazadosIds } }
+                    ]
                 },
                 select: {
                     fecha_registro: true,
-                    id_estado_actual: true
+                    id_estado_nuevo: true
                 }
             });
 
             const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const monthlyData: { [key: string]: { aprobados: number; rechazados: number } } = {};
+            const monthlyData: { [key: string]: { aprobado: number; rechazado: number } } = {};
 
-            proyectosPorMes.forEach(proyecto => {
-                const fecha = new Date(proyecto.fecha_registro);
+            statusChangesMonthly.forEach(change => {
+                const fecha = new Date(change.fecha_registro);
                 const mes = meses[fecha.getMonth()];
 
                 if (!monthlyData[mes]) {
-                    monthlyData[mes] = { aprobados: 0, rechazados: 0 };
+                    monthlyData[mes] = { aprobado: 0, rechazado: 0 };
                 }
 
-                if (aprobadosIds.includes(proyecto.id_estado_actual)) {
-                    monthlyData[mes].aprobados++;
-                } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
-                    monthlyData[mes].rechazados++;
+                if (aprobadosIds.includes(change.id_estado_nuevo as string)) {
+                    monthlyData[mes].aprobado++;
+                } else if (rechazadosIds.includes(change.id_estado_nuevo as string)) {
+                    monthlyData[mes].rechazado++;
                 }
             });
 
             const monthlyChartData = meses.map(mes => ({
                 name: mes,
-                aprobados: monthlyData[mes]?.aprobados || 0,
-                rechazados: monthlyData[mes]?.rechazados || 0
+                aprobado: monthlyData[mes]?.aprobado || 0,
+                rechazado: monthlyData[mes]?.rechazado || 0
             }));
 
             return res.json({
@@ -2505,33 +2552,34 @@ export class ProjectController {
             }
             const totalEstudiantes = estudiantesAsignados.size;
 
-            // Get students with deliveries
-            const entregaAccion = await prisma.accion_seg.findFirst({
+            // Get students with deliveries (entregado means project is in review or approved)
+            let estudiantesConEntrega = 0;
+            const estadosEntregado = await prisma.estado_tg.findMany({
                 where: {
                     OR: [
-                        { tipo_accion: { contains: 'Entrega' } },
-                        { tipo_accion: { contains: 'entrega' } }
+                        { nombre_estado: { contains: 'Revisión' } },
+                        { nombre_estado: { contains: 'revisión' } },
+                        { nombre_estado: { contains: 'Aprobado' } },
+                        { nombre_estado: { contains: 'aprobado' } },
+                        { nombre_estado: { contains: 'Finalizado' } },
+                        { nombre_estado: { contains: 'finalizado' } }
                     ]
                 }
             });
+            const entregadoIds = estadosEntregado.map(e => e.id_estado_tg);
 
-            let estudiantesConEntrega = 0;
-            if (entregaAccion) {
-                const estudiantesIds = Array.from(estudiantesAsignados);
-                for (const estudianteId of estudiantesIds) {
-                    const tieneEntrega = await prisma.actores.findFirst({
-                        where: {
-                            id_persona: estudianteId,
-                            estado: "Activo",
-                            seguimiento_tg: {
-                                some: {
-                                    id_accion: entregaAccion.id_accion
-                                }
-                            }
+            const estudiantesIds = Array.from(estudiantesAsignados);
+            for (const estudianteId of estudiantesIds) {
+                const tieneEntrega = await prisma.actores.findFirst({
+                    where: {
+                        id_persona: estudianteId,
+                        estado: "Activo",
+                        trabajo_grado: {
+                            id_estado_actual: { in: entregadoIds }
                         }
-                    });
-                    if (tieneEntrega) estudiantesConEntrega++;
-                }
+                    }
+                });
+                if (tieneEntrega) estudiantesConEntrega++;
             }
 
             const estudiantesSinEntrega = totalEstudiantes - estudiantesConEntrega;
@@ -2561,9 +2609,21 @@ export class ProjectController {
             const aprobadosIds = estadosAprobado.map(e => e.id_estado_tg);
             const rechazadosIds = estadosRechazado.map(e => e.id_estado_tg);
 
-            const proyectosPorSemana = proyectosUnicos.filter(p => {
-                const fecha = new Date(p.fecha_registro);
-                return fecha >= cuatroSemanasAtras;
+            const statusChangesWeekly = await prisma.seguimiento_tg.findMany({
+                where: {
+                    id_trabajo_grado: { in: proyectosIds },
+                    fecha_registro: {
+                        gte: cuatroSemanasAtras
+                    },
+                    OR: [
+                        { id_estado_nuevo: { in: aprobadosIds } },
+                        { id_estado_nuevo: { in: rechazadosIds } }
+                    ]
+                },
+                select: {
+                    fecha_registro: true,
+                    id_estado_nuevo: true
+                }
             });
 
             // Group by week
@@ -2575,20 +2635,20 @@ export class ProjectController {
                 semanas[`Semana ${i}`] = { aprobado: 0, rechazado: 0 };
             }
 
-            proyectosPorSemana.forEach(proyecto => {
-                const fecha = new Date(proyecto.fecha_registro);
+            statusChangesWeekly.forEach(change => {
+                const fecha = new Date(change.fecha_registro);
                 fecha.setHours(0, 0, 0, 0);
 
                 const diffTime = hoy.getTime() - fecha.getTime();
                 const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                let semanaNum = Math.ceil(diffDays / 7);
+                let semanaNum = Math.floor(diffDays / 7) + 1;
 
                 if (semanaNum >= 1 && semanaNum <= 4) {
                     const nombreSemana = `Semana ${semanaNum}`;
 
-                    if (aprobadosIds.includes(proyecto.id_estado_actual)) {
+                    if (aprobadosIds.includes(change.id_estado_nuevo as string)) {
                         semanas[nombreSemana].aprobado++;
-                    } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
+                    } else if (rechazadosIds.includes(change.id_estado_nuevo as string)) {
                         semanas[nombreSemana].rechazado++;
                     }
                 }
@@ -2597,44 +2657,57 @@ export class ProjectController {
             const weeklyData = Object.keys(semanas).sort((a, b) => {
                 const numA = parseInt(a.replace('Semana ', ''));
                 const numB = parseInt(b.replace('Semana ', ''));
-                return numA - numB;
+                return numB - numA;
             }).map(name => ({
                 name,
                 aprobado: semanas[name].aprobado,
                 rechazado: semanas[name].rechazado
             }));
 
-            // Get monthly stats for assigned projects (last 12 months)
+            // Get monthly stats for assigned projects (last 12 months) from tracking table
             const doceMesesAtras = new Date();
             doceMesesAtras.setMonth(doceMesesAtras.getMonth() - 12);
 
-            const proyectosPorMes = proyectosUnicos.filter(p => {
-                const fecha = new Date(p.fecha_registro);
-                return fecha >= doceMesesAtras;
+            const projectIds = proyectosUnicos.map(p => p.id_trabajo_grado);
+            const statusChangesMonthly = await prisma.seguimiento_tg.findMany({
+                where: {
+                    id_trabajo_grado: { in: projectIds },
+                    fecha_registro: {
+                        gte: doceMesesAtras
+                    },
+                    OR: [
+                        { id_estado_nuevo: { in: aprobadosIds } },
+                        { id_estado_nuevo: { in: rechazadosIds } }
+                    ]
+                },
+                select: {
+                    fecha_registro: true,
+                    id_estado_nuevo: true
+                }
             });
 
             const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const monthlyData: { [key: string]: { aprobados: number; rechazados: number } } = {};
+            const monthlyData: { [key: string]: { aprobado: number; rechazado: number } } = {};
 
-            proyectosPorMes.forEach(proyecto => {
-                const fecha = new Date(proyecto.fecha_registro);
+            statusChangesMonthly.forEach(change => {
+                const fecha = new Date(change.fecha_registro);
                 const mes = meses[fecha.getMonth()];
 
                 if (!monthlyData[mes]) {
-                    monthlyData[mes] = { aprobados: 0, rechazados: 0 };
+                    monthlyData[mes] = { aprobado: 0, rechazado: 0 };
                 }
 
-                if (aprobadosIds.includes(proyecto.id_estado_actual)) {
-                    monthlyData[mes].aprobados++;
-                } else if (rechazadosIds.includes(proyecto.id_estado_actual)) {
-                    monthlyData[mes].rechazados++;
+                if (aprobadosIds.includes(change.id_estado_nuevo as string)) {
+                    monthlyData[mes].aprobado++;
+                } else if (rechazadosIds.includes(change.id_estado_nuevo as string)) {
+                    monthlyData[mes].rechazado++;
                 }
             });
 
             const monthlyChartData = meses.map(mes => ({
                 name: mes,
-                aprobados: monthlyData[mes]?.aprobados || 0,
-                rechazados: monthlyData[mes]?.rechazados || 0
+                aprobado: monthlyData[mes]?.aprobado || 0,
+                rechazado: monthlyData[mes]?.rechazado || 0
             }));
 
             return res.json({

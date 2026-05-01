@@ -1,42 +1,47 @@
 import { envs } from "../config";
 
-export const getConfirmationEmailTemplate = (name: string, token: string) => `
+const getBaseEmailTemplate = (title: string, contentHtml: string, accentColor: string = '#FACD05') => `
     <!DOCTYPE html>
-    <html>
+    <html lang="es">
     <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
         <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
+        body { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #374151; margin: 0; padding: 0; background-color: #f8fafc; }
         .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #0ea5e9; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .token { background-color: #f0f9ff; color: #0369a1; font-size: 32px; font-weight: 700; padding: 15px 30px; border-radius: 8px; display: inline-block; letter-spacing: 5px; margin: 20px 0; border: 1px dashed #7dd3fc; }
-        .button { background-color: #0ea5e9; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
+        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.025); border-top: 6px solid ${accentColor}; }
+        .header { background-color: #ffffff; padding: 40px 40px 20px; text-align: left; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 700; color: #111827; letter-spacing: -0.025em; }
+        .content { padding: 0 40px 40px; }
+        .footer { background-color: #f8fafc; text-align: center; padding: 24px 40px; color: #64748b; font-size: 13px; border-top: 1px solid #f1f5f9; }
+        
+        /* Typography */
+        p { margin-top: 0; margin-bottom: 16px; }
+        .text-strong { font-weight: 600; color: #111827; }
+        .text-subtle { color: #64748b; font-size: 14px; }
+        
+        /* Components */
+        .btn { display: inline-block; background-color: ${accentColor} !important; color: ${accentColor === '#FACD05' || accentColor === '#facc15' ? '#422006' : '#ffffff'} !important; padding: 12px 28px; text-decoration: none; border-radius: 8px; margin: 24px 0; font-weight: 600; font-size: 15px; text-align: center; transition: opacity 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .token-box { background-color: #f8fafc; color: #0f172a; font-size: 36px; font-weight: 800; padding: 20px 40px; border-radius: 12px; display: inline-block; letter-spacing: 8px; margin: 24px 0; border: 2px dashed #cbd5e1; text-align: center; }
+        .info-box { background-color: #f8fafc; padding: 24px; border-radius: 12px; border-left: 4px solid ${accentColor}; margin: 32px 0; }
+        .label { font-size: 12px; text-transform: uppercase; font-weight: 700; color: #64748b; display: block; margin-bottom: 4px; letter-spacing: 0.05em; }
+        .value { font-size: 16px; font-weight: 600; color: #111827; margin-bottom: 16px; }
+        .value:last-child { margin-bottom: 0; }
         </style>
     </head>
     <body>
       <div class="wrapper">
         <div class="container">
         <div class="header">
-            <h1>Bienvenido a Gestión de Proyectos de Grado 🎓</h1>
+            <h1>${title}</h1>
         </div>
         <div class="content">
-            <p style="color: #111827; font-size: 16px;">Hola <strong>${name}</strong>,</p>
-            <p>Gracias por registrarte en el sistema de Gestión de Proyectos de Grado de Unimayor. Tu cuenta ha sido creada exitosamente, solo necesitas confirmarla para activarla.</p>
-            <p>Por favor, visita el siguiente enlace e ingresa el código de confirmación de 6 dígitos:</p>
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/confirm-account" class="button">Confirmar mi cuenta</a>
-            <br/>
-            <div class="token">${token}</div>
-            </div>
-            <p style="font-size: 14px; color: #6b7280; margin-top: 30px;"><strong>Nota:</strong> Este código expirará en 24 horas.</p>
-            <p style="font-size: 14px; color: #6b7280;">Si no solicitaste la creación de esta cuenta, por favor ignora este correo.</p>
+            ${contentHtml}
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
+            <p style="margin:0;">© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor.</p>
+            <p style="margin:8px 0 0; font-size: 12px;">Este es un mensaje automático, por favor no responda a este correo.</p>
         </div>
         </div>
       </div>
@@ -44,300 +49,167 @@ export const getConfirmationEmailTemplate = (name: string, token: string) => `
     </html>
 `;
 
-export const getPasswordResetTemplate = (name: string, token: string) => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
-        .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #0ea5e9; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .token { background-color: #f0f9ff; color: #0369a1; font-size: 32px; font-weight: 700; padding: 15px 30px; border-radius: 8px; display: inline-block; letter-spacing: 5px; margin: 20px 0; border: 1px dashed #7dd3fc; }
-        .button { background-color: #0ea5e9; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .warning { background-color: #fefce8; border-left: 4px solid #facc15; padding: 15px; margin: 30px 0 10px; border-radius: 4px; color: #854d0e; font-size: 14px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        </style>
-    </head>
-    <body>
-      <div class="wrapper">
-        <div class="container">
-        <div class="header">
-            <h1>Restablecer tu contraseña</h1>
-        </div>
-        <div class="content">
-            <p style="color: #111827; font-size: 16px;">Hola <strong>${name}</strong>,</p>
-            <p>Recibimos una solicitud para restablecer tu contraseña en el sistema de Gestión de Proyectos de Grado.</p>
-            <p>Para crear una contraseña nueva, haz clic en el siguiente enlace. Alternativamente, puedes ingresar el código manualmente:</p>
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/reset-password/${token}" class="button">Restablecer mi contraseña</a>
+export const getConfirmationEmailTemplate = (name: string, token: string) => getBaseEmailTemplate(
+    'Bienvenido a la Plataforma 🎓',
+    `
+        <p class="text-strong" style="font-size: 16px;">Hola ${name},</p>
+        <p>Tu cuenta ha sido creada exitosamente en el sistema de Gestión de Proyectos de Grado de Unimayor. Solo necesitas confirmarla para activarla.</p>
+        <p>Por favor, ingresa el siguiente código de confirmación de 6 dígitos en la plataforma:</p>
+        <div style="text-align: center;">
+            <div class="token-box">${token}</div>
             <br/>
-            <div class="token">${token}</div>
-            </div>
-            <div class="warning">
-            <strong>Importante:</strong>
-            <ul style="margin: 5px 0 0; padding-left: 20px;">
-                <li>El código expirará en 1 hora.</li>
-                <li>Si no solicitaste este cambio, ignora este correo.</li>
+            <a href="${envs.FRONTEND_URL}/confirm-account" class="btn" style="background-color: #0ea5e9; color: #ffffff; text-decoration: none;">Ir a confirmar cuenta</a>
+        </div>
+        <p class="text-subtle" style="margin-top: 32px;"><strong>Nota:</strong> Este código expirará en 24 horas.</p>
+        <p class="text-subtle">Si no solicitaste la creación de esta cuenta, por favor ignora este correo.</p>
+    `,
+    '#0ea5e9'
+);
+
+export const getPasswordResetTemplate = (name: string, token: string) => getBaseEmailTemplate(
+    'Restablecer tu contraseña',
+    `
+        <p class="text-strong" style="font-size: 16px;">Hola ${name},</p>
+        <p>Recibimos una solicitud para restablecer tu contraseña en el sistema de Gestión de Proyectos de Grado.</p>
+        <p>Para crear una nueva contraseña, haz clic en el siguiente botón o ingresa el código manualmente en la plataforma:</p>
+        <div style="text-align: center;">
+            <div class="token-box">${token}</div>
+            <br/>
+            <a href="${envs.FRONTEND_URL}/reset-password/${token}" class="btn" style="background-color: #0ea5e9; color: #ffffff; text-decoration: none;">Restablecer mi contraseña</a>
+        </div>
+        <div class="info-box" style="border-left-color: #facc15; background-color: #fefce8;">
+            <strong style="color: #854d0e; display: block; margin-bottom: 8px;">Importante:</strong>
+            <ul style="margin: 0; padding-left: 20px; color: #a16207; font-size: 14px;">
+                <li style="margin-bottom: 4px;">El código expirará en 1 hora.</li>
+                <li style="margin-bottom: 4px;">Si no solicitaste este cambio, ignora este correo.</li>
                 <li>Por tu seguridad, nunca compartas este código con nadie.</li>
             </ul>
-            </div>
         </div>
-        <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
-        </div>
-        </div>
-      </div>
-    </body>
-    </html>
-`;
+    `,
+    '#0ea5e9'
+);
 
-export const getNewIterationAlertTemplate = (directorName: string, studentName: string, projectTitle: string, shortSummary: string, eventsHtml: string = "") => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
-        .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #FACD05; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .info-box { background-color: #fefce8; padding: 20px; border-radius: 6px; border-left: 4px solid #facc15; margin: 25px 0; }
-        .button { background-color: #0ea5e9; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: #854d0e; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
-        </style>
-    </head>
-    <body>
-      <div class="wrapper">
-        <div class="container">
-        <div class="header">
-            <h1>Nueva Entrega de Avance</h1>
+export const getNewIterationAlertTemplate = (directorName: string, studentName: string, projectTitle: string, shortSummary: string, eventsHtml: string = "") => getBaseEmailTemplate(
+    'Nueva Entrega de Avance',
+    `
+        <p class="text-strong" style="font-size: 16px;">Estimado/a ${directorName},</p>
+        <p>El estudiante <strong style="color:#111827;">${studentName}</strong> ha registrado un nuevo avance en el sistema para el proyecto de grado a su cargo.</p>
+        
+        <div class="info-box" style="border-left-color: #FACD05; background-color: #fefce8;">
+            <span class="label" style="color: #a16207;">Proyecto</span>
+            <div class="value">${projectTitle}</div>
+            <span class="label" style="color: #a16207;">Resumen de la entrega</span>
+            <div class="value" style="font-weight: 400;">${shortSummary}</div>
         </div>
-        <div class="content">
-            <p style="color: #111827; font-size: 16px;">Estimado/a <strong>${directorName}</strong>,</p>
-            <p>Nos complace informarle que el estudiante <strong>${studentName}</strong> ha registrado un nuevo avance en el sistema para el proyecto de grado a su cargo.</p>
+
+        ${eventsHtml}
+
+        <p>Por favor, ingrese a la plataforma para revisar la documentación adjunta y emitir la retroalimentación correspondiente.</p>
+        
+        <div style="text-align: center;">
+            <a href="${envs.FRONTEND_URL}/projects" class="btn" style="background-color: #FACD05; color: #422006; text-decoration: none;">Gestionar Proyecto</a>
+        </div>
+    `,
+    '#FACD05'
+);
+
+export const getReviewAlertTemplate = (studentName: string, reviewerName: string, projectTitle: string, statusHtml: string, resolutionHtml: string, shortComments: string, eventsHtml: string = "") => getBaseEmailTemplate(
+    'Actualización de Proyecto',
+    `
+        <p class="text-strong" style="font-size: 16px;">Hola ${studentName},</p>
+        <p>Se ha registrado una nueva revisión en tu proyecto de grado por parte de <strong style="color:#111827;">${reviewerName}</strong>.</p>
+        
+        <div class="info-box" style="border-left-color: #0ea5e9; background-color: #f0f9ff;">
+            <span class="label" style="color: #0369a1;">Proyecto</span>
+            <div class="value">${projectTitle}</div>
             
-            <div class="info-box">
-            <p style="margin-top: 0; color: #4b5563;"><span class="label">Proyecto</span><br/> <strong style="color: #111827;">${projectTitle}</strong></p>
-            <p style="margin-bottom: 0; color: #4b5563;"><span class="label">Resumen de la entrega</span><br/> ${shortSummary}</p>
-            </div>
-
-            ${eventsHtml}
-
-            <p>Por favor, ingrese a la plataforma para revisar la documentación adjunta y emitir la retroalimentación correspondiente.</p>
-            
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/dashboard/projects" class="button">Gestionar Proyecto</a>
-            </div>
-        </div>
-        <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
-        </div>
-        </div>
-      </div>
-    </body>
-    </html>
-`;
-
-export const getReviewAlertTemplate = (studentName: string, reviewerName: string, projectTitle: string, statusHtml: string, resolutionHtml: string, shortComments: string, eventsHtml: string = "") => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
-        .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #0ea5e9; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .info-box { background-color: #f0f9ff; padding: 20px; border-radius: 6px; border-left: 4px solid #0ea5e9; margin: 25px 0; }
-        .button { background-color: #0ea5e9; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: #0369a1; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
-        </style>
-    </head>
-    <body>
-      <div class="wrapper">
-        <div class="container">
-        <div class="header">
-            <h1>Actualización de Proyecto</h1>
-        </div>
-        <div class="content">
-            <p style="color: #111827; font-size: 16px;">Hola <strong>${studentName}</strong>,</p>
-            <p>Se ha registrado una nueva revisión en tu proyecto de grado por parte de <strong>${reviewerName}</strong>.</p>
-            
-            <div class="info-box">
-            <p style="margin-top: 0; color: #4b5563;"><span class="label">Proyecto</span><br/> <strong style="color: #111827;">${projectTitle}</strong></p>
             ${statusHtml}
             ${resolutionHtml}
-            <p style="margin-bottom: 0; color: #4b5563;"><span class="label">Comentarios</span><br/> ${shortComments}</p>
-            </div>
-
-            ${eventsHtml}
-
-            <p>Ingresa a la plataforma web para analizar los detalles y descargar los documentos de la revisión, si fueron adjuntados.</p>
             
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/dashboard/projects" class="button">Ir a Mis Proyectos</a>
-            </div>
+            <span class="label" style="color: #0369a1; margin-top: 16px;">Comentarios</span>
+            <div class="value" style="font-weight: 400;">${shortComments}</div>
         </div>
-        <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
-        </div>
-        </div>
-      </div>
-    </body>
-    </html>
-`;
 
-export const getNotificationEmailTemplate = (name: string, title: string, content: string, date: string) => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
-        .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #eab308; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .info-box { background-color: #fefce8; padding: 20px; border-radius: 6px; border-left: 4px solid #facc15; margin: 25px 0; }
-        .button { background-color: #eab308; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: #ca8a04; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
-        </style>
-    </head>
-    <body>
-      <div class="wrapper">
-        <div class="container">
-        <div class="header">
-            <h1>Notificación de Coordinación</h1>
-        </div>
-        <div class="content">
-            <p style="color: #111827; font-size: 16px;">Hola <strong>${name}</strong>,</p>
-            <p>Se ha publicado un nuevo anuncio que requiere tu atención (${date}):</p>
-            
-            <div class="info-box">
-            <p style="margin-top: 0; color: #4b5563;"><span class="label">Asunto</span><br/> <strong style="color: #111827;">${title}</strong></p>
-            <p style="margin-bottom: 0; color: #4b5563;"><span class="label">Mensaje</span><br/> ${content}</p>
-            </div>
+        ${eventsHtml}
 
-            <p>Puedes revisar todas tus notificaciones e historial directamente desde el panel principal de nuestra plataforma web.</p>
-            
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/dashboard" class="button">Ingresar al Sistema</a>
-            </div>
+        <p>Ingresa a la plataforma web para analizar los detalles y descargar los documentos de la revisión, si fueron adjuntados.</p>
+        
+        <div style="text-align: center;">
+            <a href="${envs.FRONTEND_URL}/projects" class="btn" style="background-color: #0ea5e9; color: #ffffff; text-decoration: none;">Ir a Mis Proyectos</a>
         </div>
-        <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
-        </div>
-        </div>
-      </div>
-    </body>
-    </html>
-`;
+    `,
+    '#0ea5e9'
+);
 
-export const getDirectMessageTemplate = (senderName: string, recipientName: string, messageContent: string, date: string) => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
-        .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid #10b981; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .message-box { background-color: #ecfdf5; padding: 20px; border-radius: 6px; border-left: 4px solid #10b981; margin: 25px 0; font-style: italic; color: #047857; }
-        .button { background-color: #10b981; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: #059669; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
-        </style>
-    </head>
-    <body>
-      <div class="wrapper">
-        <div class="container">
-        <div class="header">
-            <h1>Nuevo Mensaje Recibido</h1>
+export const getNotificationEmailTemplate = (name: string, title: string, content: string, date: string) => getBaseEmailTemplate(
+    'Notificación de Coordinación',
+    `
+        <p class="text-strong" style="font-size: 16px;">Hola ${name},</p>
+        <p>Se ha publicado un nuevo anuncio que requiere tu atención <span class="text-subtle">(${date})</span>:</p>
+        
+        <div class="info-box" style="border-left-color: #facc15; background-color: #fefce8;">
+            <span class="label" style="color: #ca8a04;">Asunto</span>
+            <div class="value">${title}</div>
+            <span class="label" style="color: #ca8a04;">Mensaje</span>
+            <div class="value" style="font-weight: 400;">${content}</div>
         </div>
-        <div class="content">
-            <p style="color: #111827; font-size: 16px;">Hola <strong>${recipientName}</strong>,</p>
-            <p>Te informamos que <strong>${senderName}</strong> te ha enviado el siguiente mensaje directo a través de nuestra plataforma (${date}):</p>
-            
-            <div class="message-box">
+
+        <p>Puedes revisar todas tus notificaciones e historial directamente desde el panel principal de nuestra plataforma web.</p>
+        
+        <div style="text-align: center;">
+            <a href="${envs.FRONTEND_URL}/" class="btn" style="background-color: #eab308; color: #ffffff; text-decoration: none;">Ingresar al Sistema</a>
+        </div>
+    `,
+    '#eab308'
+);
+
+export const getDirectMessageTemplate = (senderName: string, recipientName: string, messageContent: string, date: string) => getBaseEmailTemplate(
+    'Nuevo Mensaje Recibido',
+    `
+        <p class="text-strong" style="font-size: 16px;">Hola ${recipientName},</p>
+        <p>Te informamos que <strong style="color:#111827;">${senderName}</strong> te ha enviado un mensaje directo a través de nuestra plataforma <span class="text-subtle">(${date})</span>:</p>
+        
+        <div class="info-box" style="border-left-color: #10b981; background-color: #ecfdf5;">
+            <div style="font-style: italic; color: #047857; font-size: 16px;">
                "${messageContent}"
             </div>
+        </div>
 
-            <p>Para responder a este mensaje, ingresa a la plataforma web e interactúa desde el widget de chat o notificaciones.</p>
-            
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/dashboard" class="button">Ver Mensaje en el Sistema</a>
-            </div>
+        <p>Para responder a este mensaje, ingresa a la plataforma web e interactúa desde el widget de chat o notificaciones.</p>
+        
+        <div style="text-align: center;">
+            <a href="${envs.FRONTEND_URL}/" class="btn" style="background-color: #10b981; color: #ffffff; text-decoration: none;">Ver Mensaje en el Sistema</a>
         </div>
-        <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
-        </div>
-        </div>
-      </div>
-    </body>
-    </html>
-`;
+    `,
+    '#10b981'
+);
 
-export const getEventNotificationTemplate = (eventName: string, eventDescription: string, eventDate: string, eventTime: string, isUrgent: boolean, projectTitle: string) => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #4b5563; margin: 0; padding: 0; background-color: #f4f6f8; }
-        .wrapper { padding: 40px 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 6px solid ${isUrgent ? '#ef4444' : '#3b82f6'}; }
-        .header { background-color: #ffffff; padding: 30px 30px 10px; text-align: left; border-bottom: 1px solid #f3f4f6; }
-        .header h1 { margin: 0; font-size: 22px; font-weight: 600; color: #111827; }
-        .content { padding: 30px; }
-        .info-box { background-color: ${isUrgent ? '#fef2f2' : '#eff6ff'}; padding: 20px; border-radius: 6px; border-left: 4px solid ${isUrgent ? '#ef4444' : '#3b82f6'}; margin: 25px 0; }
-        .button { background-color: ${isUrgent ? '#ef4444' : '#3b82f6'}; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0; font-weight: 600; font-size: 15px; }
-        .footer { background-color: #f9fafb; text-align: center; padding: 20px; color: #9ca3af; font-size: 13px; border-top: 1px solid #f3f4f6; }
-        .label { font-size: 13px; text-transform: uppercase; font-weight: 700; color: ${isUrgent ? '#b91c1c' : '#1d4ed8'}; display: inline-block; margin-bottom: 4px; letter-spacing: 0.05em; }
-        .urgent-badge { display: inline-block; background-color: #ef4444; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin-bottom: 15px; }
-        </style>
-    </head>
-    <body>
-      <div class="wrapper">
-        <div class="container">
-        <div class="header">
-            <h1>Evento Programado: ${projectTitle}</h1>
-        </div>
-        <div class="content">
-            ${isUrgent ? '<div class="urgent-badge">¡ATENCIÓN! ESTE EVENTO ES PRONTO</div>' : ''}
-            <p style="color: #111827; font-size: 16px;">Se ha programado un nuevo evento para el proyecto de grado al que estás adscrito.</p>
+export const getEventNotificationTemplate = (eventName: string, eventDescription: string, eventDate: string, eventTime: string, isUrgent: boolean, projectTitle: string) => getBaseEmailTemplate(
+    'Evento Programado',
+    `
+        ${isUrgent ? '<div style="display: inline-block; background-color: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; margin-bottom: 20px;">¡ATENCIÓN! ESTE EVENTO ES PRONTO</div>' : ''}
+        
+        <p class="text-strong" style="font-size: 16px;">Hola,</p>
+        <p>Se ha programado un nuevo evento para el proyecto de grado al que estás adscrito (<strong style="color:#111827;">${projectTitle}</strong>).</p>
+        
+        <div class="info-box" style="border-left-color: ${isUrgent ? '#ef4444' : '#0ea5e9'}; background-color: ${isUrgent ? '#fef2f2' : '#f0f9ff'};">
+            <span class="label" style="color: ${isUrgent ? '#b91c1c' : '#0369a1'};">Asunto</span>
+            <div class="value">${eventName}</div>
             
-            <div class="info-box">
-               <p style="margin-top: 0; color: #4b5563;"><span class="label">Asunto</span><br/> <strong style="color: #111827;">${eventName}</strong></p>
-               ${eventDescription ? `<p style="color: #4b5563;"><span class="label">Descripción</span><br/> ${eventDescription}</p>` : ''}
-               <p style="margin-bottom: 0; color: #4b5563;"><span class="label">Fecha y Hora</span><br/> ${eventDate} a las ${eventTime}</p>
-            </div>
+            ${eventDescription ? `
+                <span class="label" style="color: ${isUrgent ? '#b91c1c' : '#0369a1'};">Descripción</span>
+                <div class="value" style="font-weight: 400;">${eventDescription}</div>
+            ` : ''}
+            
+            <span class="label" style="color: ${isUrgent ? '#b91c1c' : '#0369a1'}; margin-top: 16px;">Fecha y Hora</span>
+            <div class="value">${eventDate} a las ${eventTime}</div>
+        </div>
 
-            <p>Por favor, revisa el calendario en la plataforma y organízate para asistir si es requerido.</p>
-            
-            <div style="text-align: center;">
-            <a href="${envs.FRONTEND_URL}/dashboard" class="button">Ver en el Calendario</a>
-            </div>
+        <p>Por favor, revisa el calendario en la plataforma y organízate para asistir si es requerido.</p>
+        
+        <div style="text-align: center;">
+            <a href="${envs.FRONTEND_URL}/" class="btn" style="background-color: ${isUrgent ? '#ef4444' : '#0ea5e9'}; color: #ffffff; text-decoration: none;">Ver en el Calendario</a>
         </div>
-        <div class="footer">
-            <p>© ${new Date().getFullYear()} Gestión de Proyectos de Grado - Unimayor. Todos los derechos reservados.</p>
-        </div>
-        </div>
-      </div>
-    </body>
-    </html>
-`;
+    `,
+    isUrgent ? '#ef4444' : '#0ea5e9'
+);

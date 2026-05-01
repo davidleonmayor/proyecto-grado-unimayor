@@ -11,8 +11,8 @@ const Legend = RechartsLegend as unknown as React.FC<any>;
 interface FinanceChartProps {
   data?: Array<{
     name: string;
-    aprobados: number;
-    rechazados: number;
+    aprobado: number;
+    rechazado: number;
   }>;
   href?: string;
 }
@@ -35,18 +35,18 @@ export default function FinanceChart({ data = [], href }: FinanceChartProps) {
 
   // Use provided data or default empty data
   const chartData = data.length > 0 ? data : [
-    { name: 'Ene', aprobados: 0, rechazados: 0 },
-    { name: 'Feb', aprobados: 0, rechazados: 0 },
-    { name: 'Mar', aprobados: 0, rechazados: 0 },
-    { name: 'Abr', aprobados: 0, rechazados: 0 },
-    { name: 'May', aprobados: 0, rechazados: 0 },
-    { name: 'Jun', aprobados: 0, rechazados: 0 },
-    { name: 'Jul', aprobados: 0, rechazados: 0 },
-    { name: 'Ago', aprobados: 0, rechazados: 0 },
-    { name: 'Sep', aprobados: 0, rechazados: 0 },
-    { name: 'Oct', aprobados: 0, rechazados: 0 },
-    { name: 'Nov', aprobados: 0, rechazados: 0 },
-    { name: 'Dic', aprobados: 0, rechazados: 0 },
+    { name: 'Ene', aprobado: 0, rechazado: 0 },
+    { name: 'Feb', aprobado: 0, rechazado: 0 },
+    { name: 'Mar', aprobado: 0, rechazado: 0 },
+    { name: 'Abr', aprobado: 0, rechazado: 0 },
+    { name: 'May', aprobado: 0, rechazado: 0 },
+    { name: 'Jun', aprobado: 0, rechazado: 0 },
+    { name: 'Jul', aprobado: 0, rechazado: 0 },
+    { name: 'Ago', aprobado: 0, rechazado: 0 },
+    { name: 'Sep', aprobado: 0, rechazado: 0 },
+    { name: 'Oct', aprobado: 0, rechazado: 0 },
+    { name: 'Nov', aprobado: 0, rechazado: 0 },
+    { name: 'Dic', aprobado: 0, rechazado: 0 },
   ];
   return (
     <div className="bg-white rounded-xl w-full h-full p-4 relative z-0">
@@ -96,8 +96,8 @@ export default function FinanceChart({ data = [], href }: FinanceChartProps) {
           <YAxis axisLine={false} tickLine={false} />
           <Tooltip />
           <Legend align="center" verticalAlign="top" wrapperStyle={{ paddingTop: '20px', paddingBottom: '40px' }} />
-          <Line type="monotone" dataKey="aprobados" stroke="#0EA5E9" strokeWidth={5} />
-          <Line type="monotone" dataKey="rechazados" stroke="#F44336" strokeWidth={5} />
+          <Line type="monotone" dataKey="aprobado" stroke="#0EA5E9" strokeWidth={5} />
+          <Line type="monotone" dataKey="rechazado" stroke="#F44336" strokeWidth={5} />
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -57,11 +57,13 @@ export class ProjectEmail {
       let resolutionHtml = "";
 
       if (info.status) {
-        statusHtml = `<p><span class="label">Nuevo Estado:</span> <span style="color: #0284c7; font-weight: bold; font-size: 14px;">${info.status}</span></p>`;
+        statusHtml = `<span class="label" style="color: #0369a1;">Nuevo Estado</span>
+<div class="value" style="color: #0284c7;">${info.status}</div>`;
       }
 
       if (info.resolution) {
-        resolutionHtml = `<p><span class="label">Resolución Asignada:</span> <strong>${info.resolution}</strong></p>`;
+        resolutionHtml = `<span class="label" style="color: #0369a1;">Resolución Asignada</span>
+<div class="value">${info.resolution}</div>`;
       }
 
       const htmlContent = getReviewAlertTemplate(

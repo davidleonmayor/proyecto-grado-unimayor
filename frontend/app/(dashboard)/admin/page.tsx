@@ -81,7 +81,7 @@ function AdminPageContent() {
 
 export default function AdminPage() {
   return (
-    <RoleProtectedRoute allowedRoles={['admin']} redirectTo="/teacher">
+    <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/teacher">
       <AdminPageContent />
     </RoleProtectedRoute>
   );

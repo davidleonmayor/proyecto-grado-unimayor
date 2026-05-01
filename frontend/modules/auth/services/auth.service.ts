@@ -59,8 +59,8 @@ export class AuthService extends BaseApiClient {
     currentPassword: string,
     password: string
   ): Promise<string> {
-    return this.request<string>('/api/auth/update-password', {
-      method: 'PUT',
+    return this.request<string>('/api/auth/reset-auth-password', {
+      method: 'POST',
       requiresAuth: true,
       body: JSON.stringify({
         currentPassword,

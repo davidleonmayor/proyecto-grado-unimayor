@@ -312,17 +312,17 @@ model mensaje_entrega {
   @@map("MENSAJE_ENTREGA")
 }
 
-model webhook_subscription {
-  id_subscription String   @id @default(cuid())
-  topic           String   @db.VarChar(100)
-  url             String   @db.VarChar(500)
-  secret          String?  @db.VarChar(100)
-  is_active       Boolean  @default(true)
-  created_at      DateTime @default(now()) @db.DateTime(0)
+model SuscripcionWebhook {
+  id_suscripcion String   @id @default(cuid())
+  topico         String   @db.VarChar(100)
+  url            String   @db.VarChar(500)
+  secreto        String?  @db.VarChar(100)
+  activo         Boolean  @default(true)
+  fecha_registro DateTime @default(now()) @db.DateTime(0)
 
-  @@index([topic])
-  @@index([is_active])
-  @@map("WEBHOOK_SUBSCRIPTION")
+  @@index([topico])
+  @@index([activo])
+  @@map("SUSCRIPCION_WEBHOOK")
 }
 
 model anuncio {

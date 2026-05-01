@@ -59,10 +59,10 @@ export class PersonController {
                 }
             }
 
-            // Build where clause
-            // Un profesor/director no tiene id_programa_academico (los estudiantes sí lo tienen)
+            // Build where clause - only show confirmed users
             let where: any = {
-                id_programa_academico: null
+                id_programa_academico: null,
+                confirmed: true
             };
 
             // If user is coordinator, filter by their faculty
@@ -263,10 +263,11 @@ export class PersonController {
                 }
             }
 
-            // Build where clause
+            // Build where clause - only show confirmed users
             // Los estudiantes siempre tienen un id_programa_academico asignado
             let where: any = {
-                id_programa_academico: { not: null }
+                id_programa_academico: { not: null },
+                confirmed: true
             };
 
             // Search filter
@@ -424,15 +425,84 @@ export class PersonController {
                 return res.status(404).json({ message: 'Persona no encontrada' });
             }
 
-            // Get all active events (events are general, not project-specific)
-            const events = await prisma.evento.findMany({
+            // Get projects for students (where they are actors)
+            const studentProjects = person.actores
+                .filter(a => a.tipo_rol.nombre_rol === 'Estudiante' && a.trabajo_grado)
+                .map(a => a.trabajo_grado);
+
+            // Get projects for teachers (where they are directors/advisors)
+            const teacherProjects = person.actores
+                .filter(a =>
+                    ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol.nombre_rol) &&
+                    a.trabajo_grado
+                )
+                .map(a => a.trabajo_grado);
+
+            // Get all active events for this person's projects
+            const projectIds = [...studentProjects, ...teacherProjects].map(p => p?.id_trabajo_grado).filter(Boolean);
+
+            const rawEvents = await prisma.evento.findMany({
                 where: {
-                    activo: true
+                    activo: true,
+                    id_trabajo_grado: { in: projectIds as string[] }
                 },
                 orderBy: {
                     fecha_inicio: 'asc'
                 },
-                take: 10 // Limit to 10 most recent events
+                take: 100, // Fetch up to 100 events for the profile's BigCalendar
+                include: {
+                    trabajo_grado: {
+                        select: {
+                            titulo_trabajo: true
+                        }
+                    }
+                }
+            });
+
+            // Format events
+            const formattedEvents = rawEvents.map((event: any) => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const eventDate = new Date(event.fecha_fin);
+                eventDate.setHours(0, 0, 0, 0);
+                const daysRemaining = Math.round((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+                let color = 'gray'; // default
+                let borderColor = 'border-gray-300';
+
+                if (daysRemaining < 0) {
+                    color = 'gray';
+                    borderColor = 'border-gray-300';
+                } else if (event.prioridad === 'alta') {
+                    if (daysRemaining <= 1) { color = 'red'; borderColor = 'border-red-500'; }
+                    else if (daysRemaining <= 3) { color = 'orange'; borderColor = 'border-orange-500'; }
+                    else { color = 'red'; borderColor = 'border-red-400'; }
+                } else if (event.prioridad === 'media') {
+                    if (daysRemaining <= 1) { color = 'orange'; borderColor = 'border-orange-500'; }
+                    else if (daysRemaining <= 7) { color = 'yellow'; borderColor = 'border-yellow-500'; }
+                    else { color = 'blue'; borderColor = 'border-blue-400'; }
+                } else {
+                    if (daysRemaining <= 1) { color = 'yellow'; borderColor = 'border-yellow-400'; }
+                    else if (daysRemaining <= 7) { color = 'blue'; borderColor = 'border-blue-300'; }
+                    else { color = 'green'; borderColor = 'border-green-400'; }
+                }
+
+                return {
+                    id: event.id_evento,
+                    title: event.titulo,
+                    description: event.descripcion,
+                    start: event.fecha_inicio,
+                    end: event.fecha_fin,
+                    horaInicio: event.hora_inicio,
+                    horaFin: event.hora_fin,
+                    prioridad: event.prioridad,
+                    allDay: event.todo_el_dia,
+                    daysRemaining,
+                    color,
+                    borderColor,
+                    proyectoTitulo: event.trabajo_grado?.titulo_trabajo || null,
+                    proyectoId: event.id_trabajo_grado || null,
+                };
             });
 
             // Format response
@@ -441,24 +511,11 @@ export class PersonController {
                 ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol.nombre_rol)
             );
 
-            // Get projects for students (where they are actors)
-            const studentProjects = isStudent ? person.actores
-                .filter(a => a.tipo_rol.nombre_rol === 'Estudiante' && a.trabajo_grado)
-                .map(a => a.trabajo_grado) : [];
-
-            // Get projects for teachers (where they are directors/advisors)
-            const teacherProjects = isTeacher ? person.actores
-                .filter(a =>
-                    ['Director', 'Asesor', 'Asesor Externo'].includes(a.tipo_rol.nombre_rol) &&
-                    a.trabajo_grado
-                )
-                .map(a => a.trabajo_grado) : [];
-
             res.json({
                 ...person,
                 studentProjects: studentProjects || [],
                 teacherProjects: teacherProjects || [],
-                events: events || []
+                events: formattedEvents || []
             });
         } catch (error: any) {
             console.error('Error getting person:', error);

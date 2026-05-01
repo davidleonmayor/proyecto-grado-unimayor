@@ -21,7 +21,7 @@ export default function ProjectDetailPage() {
     const { role } = useUserRole();
     const isPrivileged = hasProjectRole || role === 'admin' || role === 'dean';
 
-    const [activeTab, setActiveTab] = useState<'history' | 'review'>('history');
+    const [activeTab, setActiveTab] = useState<'history' | 'review' | 'iteration'>('history');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Review State
@@ -63,9 +63,12 @@ export default function ProjectDetailPage() {
         }
     }, [projectId]);
 
-    // Redirect to history tab if user tries to access review tab without privileges
+    // Redirect to history tab if user tries to access a tab they don't have privileges for
     useEffect(() => {
         if (activeTab === 'review' && !isPrivileged && !isLoading) {
+            setActiveTab('history');
+        }
+        if (activeTab === 'iteration' && isPrivileged && !isLoading) {
             setActiveTab('history');
         }
     }, [activeTab, isPrivileged, isLoading]);
@@ -89,6 +92,35 @@ export default function ProjectDetailPage() {
 
         loadStatuses();
     }, []);
+
+    const handleIteration = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!reviewFile) {
+            Swal.fire('Error', 'Debes adjuntar un archivo para la entrega', 'error');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+            await projectsService.createIteration(projectId, {
+                description: reviewComment,
+                numero_resolucion: reviewNumeroResolucion || undefined,
+                file: reviewFile
+            });
+
+            await Swal.fire('Éxito', 'Entrega registrada correctamente', 'success');
+            setReviewComment('');
+            setReviewNumeroResolucion('');
+            setReviewFile(null);
+            setActiveTab('history');
+            loadData(); // Refresh history
+        } catch (error) {
+            Swal.fire('Error', error instanceof Error ? error.message : 'Error al registrar entrega', 'error');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleReview = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -164,6 +196,17 @@ export default function ProjectDetailPage() {
                         Registrar Revisión
                     </button>
                 )}
+                {!isPrivileged && (
+                    <button
+                        onClick={() => setActiveTab('iteration')}
+                        className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${activeTab === 'iteration'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Nueva Entrega
+                    </button>
+                )}
             </div>
 
             {/* Content */}
@@ -178,6 +221,77 @@ export default function ProjectDetailPage() {
                     ) : (
                         <ProjectHistory history={history} />
                     )
+                )}
+
+                {/* Iteration Tab (Student) */}
+                {activeTab === 'iteration' && (
+                    <div className="max-w-2xl mx-auto">
+                        <div className="mb-6">
+                            <h2 className="text-xl font-semibold text-gray-800">Nueva Entrega de Avance</h2>
+                            <p className="text-sm text-gray-500 mt-1">Sube el documento de tu avance y agrega comentarios para los revisores.</p>
+                        </div>
+
+                        <form onSubmit={handleIteration} className="space-y-5">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Comentarios y Observaciones *
+                                </label>
+                                <textarea
+                                    value={reviewComment}
+                                    onChange={(e) => setReviewComment(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                                    rows={5}
+                                    placeholder="Escribe tus observaciones aquí..."
+                                    required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Documento Adjunto *
+                                </label>
+                                <div className={`relative group border-2 border-dashed rounded-lg p-6 text-center transition-all ${reviewFile ? 'border-gray-800 bg-gray-50' : 'border-gray-200 hover:border-gray-400 bg-white'}`}>
+                                    <input
+                                        type="file"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            setReviewFile(file);
+                                        }}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                                        required
+                                    />
+                                    {!reviewFile ? (
+                                        <div className="space-y-2 pointer-events-none">
+                                            <svg className="mx-auto h-6 w-6 text-gray-400 group-hover:text-gray-600 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            <div className="text-sm font-medium text-gray-700">Seleccionar o arrastrar archivo</div>
+                                            <div className="text-xs text-gray-400">PDF, DOC, EXCEL (Obligatorio)</div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2 pointer-events-none">
+                                            <svg className="mx-auto h-6 w-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            <div className="text-sm font-medium text-gray-900 truncate px-2">{reviewFile.name}</div>
+                                            <div className="text-xs text-gray-500">{(reviewFile.size / 1024 / 1024).toFixed(2)} MB</div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full py-2.5 px-4 border border-transparent rounded text-sm font-medium text-white bg-[#155dfc] hover:bg-[#155dfc]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:bg-gray-200 disabled:text-gray-500 transition-colors"
+                                >
+                                    {isSubmitting ? 'Subiendo...' : 'Enviar Entrega'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 )}
 
                 {/* Review Tab (Privileged) */}

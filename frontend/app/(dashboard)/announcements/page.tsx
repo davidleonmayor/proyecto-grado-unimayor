@@ -94,7 +94,7 @@ const AnnouncementsPageContent = () => {
                 <div className="bg-white p-6 rounded-md shadow-sm">
                     <h1 className="text-xl font-bold text-gray-800 mb-4">Crear Nuevo Anuncio</h1>
                     <p className="text-sm text-gray-500 mb-6">
-                        Publica un anuncio que será visible en la plataforma. Si eres <strong>Coordinador</strong>, este anuncio y su correo de notificación se enviarán <strong>solo a tu facultad</strong>. Si eres Administrador o Decano, se enviará a todo el sistema de forma global.
+                        Publica un anuncio que será visible en la plataforma. Si eres <strong>Coordinador</strong>, este anuncio y su correo de notificación se enviarán <strong>solo a tu facultad</strong>. Si eres Administrador, se enviará a todo el sistema de forma global.
                     </p>
 
                     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -125,9 +125,9 @@ const AnnouncementsPageContent = () => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`mt-2 bg-secondary text-white py-2.5 rounded-md font-semibold transition-colors ${isSubmitting ? "opacity-75 cursor-not-allowed" : "hover:bg-opacity-90"}`}
+                            className={`mt-2 bg-[#0ea5e9] text-white py-2.5 rounded-md font-semibold transition-colors shadow-sm ${isSubmitting ? "opacity-75 cursor-not-allowed" : "hover:bg-[#0284c7]"}`}
                         >
-                            {isSubmitting ? "Enviando Correos..." : "Publicar y Enviar Correos"}
+                            {isSubmitting ? "Publicando..." : "Publicar"}
                         </button>
                     </form>
                 </div>

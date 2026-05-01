@@ -88,7 +88,7 @@ async function main() {
     // Clean messaging tables before persona (FK constraints)
     await (prisma as any).mensaje_entrega.deleteMany({});
     await (prisma as any).mensaje.deleteMany({});
-    await (prisma as any).webhook_subscription.deleteMany({});
+    await (prisma as any).suscripcion_webhook.deleteMany({});
     await prisma.persona.deleteMany({});
     await prisma.distinciones.deleteMany({});
     await prisma.accion_seg.deleteMany({});

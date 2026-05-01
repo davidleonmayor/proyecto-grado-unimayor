@@ -58,9 +58,15 @@ export class EventController {
             const isCoordinator = userActors.some(a => a.id_tipo_rol === coordinatorRole?.id_rol);
             const isTeacher = userActors.some(a => teacherRoleIds.includes(a.id_tipo_rol));
 
+            // Events should only be visible for up to 30 days after they expire
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            thirtyDaysAgo.setHours(0, 0, 0, 0);
+
             // Build where clause based on user role
             let whereClause: any = {
                 activo: true,
+                fecha_fin: { gte: thirtyDaysAgo }
             };
 
             // Add search filter
@@ -91,8 +97,11 @@ export class EventController {
                     // Events whose end date is today or in the future
                     whereClause.fecha_fin = { gte: now };
                 } else if (status === 'past') {
-                    // Events whose end date is in the past
-                    whereClause.fecha_fin = { lt: now };
+                    // Events whose end date is in the past but within the last 30 days
+                    whereClause.fecha_fin = { 
+                        lt: now,
+                        gte: thirtyDaysAgo
+                    };
                 } else if (status === 'today') {
                     // Events whose end date is today
                     whereClause.fecha_fin = { gte: now, lt: tomorrow };
@@ -209,34 +218,44 @@ export class EventController {
             });
 
             // Sort manually: alta first, then by days remaining (ascending for future, descending for past)
-            const now = new Date();
+            const nowForSort = new Date();
+            nowForSort.setHours(0, 0, 0, 0);
+
             events.sort((a, b) => {
-                const priorityOrder: { [key: string]: number } = { 'alta': 0, 'media': 1, 'baja': 2 };
-                const aPriority = priorityOrder[a.prioridad] ?? 3;
-                const bPriority = priorityOrder[b.prioridad] ?? 3;
-
-                if (aPriority !== bPriority) {
-                    return aPriority - bPriority;
-                }
-
-                // If same priority, sort by date (future events first, then past)
                 const aDate = new Date(a.fecha_fin);
                 aDate.setHours(0, 0, 0, 0);
                 const bDate = new Date(b.fecha_fin);
                 bDate.setHours(0, 0, 0, 0);
-                const nowForSort = new Date();
-                nowForSort.setHours(0, 0, 0, 0);
+
                 const aDaysRemaining = Math.round((aDate.getTime() - nowForSort.getTime()) / (1000 * 60 * 60 * 24));
                 const bDaysRemaining = Math.round((bDate.getTime() - nowForSort.getTime()) / (1000 * 60 * 60 * 24));
 
-                // Future events first (ascending), then past events (descending)
-                if (aDaysRemaining >= 0 && bDaysRemaining >= 0) {
-                    return aDaysRemaining - bDaysRemaining; // Future: ascending
-                } else if (aDaysRemaining < 0 && bDaysRemaining < 0) {
-                    return bDaysRemaining - aDaysRemaining; // Past: descending (most recent first)
+                const aIsUpcoming = aDaysRemaining >= 0;
+                const bIsUpcoming = bDaysRemaining >= 0;
+
+                // 1. Primary sort: Upcoming vs Past
+                if (aIsUpcoming && !bIsUpcoming) return -1;
+                if (!aIsUpcoming && bIsUpcoming) return 1;
+
+                // 2. Secondary sort: By days remaining (closest to today first)
+                if (aIsUpcoming) {
+                    // Both are upcoming: smallest daysRemaining first
+                    if (aDaysRemaining !== bDaysRemaining) {
+                        return aDaysRemaining - bDaysRemaining;
+                    }
                 } else {
-                    return aDaysRemaining >= 0 ? -1 : 1; // Future before past
+                    // Both are expired: largest daysRemaining (closest to 0) first
+                    if (aDaysRemaining !== bDaysRemaining) {
+                        return bDaysRemaining - aDaysRemaining;
+                    }
                 }
+
+                // 3. Tertiary sort: Priority
+                const priorityOrder: { [key: string]: number } = { 'alta': 0, 'media': 1, 'baja': 2 };
+                const aPriority = priorityOrder[a.prioridad] ?? 3;
+                const bPriority = priorityOrder[b.prioridad] ?? 3;
+
+                return aPriority - bPriority;
             });
 
             // Calculate days remaining and add color based on priority and days
@@ -304,6 +323,7 @@ export class EventController {
                     color,
                     borderColor,
                     proyectoTitulo: event.trabajo_grado?.titulo_trabajo || null,
+                    proyectoId: event.id_trabajo_grado || null,
                 };
             });
 

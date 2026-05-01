@@ -9,8 +9,8 @@ export class WebhookService {
     public async dispatch(topic: string, payload: any): Promise<void> {
         try {
             // Find all active subscriptions for this topic
-            const subscriptions = await (prisma as any).webhook_subscription.findMany({
-                where: { topic, is_active: true }
+            const subscriptions = await (prisma as any).suscripcion_webhook.findMany({
+                where: { topico: topic, activo: true }
             });
 
             if (subscriptions.length === 0) {
@@ -23,7 +23,7 @@ export class WebhookService {
             // Fire all webhooks asynchronously (fire and forget)
             // In a production system, this would be queued in Redis/RabbitMQ/Kafka
             for (const sub of subscriptions) {
-                this.sendPayload(sub.url, payload, sub.secret).catch(err => {
+                this.sendPayload(sub.url, payload, sub.secreto).catch(err => {
                     console.error(`[WebhookService] Failed to dispatch ${topic} to ${sub.url}`, err.message);
                 });
             }

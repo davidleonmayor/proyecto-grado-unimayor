@@ -11,6 +11,8 @@ import singleBranch from "@/public/singleBranch.png";
 import singleClass from "@/public/singleClass.png";
 import singleLesson from "@/public/singleLesson.png";
 import EventCalendar from '@/modules/events/components/EventCalendar';
+import BigCalendar from '@/modules/events/components/BigCalendar';
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import Link from "next/link";
 import FormModal from '@/shared/components/ui/FormModal';
 import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
@@ -135,46 +137,45 @@ const SingleTeacherPageContent = () => {
                         </div>
                     </div>
 
-
                     {/* SMALL CARDS */}
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                         {/* CARD */}
-                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
-                            <Image src={singleAttendanceImage} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
+                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 shadow-sm">
+                            <Image src={singleAttendanceImage} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold">{totalProjects}</h1>
-                                <span className="text-xs sm:text-sm text-white/80">Proyectos dirigidos</span>
+                                <span className="text-xs sm:text-sm text-gray-400">Proyectos dirigidos</span>
                             </div>
                         </div>
                         {/* CARD */}
-                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
-                            <Image src={singleClass} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
+                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 shadow-sm">
+                            <Image src={singleClass} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold">{totalStudents}</h1>
-                                <span className="text-xs sm:text-sm text-white/80">Estudiantes asignados</span>
+                                <span className="text-xs sm:text-sm text-gray-400">Estudiantes asignados</span>
                             </div>
                         </div>
                         {/* CARD */}
-                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
-                            <Image src={singleBranch} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
+                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 shadow-sm">
+                            <Image src={singleBranch} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold">{uniqueModalities}</h1>
-                                <span className="text-xs sm:text-sm text-white/80">Opciones de Grado supervisadas</span>
+                                <span className="text-xs sm:text-sm text-gray-400">Opciones de Grado supervisadas</span>
                             </div>
                         </div>
                         {/* CARD */}
-                        <div className="bg-[#0ea5e9] p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 text-white">
-                            <Image src={singleLesson} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 brightness-0 invert" />
+                        <div className="bg-white p-3 sm:p-4 rounded-md flex gap-3 sm:gap-4 shadow-sm">
+                            <Image src={singleLesson} alt="" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
                             <div className="min-w-0">
                                 <h1 className="text-lg sm:text-xl font-semibold truncate">{faculty}</h1>
-                                <span className="text-xs sm:text-sm text-white/80">Facultad</span>
+                                <span className="text-xs sm:text-sm text-gray-400">Facultad</span>
                             </div>
                         </div>
                     </div>
-
                 </div>
+
                 {/* BOTTOM - Projects List */}
-                <div className="mt-4 bg-white rounded-md p-3 sm:p-4">
+                <div className="mt-4 bg-white rounded-md p-3 sm:p-4 shadow-sm">
                     <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Proyectos Dirigidos</h1>
                     {projects.length === 0 ? (
                         <p className="text-sm text-gray-500">No hay proyectos asignados</p>
@@ -213,10 +214,17 @@ const SingleTeacherPageContent = () => {
                         </div>
                     )}
                 </div>
+
+                {/* HORARIO - BigCalendar */}
+                <div className="mt-4 bg-white rounded-md p-3 sm:p-4 shadow-sm w-full">
+                    <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Horario del profesor</h1>
+                    <BigCalendar initialEvents={teacher.events} />
+                </div>
             </div>
+
             {/* RIGHT */}
             <div className="w-full xl:w-1/3 flex flex-col gap-3 sm:gap-4">
-                <div className="bg-white p-3 sm:p-4 rounded-md">
+                <div className="bg-white p-3 sm:p-4 rounded-md shadow-sm">
                     <h1 className="text-lg sm:text-xl font-semibold">Atajos</h1>
                     <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-4 flex-wrap text-xs text-gray-600">
                         <Link href={"/projects"} className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">Proyectos</Link>
@@ -226,7 +234,7 @@ const SingleTeacherPageContent = () => {
                     </div>
                 </div>
                 <div className="hidden xl:block">
-                    <EventCalendar />
+                    <EventCalendar initialEvents={teacher.events} />
                 </div>
             </div>
         </div>

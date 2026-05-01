@@ -17,9 +17,11 @@ import { ChatWidget } from '@/modules/messaging/components/ChatWidget';
 import { PersonaMin } from '@/modules/messaging/services/messaging.service';
 import Swal from 'sweetalert2';
 import { announcementService, Announcement } from '@/modules/dashboard/services/announcement.service';
+import { useAvatar } from '@/shared/hooks/useAvatar';
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
+  const { avatar } = useAvatar();
 
   // Real-time messaging
   const { conversations, loading, unreadCount, refresh } = useMessaging();
@@ -93,7 +95,7 @@ export const Navbar = () => {
       text: '¿Estás seguro de que deseas cerrar sesión?',
       icon: 'question',
       showCancelButton: true,
-      confirmButtonColor: '#3b82f6',
+      confirmButtonColor: '#0ea5e9',
       cancelButtonColor: '#6b7280',
       confirmButtonText: 'Sí, cerrar sesión',
       cancelButtonText: 'Cancelar',
@@ -336,11 +338,11 @@ export const Navbar = () => {
               </span>
             </div>
             <Image
-              src={avatarImage}
+              src={avatar}
               alt="Avatar image"
               width={34}
               height={34}
-              className="rounded-full ring-2 ring-white shadow-sm"
+              className="rounded-full ring-2 ring-white shadow-sm aspect-square object-cover"
             />
           </div>
 

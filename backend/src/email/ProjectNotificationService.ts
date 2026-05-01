@@ -25,9 +25,9 @@ export class ProjectNotificationService {
 
             if (!events || events.length === 0) return "";
 
-            let htmlString = `<div style="margin: 25px 0; padding: 15px; background-color: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">`;
-            htmlString += `<h3 style="margin-top: 0; color: #334155; font-size: 16px;"> Próximos Eventos</h3>`;
-            htmlString += `<ul style="padding-left: 20px; color: #475569; margin-bottom: 0;">`;
+            let htmlString = `<div class="info-box" style="border-left-color: #e2e8f0;">`;
+            htmlString += `<h3 style="margin-top: 0; color: #111827; font-size: 16px;"> Próximos Eventos</h3>`;
+            htmlString += `<ul style="padding-left: 20px; color: #4b5563; margin-bottom: 0; font-size: 15px;">`;
 
             for (const event of events) {
                 const eventStartDate = new Date(event.fecha_inicio);
@@ -41,10 +41,10 @@ export class ProjectNotificationService {
 
                 if (isToday) {
                     htmlString += `<li style="margin-bottom: 10px;">
-                        <span style="background-color: #ffedd5; color: #c2410c; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">¡HOY!</span>
+                        <span style="background-color: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 5px;">¡HOY!</span>
                         <strong style="color: #111827;">${event.titulo}</strong>
-                        <div style="font-size: 13px; margin-top: 2px;">
-                            <span style="color: #ea580c; font-weight: bold;">¡El evento inicia hoy${event.hora_inicio ? ` a las ${event.hora_inicio}` : ''}!</span>
+                        <div style="font-size: 13px; margin-top: 4px;">
+                            <span style="color: #ea580c; font-weight: 600;">¡El evento inicia hoy${event.hora_inicio ? ` a las ${event.hora_inicio}` : ''}!</span>
                         </div>
                     </li>`;
                 } else {

@@ -56,7 +56,12 @@ const StudentForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
     try {
       if (type === "create") {
         await personsService.createStudent(formData);
-        Swal.fire('Éxito', 'Estudiante creado exitosamente', 'success');
+        Swal.fire({
+          title: 'Estudiante creado',
+          text: 'Se ha enviado un correo de confirmación. El estudiante debe verificar su cuenta antes de poder aparecer en el sistema y ser asignado a proyectos.',
+          icon: 'success',
+          confirmButtonColor: '#0ea5e9'
+        });
       } else {
         await personsService.updatePerson(data.id, formData);
         Swal.fire('Éxito', 'Estudiante actualizado exitosamente', 'success');

@@ -55,6 +55,34 @@ const getStatusColor = (statusName: string) => {
 
 export const ProjectHistory = ({ history }: ProjectHistoryProps) => {
   const [downloading, setDownloading] = useState<string | null>(null);
+  const [previewing, setPreviewing] = useState<{ id: string; url: string | null; loading: boolean }>({ id: '', url: null, loading: false });
+
+  const handlePreview = async (historyId: string) => {
+    try {
+      setPreviewing({ id: historyId, url: null, loading: true });
+      const { blob, type } = await projectsService.getFileBlob(historyId);
+      
+      if (type !== 'application/pdf') {
+        alert('Solo se pueden previsualizar archivos PDF en el navegador. Por favor descargue el archivo.');
+        setPreviewing({ id: '', url: null, loading: false });
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      setPreviewing({ id: historyId, url, loading: false });
+    } catch (error) {
+      console.error('Error al obtener previsualización:', error);
+      alert(error instanceof Error ? error.message : 'Error al obtener previsualización');
+      setPreviewing({ id: '', url: null, loading: false });
+    }
+  };
+
+  const closePreview = () => {
+    if (previewing.url) {
+      URL.revokeObjectURL(previewing.url);
+    }
+    setPreviewing({ id: '', url: null, loading: false });
+  };
 
   const handleDownload = async (historyId: string) => {
     try {
@@ -173,58 +201,116 @@ export const ProjectHistory = ({ history }: ProjectHistoryProps) => {
             })()}
 
             {item.file && (
-              <button
-                onClick={() => handleDownload(item.id)}
-                disabled={downloading === item.id}
-                className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {downloading === item.id ? (
-                  <>
-                    <svg
-                      className="animate-spin h-4 w-4"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
+              <div className="flex items-center gap-6 mt-4">
+                <button
+                  onClick={() => handleDownload(item.id)}
+                  disabled={downloading === item.id}
+                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {downloading === item.id ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Descargando...
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
                         stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Descargando...
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                      />
-                    </svg>
-                    {item.fileName || 'Descargar archivo adjunto'}
-                  </>
-                )}
-              </button>
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
+                      {item.fileName || 'Descargar adjunto'}
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => handlePreview(item.id)}
+                  disabled={previewing.loading && previewing.id === item.id}
+                  className="flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {previewing.loading && previewing.id === item.id ? (
+                     <>
+                     <svg
+                       className="animate-spin h-4 w-4"
+                       xmlns="http://www.w3.org/2000/svg"
+                       fill="none"
+                       viewBox="0 0 24 24"
+                     >
+                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                     </svg>
+                     Cargando...
+                   </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      Previsualizar PDF
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>
       ))}
+
+      {previewing.url && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center p-4 border-b border-gray-100 bg-gray-50/50">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 className="text-base font-semibold text-gray-800">Previsualización de Documento</h3>
+              </div>
+              <button 
+                onClick={closePreview} 
+                className="text-gray-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors"
+                title="Cerrar"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 w-full bg-gray-200 p-2">
+              <embed src={previewing.url} type="application/pdf" className="w-full h-full rounded shadow-sm bg-white" />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

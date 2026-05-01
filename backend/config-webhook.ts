@@ -8,17 +8,17 @@ async function main() {
     const secret = 'internal_secret';
 
     // Check if exists
-    const existing = await prisma.webhook_subscription.findFirst({
-        where: { url, topic }
+    const existing = await (prisma as any).suscripcion_webhook.findFirst({
+        where: { url, topico: topic }
     });
 
     if (!existing) {
-        await prisma.webhook_subscription.create({
+        await (prisma as any).suscripcion_webhook.create({
             data: {
-                topic,
+                topico: topic,
                 url,
-                secret,
-                is_active: true
+                secreto: secret,
+                activo: true
             }
         });
         console.log(`Successfully registered internal webhook for ${topic} -> ${url}`);

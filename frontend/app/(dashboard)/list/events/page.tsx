@@ -31,6 +31,7 @@ interface Event {
   color: string;
   borderColor: string;
   proyectoTitulo?: string | null;
+  proyectoId?: string | null;
 }
 
 const columns = [
@@ -39,7 +40,7 @@ const columns = [
   { header: "Hora inicio", accessor: "horaInicio" },
   { header: "Hora fin", accessor: "horaFin" },
   { header: "Prioridad", accessor: "prioridad" },
-  { header: "Estado", accessor: "daysRemaining" },
+  { header: "Días restantes", accessor: "daysRemaining" },
 ];
 
 const EventListPageContent = () => {
@@ -51,8 +52,8 @@ const EventListPageContent = () => {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
   const [filterPriority, setFilterPriority] = useState<string>('all');
-  const [filterDate, setFilterDate] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('priority');
+  const [filterDate, setFilterDate] = useState<string>('active');
+  const [sortBy, setSortBy] = useState<string>('days-asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -117,14 +118,21 @@ const EventListPageContent = () => {
       // Apply client-side sorting only (filters are handled server-side)
       let sorted = [...eventsData];
 
-      // Sorting
+      // Client-side sorting logic that handles past events correctly
+      const sortDaysRemaining = (aDays: number, bDays: number) => {
+        if (aDays >= 0 && bDays >= 0) return aDays - bDays;
+        if (aDays >= 0 && bDays < 0) return -1;
+        if (aDays < 0 && bDays >= 0) return 1;
+        return bDays - aDays; // Both negative (past events), show most recently passed first
+      };
+
       if (sortBy === 'priority') {
         const priorityOrder = { 'alta': 0, 'media': 1, 'baja': 2 };
         sorted.sort((a, b) => {
           const aPriority = priorityOrder[a.prioridad as keyof typeof priorityOrder] ?? 3;
           const bPriority = priorityOrder[b.prioridad as keyof typeof priorityOrder] ?? 3;
           if (aPriority !== bPriority) return aPriority - bPriority;
-          return a.daysRemaining - b.daysRemaining;
+          return sortDaysRemaining(a.daysRemaining, b.daysRemaining);
         });
       } else if (sortBy === 'date-asc') {
         sorted.sort((a, b) => {
@@ -139,9 +147,9 @@ const EventListPageContent = () => {
           return bDate - aDate;
         });
       } else if (sortBy === 'days-asc') {
-        sorted.sort((a, b) => a.daysRemaining - b.daysRemaining);
+        sorted.sort((a, b) => sortDaysRemaining(a.daysRemaining, b.daysRemaining));
       } else if (sortBy === 'days-desc') {
-        sorted.sort((a, b) => b.daysRemaining - a.daysRemaining);
+        sorted.sort((a, b) => sortDaysRemaining(b.daysRemaining, a.daysRemaining));
       }
 
       setEvents(sorted);
@@ -226,11 +234,19 @@ const EventListPageContent = () => {
           {item.description && (
             <p className="text-xs text-gray-400 mt-1">{item.description}</p>
           )}
-          {item.proyectoTitulo && (
-            <p className="text-xs text-indigo-500 mt-1">
-              Proyecto: {item.proyectoTitulo}
-            </p>
-          )}
+          {item.proyectoTitulo && item.proyectoId ? (
+            <Link href={`/projects/${item.proyectoId}`} className="mt-2 flex flex-col text-xs text-gray-500 group cursor-pointer block w-fit">
+              <span className="font-semibold text-gray-600 group-hover:text-primary-600 transition-colors">Proyecto:</span>
+              <span className="text-primary-600 group-hover:text-primary-700 group-hover:underline transition-colors mt-0.5">
+                {item.proyectoTitulo}
+              </span>
+            </Link>
+          ) : item.proyectoTitulo ? (
+            <div className="mt-2 flex flex-col text-xs text-gray-500">
+              <span className="font-semibold text-gray-600">Proyecto:</span>
+              <span className="mt-0.5 text-gray-600">{item.proyectoTitulo}</span>
+            </div>
+          ) : null}
         </td>
         <td className="p-4">
           {startDate.toLocaleDateString("es-CO", {
@@ -252,10 +268,25 @@ const EventListPageContent = () => {
           }))}
         </td>
         <td className="p-4">
-          {getPriorityBadge(item.prioridad)}
+          <div className="flex flex-col items-center justify-center">
+            <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium capitalize ${item.prioridad === 'alta' ? 'bg-red-50 text-red-700 border border-red-200' :
+                item.prioridad === 'media' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                  'bg-green-50 text-green-700 border border-green-200'
+              }`}>
+              {item.prioridad}
+            </span>
+          </div>
         </td>
         <td className="p-4">
-          {getDaysRemainingBadge(item.daysRemaining)}
+          <div className="flex flex-col items-center justify-center">
+            <span className="text-xs text-gray-400 mb-1">Dias restantes</span>
+            <span className={`font-semibold leading-none mt-1 ${item.daysRemaining > 0 ? 'text-lg text-gray-700' :
+                item.daysRemaining === 0 ? 'text-lg text-orange-600' :
+                  'text-sm text-red-500'
+              }`}>
+              {item.daysRemaining > 0 ? item.daysRemaining : (item.daysRemaining === 0 ? 'Hoy' : 'Vencido')}
+            </span>
+          </div>
         </td>
         <td className="p-4">
           <div className="flex items-center gap-2">
@@ -287,12 +318,13 @@ const EventListPageContent = () => {
                   setShowFilterMenu(!showFilterMenu);
                   setShowSortMenu(false);
                 }}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal hover:brightness-95 transition-all duration-200 ${showFilterMenu ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}
+                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm text-[#003b73] ${showFilterMenu ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}
                 title="Filtrar"
               >
-                <Image src={filterImage} alt="Filtrar" width={14} height={14} />
+                <Image src={filterImage} alt="Filtrar" width={16} height={16} className="opacity-70" />
+                <span>Filtrar</span>
                 {activeFilterCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {activeFilterCount}
                   </span>
                 )}
@@ -351,10 +383,11 @@ const EventListPageContent = () => {
                   setShowSortMenu(!showSortMenu);
                   setShowFilterMenu(false);
                 }}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-principal hover:brightness-95 transition-all duration-200 ${showSortMenu ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}
+                className={`flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-white border border-gray-200 hover:bg-gray-50 transition-colors shadow-sm text-[#003b73] ${showSortMenu ? 'ring-2 ring-primary-500 ring-offset-1' : ''}`}
                 title="Ordenar"
               >
-                <Image src={sortImage} alt="Ordenar" width={14} height={14} />
+                <Image src={sortImage} alt="Ordenar" width={16} height={16} className="opacity-70" />
+                <span>Ordenar</span>
               </button>
               {showSortMenu && (
                 <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden">
@@ -389,7 +422,7 @@ const EventListPageContent = () => {
             </div>
 
             {isCoordinator && (
-              <FormModal table="event" type="create" />
+              <FormModal table="event" type="create" buttonText="Crear Evento" />
             )}
           </div>
         </div>

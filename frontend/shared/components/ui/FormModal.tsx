@@ -85,7 +85,7 @@ const FormModal = ({ table, type, data, id, buttonText }:
 ) => {
 
     const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
-    const createClasses = "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50";
+    const createClasses = "bg-white text-[#003b73] border border-gray-200 hover:bg-gray-50";
     const otherBgColor = type === "update" ? "bg-secondary-400 text-white" : "bg-red-500 text-white";
 
     const [open, setOpen] = useState(false);

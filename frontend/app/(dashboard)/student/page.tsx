@@ -1,6 +1,7 @@
 'use client';
 
 import BigCalendar from '@/modules/events/components/BigCalendar';
+
 import EventCalendar from '@/modules/events/components/EventCalendar';
 import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
 import "react-big-calendar/lib/css/react-big-calendar.css";

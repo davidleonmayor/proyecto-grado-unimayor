@@ -10,13 +10,16 @@ import singleBranch from "@/public/singleBranch.png";
 import singleClass from "@/public/singleClass.png";
 import singleLesson from "@/public/singleLesson.png";
 import EventCalendar from '@/modules/events/components/EventCalendar';
+import BigCalendar from '@/modules/events/components/BigCalendar';
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import Link from "next/link";
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { personsService } from '@/modules/persons/services/persons.service';
-
+import { useAvatar } from '@/shared/hooks/useAvatar';
 
 const ProfilePage = () => {
     const { user, loading: authLoading } = useAuth();
+    const { avatar } = useAvatar();
     const [profile, setProfile] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [projects, setProjects] = useState<any[]>([]);
@@ -103,7 +106,7 @@ const ProfilePage = () => {
                         <div className="w-full sm:w-1/3 flex justify-center sm:justify-start">
                             <div className="relative w-24 h-24 sm:w-32 sm:h-32 lg:w-36 lg:h-36 rounded-full overflow-hidden bg-primary-200">
                                 <Image
-                                    src="/avatar.png"
+                                    src={avatar}
                                     alt={fullName}
                                     width={144}
                                     height={144}
@@ -170,7 +173,7 @@ const ProfilePage = () => {
                 </div>
 
                 {/* BOTTOM - Personal Info */}
-                <div className="mt-4 bg-white rounded-md p-3 sm:p-4">
+                <div className="mt-4 bg-white rounded-md p-3 sm:p-4 shadow-sm">
                     <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Información Personal</h1>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -214,7 +217,7 @@ const ProfilePage = () => {
 
                 {/* Projects Section */}
                 {projects.length > 0 ? (
-                    <div className="mt-4 bg-white rounded-md p-3 sm:p-4">
+                    <div className="mt-4 bg-white rounded-md p-3 sm:p-4 shadow-sm">
                         <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">
                             {projects.length === 1 ? 'Proyecto de Grado' : 'Proyectos de Grado'}
                         </h1>
@@ -274,20 +277,32 @@ const ProfilePage = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="mt-4 bg-white rounded-md p-4">
+                    <div className="mt-4 bg-white rounded-md p-4 shadow-sm">
                         <h1 className="text-lg sm:text-xl font-semibold mb-3">Proyecto de Grado</h1>
                         <p className="text-gray-500 text-sm">No tienes proyectos de grado asignados actualmente.</p>
                     </div>
                 )}
+
+                {/* CALENDAR - BigCalendar */}
+                <div className="mt-4 bg-white rounded-md p-3 sm:p-4 shadow-sm w-full">
+                    <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Mi Horario</h1>
+                    <BigCalendar initialEvents={profile.events} />
+                </div>
             </div>
 
             {/* RIGHT */}
             <div className="w-full xl:w-1/3 flex flex-col gap-3 sm:gap-4">
-                <div className="bg-white p-3 sm:p-4 rounded-md">
+                <div className="bg-white p-3 sm:p-4 rounded-md shadow-sm">
                     <h1 className="text-lg sm:text-xl font-semibold">Atajos</h1>
                     <div className="mt-3 sm:mt-4 flex gap-2 sm:gap-4 flex-wrap text-xs text-gray-600">
                         <Link href="/projects" className="p-2 sm:p-3 rounded-md bg-pastelBlue hover:bg-pastelBlue/80 transition-colors">
                             Mis Proyectos
+                        </Link>
+                        <Link href="/list/students" className="p-2 sm:p-3 rounded-md bg-pastelPurple hover:bg-pastelPurple/80 transition-colors">
+                            Estudiantes
+                        </Link>
+                        <Link href="/list/teachers" className="p-2 sm:p-3 rounded-md bg-pastelYellow hover:bg-pastelYellow/80 transition-colors">
+                            Profesores
                         </Link>
                         <Link href="/list/events" className="p-2 sm:p-3 rounded-md bg-pastelGreen hover:bg-pastelGreen/80 transition-colors">
                             Eventos
@@ -295,7 +310,7 @@ const ProfilePage = () => {
                     </div>
                 </div>
                 <div className="hidden xl:block">
-                    <EventCalendar />
+                    <EventCalendar initialEvents={profile.events} />
                 </div>
             </div>
         </div>

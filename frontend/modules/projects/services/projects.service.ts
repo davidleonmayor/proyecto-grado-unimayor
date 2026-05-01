@@ -99,6 +99,10 @@ export class ProjectsService extends BaseApiClient {
     );
   }
 
+  async getFileBlob(historyId: string): Promise<{ blob: Blob; type: string; filename: string }> {
+    return super.getFileBlob(`/api/projects/history/${historyId}/download`);
+  }
+
   getDownloadUrl(historyId: string): string {
     return `${this.baseURL}/api/projects/history/${historyId}/download`;
   }

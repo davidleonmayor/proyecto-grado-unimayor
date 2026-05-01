@@ -36,7 +36,12 @@ const TeacherForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
         try {
             if (type === "create") {
                 await personsService.createTeacher(formData);
-                Swal.fire('Éxito', 'Profesor creado exitosamente', 'success');
+                Swal.fire({
+                    title: 'Profesor creado',
+                    text: 'Se ha enviado un correo de confirmación. El profesor debe verificar su cuenta antes de poder aparecer en el sistema y ser asignado a proyectos.',
+                    icon: 'success',
+                    confirmButtonColor: '#0ea5e9'
+                });
             } else {
                 await personsService.updatePerson(data.id, formData);
                 Swal.fire('Éxito', 'Profesor actualizado exitosamente', 'success');

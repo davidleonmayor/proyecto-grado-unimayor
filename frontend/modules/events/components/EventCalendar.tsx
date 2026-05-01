@@ -6,6 +6,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import moreDarkImage from '@/public/moreDark.png';
 import { eventsService } from '@/modules/events/services/events.service';
+import Link from 'next/link';
 
 
 type ValuePiece = Date | null;
@@ -25,9 +26,11 @@ interface Event {
     daysRemaining: number;
     color: string;
     borderColor: string;
+    proyectoTitulo?: string | null;
+    proyectoId?: string | null;
 }
 
-const EventCalendar = () => {
+const EventCalendar = ({ initialEvents }: { initialEvents?: Event[] } = {}) => {
     const router = useRouter();
     const [value, onChange] = useState<Value>(new Date());
     const [events, setEvents] = useState<Event[]>([]);
@@ -38,9 +41,47 @@ const EventCalendar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
+    const sortEvents = (eventsData: Event[]) => {
+        return [...eventsData].sort((a: Event, b: Event) => {
+            // 1. Primary sort: Upcoming (>=0) vs Expired (<0)
+            const aIsUpcoming = a.daysRemaining >= 0;
+            const bIsUpcoming = b.daysRemaining >= 0;
+            
+            if (aIsUpcoming && !bIsUpcoming) return -1;
+            if (!aIsUpcoming && bIsUpcoming) return 1;
+
+            // 2. Secondary sort: By days remaining (closest to today first)
+            if (aIsUpcoming) {
+                // Both are upcoming: smallest daysRemaining first
+                if (a.daysRemaining !== b.daysRemaining) {
+                    return a.daysRemaining - b.daysRemaining;
+                }
+            } else {
+                // Both are expired: largest daysRemaining (closest to 0) first
+                if (a.daysRemaining !== b.daysRemaining) {
+                    return b.daysRemaining - a.daysRemaining;
+                }
+            }
+
+            // 3. Tertiary sort: Priority
+            const priorityOrder = { 'alta': 0, 'media': 1, 'baja': 2 };
+            const aPriority = priorityOrder[a.prioridad as keyof typeof priorityOrder] || 3;
+            const bPriority = priorityOrder[b.prioridad as keyof typeof priorityOrder] || 3;
+            
+            return aPriority - bPriority;
+        });
+    };
+
     useEffect(() => {
-        loadEvents();
-    }, []);
+        if (initialEvents) {
+            const sorted = sortEvents(initialEvents);
+            setAllEvents(sorted);
+            setEvents(sorted.slice(0, 5));
+            setIsLoading(false);
+        } else {
+            loadEvents();
+        }
+    }, [initialEvents]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -73,21 +114,7 @@ const EventCalendar = () => {
             const response = await eventsService.getEvents({ page: 1, limit: 50 });
             const eventsData = response.events;
             // Events are already sorted by the backend, but ensure proper sorting for display
-            const sortedEvents = eventsData.sort((a: Event, b: Event) => {
-                const priorityOrder = { 'alta': 0, 'media': 1, 'baja': 2 };
-                const priorityDiff = (priorityOrder[a.prioridad as keyof typeof priorityOrder] || 3) -
-                    (priorityOrder[b.prioridad as keyof typeof priorityOrder] || 3);
-                if (priorityDiff !== 0) return priorityDiff;
-
-                // Future events first, then past events
-                if (a.daysRemaining >= 0 && b.daysRemaining >= 0) {
-                    return a.daysRemaining - b.daysRemaining;
-                } else if (a.daysRemaining < 0 && b.daysRemaining < 0) {
-                    return b.daysRemaining - a.daysRemaining; // Most recent past events first
-                } else {
-                    return a.daysRemaining >= 0 ? -1 : 1;
-                }
-            });
+            const sortedEvents = sortEvents(eventsData);
             setAllEvents(sortedEvents);
             setEvents(sortedEvents.slice(0, 5));
         } catch (error) {
@@ -194,18 +221,43 @@ const EventCalendar = () => {
                                     {event.description && (
                                         <p className="mt-2 text-gray-400 text-sm">{event.description}</p>
                                     )}
+                                    {event.proyectoTitulo && event.proyectoId ? (
+                                        <Link href={`/projects/${event.proyectoId}`} className="mt-2 flex flex-col text-xs text-gray-500 group cursor-pointer block w-fit">
+                                            <span className="font-semibold text-gray-600 group-hover:text-primary-600 transition-colors">Proyecto:</span>
+                                            <span className="text-primary-600 group-hover:text-primary-700 group-hover:underline transition-colors mt-0.5">
+                                                {event.proyectoTitulo}
+                                            </span>
+                                        </Link>
+                                    ) : event.proyectoTitulo ? (
+                                        <div className="mt-2 flex flex-col text-xs text-gray-500">
+                                            <span className="font-semibold text-gray-600">Proyecto:</span>
+                                            <span className="mt-0.5 text-gray-600">{event.proyectoTitulo}</span>
+                                        </div>
+                                    ) : null}
                                 </div>
-                                <div className="ml-2 text-right">
-                                    <span className={`text-xs font-medium px-2 py-1 rounded ${event.color === 'red' ? 'bg-red-100 text-red-700' :
+                                <div className="ml-4 flex gap-4 text-center">
+                                    <div className="flex flex-col items-center">
+                                        <p className="text-xs text-gray-400 mb-1">Prioridad</p>
+                                        <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium capitalize ${event.color === 'red' ? 'bg-red-100 text-red-700' :
                                         event.color === 'orange' ? 'bg-orange-100 text-orange-700' :
                                             event.color === 'yellow' ? 'bg-yellow-100 text-yellow-700' :
                                                 event.color === 'blue' ? 'bg-blue-100 text-blue-700' :
                                                     event.color === 'green' ? 'bg-green-100 text-green-700' :
                                                         'bg-gray-100 text-gray-700'
                                         }`}>
-                                        {getDaysText(event.daysRemaining)}
-                                    </span>
-                                    <p className="text-xs text-gray-400 mt-1 capitalize">{event.prioridad}</p>
+                                            {event.prioridad}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <p className="text-xs text-gray-400 mb-1">Dias restantes</p>
+                                        <span className={`font-semibold mt-auto ${
+                                            event.daysRemaining > 0 ? 'text-lg text-gray-700' : 
+                                            event.daysRemaining === 0 ? 'text-lg text-orange-600' : 
+                                            'text-sm text-red-500'
+                                        }`}>
+                                            {event.daysRemaining > 0 ? event.daysRemaining : (event.daysRemaining === 0 ? 'Hoy' : 'Vencido')}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

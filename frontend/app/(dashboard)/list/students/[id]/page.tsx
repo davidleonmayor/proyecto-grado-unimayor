@@ -11,6 +11,8 @@ import singleBranch from "@/public/singleBranch.png";
 import singleClass from "@/public/singleClass.png";
 import singleLesson from "@/public/singleLesson.png";
 import EventCalendar from '@/modules/events/components/EventCalendar';
+import BigCalendar from '@/modules/events/components/BigCalendar';
+import "react-big-calendar/lib/css/react-big-calendar.css";
 import Link from "next/link";
 import FormModal from '@/shared/components/ui/FormModal';
 import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
@@ -214,6 +216,12 @@ const SingleStudentPageContent = () => {
                         <p className="text-gray-500">No hay proyecto asignado</p>
                     </div>
                 )}
+                
+                {/* HORARIO - BigCalendar */}
+                <div className="mt-4 bg-white rounded-md p-3 sm:p-4 shadow-sm w-full">
+                    <h1 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Horario del estudiante</h1>
+                    <BigCalendar initialEvents={student.events} />
+                </div>
             </div>
             {/* RIGHT */}
             <div className="w-full xl:w-1/3 flex flex-col gap-3 sm:gap-4">
@@ -228,7 +236,7 @@ const SingleStudentPageContent = () => {
                     </div>
                 </div>
                 <div className="hidden xl:block">
-                    <EventCalendar />
+                    <EventCalendar initialEvents={student.events} />
                 </div>
             </div>
         </div>

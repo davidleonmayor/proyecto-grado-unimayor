@@ -179,6 +179,52 @@ export class BaseApiClient {
       throw new Error('Error al descargar el archivo');
     }
   }
+
+  protected async getFileBlob(
+    endpoint: string
+  ): Promise<{ blob: Blob; type: string; filename: string }> {
+    const token = this.getAuthToken();
+    if (!token) {
+      throw new Error('No se encontró el token de autenticación');
+    }
+
+    try {
+      const response = await fetch(`${this.baseURL}${endpoint}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || errorData.error || 'Error al obtener el archivo'
+        );
+      }
+
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'archivo.pdf';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      const blob = await response.blob();
+      const type = response.headers.get('Content-Type') || blob.type;
+      return { blob, type, filename };
+    } catch (error) {
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      }
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error('Error al obtener el archivo');
+    }
+  }
 }
 
 export const baseApiClient = new BaseApiClient();
