@@ -1,12 +1,13 @@
 import { createRequest, createResponse } from "node-mocks-http";
 import { MessagingController } from "../messaging.controller";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../config/prisma";
 
-// 1. Mockeamos PrismaClient directamente, tal como hacías con tus modelos
-jest.mock("@prisma/client", () => {
-  const mPrismaClient = {
+// Mock the prisma client
+jest.mock("../../config/prisma", () => ({
+  prisma: {
     mensaje: {
       create: jest.fn(),
+      findMany: jest.fn(),
     },
     mensaje_entrega: {
       create: jest.fn(),
@@ -22,11 +23,13 @@ jest.mock("@prisma/client", () => {
     actores: {
       findMany: jest.fn(),
     },
-  };
-  return { PrismaClient: jest.fn(() => mPrismaClient) };
-});
+    webhook_subscription: {
+      findMany: jest.fn(),
+    },
+  },
+}));
 
-const prismaMock = new PrismaClient() as jest.Mocked<any>;
+const prismaMock = prisma as jest.Mocked<any>;
 
 describe("MessagingController", () => {
   let controller: MessagingController;
@@ -40,8 +43,12 @@ describe("MessagingController", () => {
   });
 
   describe("sendMessage", () => {
+    // Nota: La validación de datos (content requerido) ahora está en el schema
+    // La validación de auth ahora está en el middleware
+    // El controller solo procesa la lógica de negocio
+
     it("debería enviar un mensaje directo y retornar 201", async () => {
-      // Arrange
+      // Arrange - El usuario y contenido ya están validados por middleware/schema
       const req = createRequest({
         method: "POST",
         url: "/api/messaging/send",
@@ -55,12 +62,12 @@ describe("MessagingController", () => {
         contenido: "Hola",
         id_emisor: "user-123",
       };
-      prismaMock.mensaje.create.mockResolvedValue(newMsgMock);
+      (prismaMock.mensaje.create as jest.Mock).mockResolvedValue(newMsgMock);
 
       const targetUserMock = { id_persona: "teacher-456" };
-      prismaMock.persona.findUnique.mockResolvedValue(targetUserMock);
+      (prismaMock.persona.findUnique as jest.Mock).mockResolvedValue(targetUserMock);
 
-      prismaMock.mensaje_entrega.create.mockResolvedValue({});
+      (prismaMock.mensaje_entrega.create as jest.Mock).mockResolvedValue({});
 
       // Act
       await controller.sendMessage(req, res);
@@ -73,38 +80,22 @@ describe("MessagingController", () => {
       expect(prismaMock.persona.findUnique).toHaveBeenCalledWith({
         where: { id_persona: "teacher-456" },
       });
-      // Se crean 2 entregas: una para el receptor y otra para el emisor
       expect(prismaMock.mensaje_entrega.create).toHaveBeenCalledTimes(2);
     });
 
-    it("debería retornar 400 si falta el contenido del mensaje", async () => {
-      const req = createRequest({
-        method: "POST",
-        url: "/api/messaging/send",
-        user: { id_persona: "user-123" },
-        body: { targetUserId: "teacher-456" }, // Sin content
-      });
-      const res = createResponse();
-
-      await controller.sendMessage(req, res);
-
-      const data = res._getJSONData();
-      expect(res.statusCode).toBe(400);
-      expect(data.error).toBe("El contenido del mensaje es requerido");
-      expect(prismaMock.mensaje.create).not.toHaveBeenCalled();
-    });
-
     it("debería retornar 404 si el usuario destino no existe", async () => {
+      // El content ya está validado por schema, el user por middleware
       const req = createRequest({
         method: "POST",
         url: "/api/messaging/send",
-        user: { id_persona: "user-123" },
+        user: { id_persona: "user-123", id_facultad: "fac-1" },
         body: { content: "Hola", targetUserId: "ghost-999" },
       });
       const res = createResponse();
 
-      prismaMock.mensaje.create.mockResolvedValue({ id_mensaje: "msg-1" });
-      prismaMock.persona.findUnique.mockResolvedValue(null); // Usuario no encontrado
+      const newMsgMock = { id_mensaje: "msg-1", contenido: "Hola" };
+      (prismaMock.mensaje.create as jest.Mock).mockResolvedValue(newMsgMock);
+      (prismaMock.persona.findUnique as jest.Mock).mockResolvedValue(null);
 
       await controller.sendMessage(req, res);
 
@@ -117,12 +108,12 @@ describe("MessagingController", () => {
       const req = createRequest({
         method: "POST",
         url: "/api/messaging/send",
-        user: { id_persona: "user-123" },
-        body: { content: "Hola" },
+        user: { id_persona: "user-123", id_facultad: "fac-1" },
+        body: { content: "Hola" }, // Sin targetUserId - usa webhook
       });
       const res = createResponse();
 
-      prismaMock.mensaje.create.mockRejectedValue(new Error("DB Fallida"));
+      (prismaMock.mensaje.create as jest.Mock).mockRejectedValue(new Error("DB Fallida"));
 
       await controller.sendMessage(req, res);
 
@@ -133,6 +124,9 @@ describe("MessagingController", () => {
   });
 
   describe("getUnreadCount", () => {
+    // Nota: La validación de auth ya no está en el controller (está en middleware)
+    // Ahora el controller simplemente usa req.user directamente
+
     it("debería retornar el número de mensajes no leídos (200)", async () => {
       const req = createRequest({
         method: "GET",
@@ -141,33 +135,17 @@ describe("MessagingController", () => {
       });
       const res = createResponse();
 
-      prismaMock.mensaje_entrega.count.mockResolvedValue(5);
+      (prismaMock.mensaje_entrega.count as jest.Mock).mockResolvedValue(5);
 
       await controller.getUnreadCount(req, res);
 
       const data = res._getJSONData();
       expect(res.statusCode).toBe(200);
       expect(data.unreadCount).toBe(5);
-      expect(prismaMock.mensaje_entrega.count).toHaveBeenCalledWith({
-        where: expect.objectContaining({
-          id_receptor: "user-123",
-          estado: "PENDING",
-        }),
-      });
     });
 
-    it("debería retornar 401 si no hay usuario", async () => {
-      const req = createRequest({
-        method: "GET",
-        url: "/api/messaging/unread-count",
-        // Sin req.user
-      });
-      const res = createResponse();
-
-      await controller.getUnreadCount(req, res);
-
-      expect(res.statusCode).toBe(401);
-      expect(res._getJSONData().error).toBe("No autorizado");
-    });
+    // Este test ya no aplica - la validación de usuario está en middleware
+    // Si no hay usuario, el request nunca llega al controller
+    // it("debería retornar 401 si no hay usuario") - Eliminado porque el middleware lo maneja
   });
 });

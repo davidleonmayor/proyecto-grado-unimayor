@@ -1,38 +1,41 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
 import { WebhookService } from "./webhook.service";
+import { logger, prisma } from "../config";
 
-const prisma = new PrismaClient();
 const webhookService = new WebhookService();
 
 export class MessagingController {
+  constructor() {
+    this.sendMessage = this.sendMessage.bind(this);
+    this.consumeWebhook = this.consumeWebhook.bind(this);
+    this.getInbox = this.getInbox.bind(this);
+    this.getMessagingContacts = this.getMessagingContacts.bind(this);
+    this.getConversation = this.getConversation.bind(this);
+    this.getRecentConversations = this.getRecentConversations.bind(this);
+    this.getUnreadCount = this.getUnreadCount.bind(this);
+    this.markConversationRead = this.markConversationRead.bind(this);
+  }
+
   /**
    * Endpoint to send a new message.
    * We will create a `mensaje` record and dispatch a MESSAGE_CREATED webhook.
+   * 
+   * Data validation: handled by SendMessageSchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async sendMessage(req: Request, res: Response): Promise<void> {
     try {
-      const sender = (req as any).user;
-
-      if (!sender) {
-        res.status(401).json({ error: "No autorizado" });
-        return;
-      }
-
+      // req.user is guaranteed to exist - middleware handled auth
+      const { id_persona: senderId, id_facultad: senderFacultyId } = req.user!;
+      
+      // req.body.content is guaranteed to exist - schema validated it
       const { content, targetRole, targetUserId } = req.body;
 
-      if (!content) {
-        res
-          .status(400)
-          .json({ error: "El contenido del mensaje es requerido" });
-        return;
-      }
-
       // 1. Create the base Message Record
-      const newMsg = await (prisma as any).mensaje.create({
+      const newMsg = await prisma.mensaje.create({
         data: {
           contenido: content,
-          id_emisor: sender.id_persona,
+          id_emisor: senderId,
           target_rol: targetRole || null,
         },
       });
@@ -43,14 +46,13 @@ export class MessagingController {
         const targetUser = await prisma.persona.findUnique({
           where: { id_persona: targetUserId },
         });
-
         if (!targetUser) {
           res.status(404).json({ error: "El destinatario no existe." });
           return;
         }
 
         // Create delivery for the RECIPIENT
-        await (prisma as any).mensaje_entrega.create({
+        await prisma.mensaje_entrega.create({
           data: {
             id_mensaje: newMsg.id_mensaje,
             id_receptor: targetUserId,
@@ -59,16 +61,16 @@ export class MessagingController {
         });
 
         // Create delivery for the SENDER (so they see their own sent message in conversation)
-        await (prisma as any).mensaje_entrega.create({
+        await prisma.mensaje_entrega.create({
           data: {
             id_mensaje: newMsg.id_mensaje,
-            id_receptor: sender.id_persona,
+            id_receptor: senderId,
             estado: "READ", // Sender has already "read" their own message
           },
         });
 
-        console.log(
-          `[sendMessage] Direct message delivered: ${sender.id_persona} -> ${targetUserId}`,
+        logger.info(
+          `[sendMessage] Direct message delivered: ${senderId} -> ${targetUserId}`,
         );
       } else {
         // 3. For BROADCAST messages, use the webhook pipeline
@@ -77,14 +79,14 @@ export class MessagingController {
           data: {
             messageId: newMsg.id_mensaje,
             content: newMsg.contenido,
-            senderId: sender.id_persona,
-            senderFacultyId: sender.id_facultad,
+            senderId: senderId,
+            senderFacultyId: senderFacultyId,
             targetRole: targetRole,
           },
         };
         webhookService
           .dispatch("MESSAGE_CREATED", webhookPayload)
-          .catch((e) => console.error("Webhook Dispatch Error", e));
+          .catch((e) => logger.error("Webhook Dispatch Error", e));
       }
 
       res.status(201).json({
@@ -92,7 +94,7 @@ export class MessagingController {
         data: newMsg,
       });
     } catch (error) {
-      console.error("[sendMessage] Error:", error);
+      logger.error("[sendMessage] Error:", error);
       res.status(500).json({ error: "Error del servidor al enviar mensaje" });
     }
   }
@@ -101,27 +103,16 @@ export class MessagingController {
    * Internal Webhook Consumer Endpoint
    * Listens for `MESSAGE_CREATED` payloads and creates individual Inbox Deliveries
    * (mensaje_entrega) enforcing Faculty constraints (`id_facultad`).
+   * 
+   * Secret validation: handled by ConsumeWebhookSchema (custom validator)
+   * Event validation: handled by ConsumeWebhookSchema (matches /^MESSAGE_CREATED$/)
+   * Data validation: handled by ConsumeWebhookSchema (exists, isObject)
    */
   public async consumeWebhook(req: Request, res: Response): Promise<void> {
     try {
-      // Very basic security: A real implementation would verify signatures here.
-      const secret = req.headers["x-webhook-secret"];
-      if (
-        secret !== process.env.WEBHOOK_SECRET &&
-        secret !== "internal_secret"
-      ) {
-        res.status(403).json({ error: "Invalid Webhook Signature" });
-        return;
-      }
-
-      const { event, data } = req.body;
-      if (event !== "MESSAGE_CREATED" || !data) {
-        // Acknowledge receipt but ignore irrelevant events so retries stop
-        res.status(200).json({ status: "Ignored" });
-        return;
-      }
-
-      const { messageId, senderFacultyId, targetRole, targetUserId } = data;
+      // req.body.event is guaranteed to be "MESSAGE_CREATED" - schema validated it
+      // req.body.data is guaranteed to exist and be an object - schema validated it
+      const { messageId, senderFacultyId, targetRole, targetUserId } = req.body.data;
 
       // Rule: Find all target users in the EXACT same faculty.
       const userFilters: any = {
@@ -160,7 +151,7 @@ export class MessagingController {
           data: deliveries,
           skipDuplicates: true,
         });
-        console.log(
+        logger.info(
           `[Webhook Consume] Created ${deliveries.length} inbox deliveries for Message ${messageId} in Faculty ${senderFacultyId}`,
         );
       }
@@ -169,7 +160,7 @@ export class MessagingController {
         .status(200)
         .json({ status: "Consumed", deliveredTo: deliveries.length });
     } catch (error) {
-      console.error("[consumeWebhook] Error:", error);
+      logger.error("[consumeWebhook] Error:", error);
       res
         .status(500)
         .json({ error: "Internal server error consuming webhook" });
@@ -177,18 +168,18 @@ export class MessagingController {
   }
 
   /**
-   * Fetch the active user's inbox
+   * Fetch the active user's inbox.
+   * 
+   * Data validation: handled by AuthOnlySchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async getInbox(req: Request, res: Response): Promise<void> {
     try {
-      const user = (req as any).user;
-      if (!user) {
-        res.status(401).json({ error: "No autorizado" });
-        return;
-      }
+      // req.user is guaranteed to exist - middleware handled auth
+      const { id_persona: userId } = req.user!;
 
-      const messages = await (prisma as any).mensaje_entrega.findMany({
-        where: { id_receptor: user.id_persona },
+      const messages = await prisma.mensaje_entrega.findMany({
+        where: { id_receptor: userId },
         include: {
           mensaje: {
             include: {
@@ -210,7 +201,7 @@ export class MessagingController {
 
       res.json(messages);
     } catch (error) {
-      console.error("[getInbox] Error:", error);
+      logger.error("[getInbox] Error:", error);
       res.status(500).json({ error: "Error fetching inbox" });
     }
   }
@@ -220,21 +211,21 @@ export class MessagingController {
    * - Students: see their director(s) from their thesis projects
    * - Directors/Professors: see their students from thesis projects + faculty coordinator(s)
    * - Coordinators: see directors in their faculty
+   * 
+   * Data validation: handled by AuthOnlySchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async getMessagingContacts(
     req: Request,
     res: Response,
   ): Promise<void> {
     try {
-      const user = (req as any).user;
-      if (!user) {
-        res.status(403).json({ error: "No autorizado" });
-        return;
-      }
+      // req.user is guaranteed to exist - middleware handled auth
+      const { id_persona: userId, id_facultad: userFacultyId } = req.user!;
 
       // 1. Find all thesis projects where this user is an actor
       const myActorRecords = await prisma.actores.findMany({
-        where: { id_persona: user.id_persona, estado: "activo" },
+        where: { id_persona: userId, estado: "activo" },
         include: {
           tipo_rol: { select: { nombre_rol: true } },
           trabajo_grado: { select: { id_trabajo_grado: true } },
@@ -260,7 +251,7 @@ export class MessagingController {
             where: {
               id_trabajo_grado: { in: myProjectIds },
               tipo_rol: { nombre_rol: "Director" },
-              id_persona: { not: user.id_persona },
+              id_persona: { not: userId },
               estado: "activo",
             },
             select: { id_persona: true },
@@ -277,7 +268,7 @@ export class MessagingController {
             where: {
               id_trabajo_grado: { in: myProjectIds },
               tipo_rol: { nombre_rol: "Estudiante" },
-              id_persona: { not: user.id_persona },
+              id_persona: { not: userId },
               estado: "activo",
             },
             select: { id_persona: true },
@@ -291,13 +282,13 @@ export class MessagingController {
         (isStudent ||
           isDirector ||
           (!isCoordinator && myActorRecords.length === 0)) &&
-        user.id_facultad
+        userFacultyId
       ) {
         // Find coordinators that belong to the same faculty
         const facultyCoords = await prisma.persona.findMany({
           where: {
-            id_facultad: user.id_facultad,
-            id_persona: { not: user.id_persona },
+            id_facultad: userFacultyId,
+            id_persona: { not: userId },
             actores: {
               some: {
                 tipo_rol: { nombre_rol: "Coordinador de Carrera" },
@@ -311,12 +302,12 @@ export class MessagingController {
       }
 
       // ── Coordinators ──────────────────────────────────────
-      if (isCoordinator && user.id_facultad) {
+      if (isCoordinator && userFacultyId) {
         // See only directors and students from their OWN faculty
         const facultyActors = await prisma.actores.findMany({
           where: {
             tipo_rol: { nombre_rol: { in: ["Director", "Estudiante"] } },
-            persona: { id_facultad: user.id_facultad },
+            persona: { id_facultad: userFacultyId },
             estado: "activo",
           },
           select: { id_persona: true },
@@ -325,7 +316,7 @@ export class MessagingController {
       }
 
       // Remove self
-      contactIds.delete(user.id_persona);
+      contactIds.delete(userId);
 
       if (contactIds.size === 0) {
         res.json([]);
@@ -344,36 +335,36 @@ export class MessagingController {
 
       res.json(contacts);
     } catch (error) {
-      console.error("[getMessagingContacts] Error:", error);
+      logger.error("[getMessagingContacts] Error:", error);
       res.status(500).json({ error: "Server error" });
     }
   }
 
   /**
-   * Get direct messaging conversation history with a specific user
+   * Get direct messaging conversation history with a specific user.
+   * 
+   * Data validation: handled by UserIdParamSchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async getConversation(req: Request, res: Response): Promise<void> {
     try {
-      const user = (req as any).user;
+      // req.user is guaranteed to exist - middleware handled auth
+      // req.params.userId is guaranteed to exist - schema validated it
+      const { id_persona: userId } = req.user!;
       const peerId = req.params.userId;
-
-      if (!user || !peerId) {
-        res.status(400).json({ error: "Faltan parámetros de usuario" });
-        return;
-      }
 
       // Fetch all messages where I am the sender and they are the recipient
       // AND where they are the sender and I am the recipient
-      const deliveries = await (prisma as any).mensaje_entrega.findMany({
+      const deliveries = await prisma.mensaje_entrega.findMany({
         where: {
           OR: [
             {
-              id_receptor: user.id_persona,
+              id_receptor: userId,
               mensaje: { id_emisor: peerId },
             },
             {
               id_receptor: peerId,
-              mensaje: { id_emisor: user.id_persona },
+              mensaje: { id_emisor: userId },
             },
           ],
         },
@@ -401,11 +392,11 @@ export class MessagingController {
           id_emisor: d.mensaje.id_emisor,
           estado: d.estado,
           fecha: d.mensaje.fecha_envio,
-          soy_emisor: d.mensaje.id_emisor === user.id_persona,
+          soy_emisor: d.mensaje.id_emisor === userId,
         })),
       );
     } catch (error) {
-      console.error("[getConversation] Error:", error);
+      logger.error("[getConversation] Error:", error);
       res.status(500).json({ error: "Server error fetching conversation" });
     }
   }
@@ -413,26 +404,24 @@ export class MessagingController {
   /**
    * Get recent conversations grouped by person.
    * Returns a list of unique conversation partners with the last message preview.
+   * 
+   * Data validation: handled by AuthOnlySchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async getRecentConversations(
     req: Request,
     res: Response,
   ): Promise<void> {
     try {
-      const user = (req as any).user;
-      if (!user) {
-        res.status(401).json({ error: "No autorizado" });
-        return;
-      }
+      // req.user is guaranteed to exist - middleware handled auth
+      const { id_persona: userId } = req.user!;
 
       // Get all deliveries where this user is involved
-      const allDeliveries: any[] = await (
-        prisma as any
-      ).mensaje_entrega.findMany({
+      const allDeliveries = await prisma.mensaje_entrega.findMany({
         where: {
           OR: [
-            { id_receptor: user.id_persona },
-            { mensaje: { id_emisor: user.id_persona } },
+            { id_receptor: userId },
+            { mensaje: { id_emisor: userId } },
           ],
         },
         include: {
@@ -458,14 +447,14 @@ export class MessagingController {
       });
 
       // Group by the OTHER person in the conversation
-      const conversationMap = new Map<string, any>();
+      const conversationMap = new Map<string, unknown>();
 
       for (const d of allDeliveries) {
-        const isSender = d.mensaje.id_emisor === user.id_persona;
+        const isSender = d.mensaje.id_emisor === userId;
         const otherPersonId = isSender ? d.id_receptor : d.mensaje.id_emisor;
 
         // Skip self-deliveries (where I am both sender and receptor)
-        if (otherPersonId === user.id_persona) continue;
+        if (otherPersonId === userId) continue;
 
         if (!conversationMap.has(otherPersonId)) {
           // Fetch the other person's info if not the emisor
@@ -509,7 +498,7 @@ export class MessagingController {
 
       res.json(Array.from(conversationMap.values()));
     } catch (error) {
-      console.error("[getRecentConversations] Error:", error);
+      logger.error("[getRecentConversations] Error:", error);
       res.status(500).json({ error: "Error fetching conversations" });
     }
   }
@@ -517,28 +506,28 @@ export class MessagingController {
   /**
    * Lightweight endpoint: returns only the total unread message count.
    * Used by the Navbar for efficient polling.
+   * 
+   * Data validation: handled by AuthOnlySchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async getUnreadCount(req: Request, res: Response): Promise<void> {
     try {
-      const user = (req as any).user;
-      if (!user) {
-        res.status(401).json({ error: "No autorizado" });
-        return;
-      }
+      // req.user is guaranteed to exist - middleware handled auth
+      const { id_persona: userId } = req.user!;
 
-      const count = await (prisma as any).mensaje_entrega.count({
+      const count = await prisma.mensaje_entrega.count({
         where: {
-          id_receptor: user.id_persona,
+          id_receptor: userId,
           estado: "PENDING",
           mensaje: {
-            id_emisor: { not: user.id_persona },
+            id_emisor: { not: userId },
           },
         },
       });
 
       res.json({ unreadCount: count });
     } catch (error) {
-      console.error("[getUnreadCount] Error:", error);
+      logger.error("[getUnreadCount] Error:", error);
       res.status(500).json({ error: "Server error" });
     }
   }
@@ -546,24 +535,24 @@ export class MessagingController {
   /**
    * Mark all messages from a specific peer as READ.
    * Called when the user opens a conversation.
+   * 
+   * Data validation: handled by UserIdParamSchema (express-validator)
+   * Auth validation: handled by AuthMiddleware (isAuthenticatedUser, isConfirmed)
    */
   public async markConversationRead(
     req: Request,
     res: Response,
   ): Promise<void> {
     try {
-      const user = (req as any).user;
+      // req.user is guaranteed to exist - middleware handled auth
+      // req.params.userId is guaranteed to exist - schema validated it
+      const { id_persona: userId } = req.user!;
       const peerId = req.params.userId;
 
-      if (!user || !peerId) {
-        res.status(400).json({ error: "Faltan parámetros" });
-        return;
-      }
-
       // Update all PENDING deliveries where I am the recipient and the peer is the sender
-      const result = await (prisma as any).mensaje_entrega.updateMany({
+      const result = await prisma.mensaje_entrega.updateMany({
         where: {
-          id_receptor: user.id_persona,
+          id_receptor: userId,
           estado: "PENDING",
           mensaje: {
             id_emisor: peerId,
@@ -577,7 +566,7 @@ export class MessagingController {
 
       res.json({ markedRead: result.count });
     } catch (error) {
-      console.error("[markConversationRead] Error:", error);
+      logger.error("[markConversationRead] Error:", error);
       res.status(500).json({ error: "Server error" });
     }
   }
