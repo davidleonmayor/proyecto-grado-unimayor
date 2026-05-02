@@ -1,5 +1,9 @@
 import { Request, Response } from "express";
+import { matchedData } from "express-validator";
 import { PrismaClient } from "@prisma/client";
+
+import { EventService } from "./event.service";
+import { logger } from "../config";
 
 const prisma = new PrismaClient();
 
@@ -260,36 +264,7 @@ export class EventController {
   // Create event (coordinator only)
   createEvent = async (req: Request, res: Response) => {
     try {
-      const {
-        titulo,
-        descripcion,
-        fecha_inicio,
-        fecha_fin,
-        hora_inicio,
-        hora_fin,
-        prioridad,
-        todo_el_dia,
-        id_trabajo_grado,
-      } = req.body;
-
-      if (!titulo || !fecha_inicio || !fecha_fin || !prioridad) {
-        return res.status(400).json({ message: "Faltan campos requeridos" });
-      }
-
-      const event = await prisma.evento.create({
-        data: {
-          titulo,
-          descripcion: descripcion || null,
-          fecha_inicio: new Date(fecha_inicio),
-          fecha_fin: new Date(fecha_fin),
-          hora_inicio: hora_inicio || null,
-          hora_fin: hora_fin || null,
-          prioridad: prioridad.toLowerCase(),
-          todo_el_dia: todo_el_dia || false,
-          id_trabajo_grado: id_trabajo_grado || null,
-        },
-      });
-
+      const event = await EventService.create(req.body);
       res.status(201).json(event);
     } catch (error: any) {
       console.error("Error creating event:", error);
@@ -303,38 +278,13 @@ export class EventController {
   updateEvent = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const {
-        titulo,
-        descripcion,
-        fecha_inicio,
-        fecha_fin,
-        hora_inicio,
-        hora_fin,
-        prioridad,
-        todo_el_dia,
-        id_trabajo_grado,
-      } = req.body;
+      const cleanData = matchedData(req, { locations: ["body"] });
 
-      const event = await prisma.evento.update({
-        where: { id_evento: id },
-        data: {
-          ...(titulo && { titulo }),
-          ...(descripcion !== undefined && { descripcion }),
-          ...(fecha_inicio && { fecha_inicio: new Date(fecha_inicio) }),
-          ...(fecha_fin && { fecha_fin: new Date(fecha_fin) }),
-          ...(hora_inicio !== undefined && { hora_inicio }),
-          ...(hora_fin !== undefined && { hora_fin }),
-          ...(prioridad && { prioridad: prioridad.toLowerCase() }),
-          ...(todo_el_dia !== undefined && { todo_el_dia }),
-          ...(id_trabajo_grado !== undefined && {
-            id_trabajo_grado: id_trabajo_grado || null,
-          }),
-        },
-      });
+      const event = await EventService.update(id, cleanData);
 
       res.json(event);
     } catch (error: any) {
-      console.error("Error updating event:", error);
+      logger.error("Error updating event:", error);
       res
         .status(500)
         .json({ message: "Error al actualizar evento", error: error.message });
@@ -345,15 +295,10 @@ export class EventController {
   deleteEvent = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-
-      await prisma.evento.update({
-        where: { id_evento: id },
-        data: { activo: false },
-      });
-
+      await EventService.delete(id);
       res.json({ message: "Evento eliminado correctamente" });
     } catch (error: any) {
-      console.error("Error deleting event:", error);
+      logger.error("Error deleting event:", error);
       res
         .status(500)
         .json({ message: "Error al eliminar evento", error: error.message });

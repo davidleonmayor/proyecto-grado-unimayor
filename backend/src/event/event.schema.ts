@@ -32,23 +32,19 @@ export const GetEventsSchema: Schema = {
   authorization: authorizationHeaderRule,
   page: {
     in: ["query"],
-    optional: {
-      options: { nullable: true },
-    },
+    optional: true,
     isInt: {
       options: { min: 1 },
-      errorMessage: "El parámetro 'page' debe ser un entero mayor o igual a 1",
+      errorMessage: "page debe ser >= 1",
     },
     toInt: true,
   },
   limit: {
     in: ["query"],
-    optional: {
-      options: { nullable: true },
-    },
+    optional: true,
     isInt: {
       options: { min: 1, max: 100 },
-      errorMessage: "El parámetro 'limit' debe ser un entero entre 1 y 100",
+      errorMessage: "limit debe estar entre 1 y 100",
     },
     toInt: true,
   },
@@ -84,7 +80,8 @@ export const CreateEventSchema: Schema = {
     trim: true,
     isLength: {
       options: { min: 1, max: 4000 },
-      errorMessage: "El campo 'descripcion' debe tener entre 1 y 4000 caracteres",
+      errorMessage:
+        "El campo 'descripcion' debe tener entre 1 y 4000 caracteres",
     },
   },
   fecha_inicio: {
@@ -93,7 +90,8 @@ export const CreateEventSchema: Schema = {
       errorMessage: "El campo 'fecha_inicio' es obligatorio",
     },
     isISO8601: {
-      errorMessage: "El campo 'fecha_inicio' debe ser una fecha válida (ISO 8601)",
+      errorMessage:
+        "El campo 'fecha_inicio' debe ser una fecha válida (ISO 8601)",
     },
   },
   fecha_fin: {
@@ -106,12 +104,18 @@ export const CreateEventSchema: Schema = {
     },
     custom: {
       options: (value: unknown, { req }) => {
-        if (typeof value !== "string" || typeof req.body?.fecha_inicio !== "string") {
+        if (
+          typeof value !== "string" ||
+          typeof req.body?.fecha_inicio !== "string"
+        ) {
           return false;
         }
-        return new Date(value).getTime() >= new Date(req.body.fecha_inicio).getTime();
+        return (
+          new Date(value).getTime() >= new Date(req.body.fecha_inicio).getTime()
+        );
       },
-      errorMessage: "El campo 'fecha_fin' debe ser mayor o igual a 'fecha_inicio'",
+      errorMessage:
+        "El campo 'fecha_fin' debe ser mayor o igual a 'fecha_inicio'",
     },
   },
   hora_inicio: {
@@ -124,7 +128,8 @@ export const CreateEventSchema: Schema = {
     },
     matches: {
       options: timeRegex,
-      errorMessage: "El campo 'hora_inicio' debe tener formato HH:mm o HH:mm:ss",
+      errorMessage:
+        "El campo 'hora_inicio' debe tener formato HH:mm o HH:mm:ss",
     },
   },
   hora_fin: {
@@ -220,26 +225,21 @@ export const UpdateEventSchema: Schema = {
     trim: true,
     isLength: {
       options: { min: 1, max: 4000 },
-      errorMessage: "El campo 'descripcion' debe tener entre 1 y 4000 caracteres",
+      errorMessage:
+        "El campo 'descripcion' debe tener entre 1 y 4000 caracteres",
     },
   },
   fecha_inicio: {
     in: ["body"],
-    optional: {
-      options: { nullable: true },
-    },
-    isISO8601: {
-      errorMessage: "El campo 'fecha_inicio' debe ser una fecha válida (ISO 8601)",
-    },
+    optional: { options: { nullable: true } },
+    isISO8601: { errorMessage: "..." },
+    toDate: true, // <-- ¡MAGIA! Convierte el string a objeto Date automáticamente
   },
   fecha_fin: {
     in: ["body"],
-    optional: {
-      options: { nullable: true },
-    },
-    isISO8601: {
-      errorMessage: "El campo 'fecha_fin' debe ser una fecha válida (ISO 8601)",
-    },
+    optional: { options: { nullable: true } },
+    isISO8601: { errorMessage: "..." },
+    toDate: true, // <-- Transforma automáticamente
     custom: {
       options: (value: unknown, { req }) => {
         if (value === null || value === undefined) return true;
@@ -251,9 +251,43 @@ export const UpdateEventSchema: Schema = {
         }
         return true;
       },
-      errorMessage: "El campo 'fecha_fin' debe ser mayor o igual a 'fecha_inicio'",
+      errorMessage:
+        "El campo 'fecha_fin' debe ser mayor o igual a 'fecha_inicio'",
     },
   },
+  // fecha_inicio: {
+  //   in: ["body"],
+  //   optional: {
+  //     options: { nullable: true },
+  //   },
+  //   isISO8601: {
+  //     errorMessage:
+  //       "El campo 'fecha_inicio' debe ser una fecha válida (ISO 8601)",
+  //   },
+  // },
+  // fecha_fin: {
+  //   in: ["body"],
+  //   optional: {
+  //     options: { nullable: true },
+  //   },
+  //   isISO8601: {
+  //     errorMessage: "El campo 'fecha_fin' debe ser una fecha válida (ISO 8601)",
+  //   },
+  //   custom: {
+  //     options: (value: unknown, { req }) => {
+  //       if (value === null || value === undefined) return true;
+  //       if (typeof value !== "string") return false;
+
+  //       const startValue = req.body?.fecha_inicio;
+  //       if (startValue && typeof startValue === "string") {
+  //         return new Date(value).getTime() >= new Date(startValue).getTime();
+  //       }
+  //       return true;
+  //     },
+  //     errorMessage:
+  //       "El campo 'fecha_fin' debe ser mayor o igual a 'fecha_inicio'",
+  //   },
+  // },
   hora_inicio: {
     in: ["body"],
     optional: {
@@ -264,7 +298,8 @@ export const UpdateEventSchema: Schema = {
     },
     matches: {
       options: timeRegex,
-      errorMessage: "El campo 'hora_inicio' debe tener formato HH:mm o HH:mm:ss",
+      errorMessage:
+        "El campo 'hora_inicio' debe tener formato HH:mm o HH:mm:ss",
     },
   },
   hora_fin: {
@@ -307,20 +342,36 @@ export const UpdateEventSchema: Schema = {
   },
   id_trabajo_grado: {
     in: ["body"],
-    optional: {
-      options: { nullable: true },
-    },
+    optional: { options: { nullable: true } },
+    customSanitizer: {
+      options: (value) =>
+        typeof value === "string" && value.trim() === "" ? null : value,
+    }, // <-- Si viene vacío, lo vuelve null antes de llegar al controlador
     custom: {
       options: (value: unknown) => {
         if (value === null || value === undefined) return true;
-        if (typeof value !== "string") return false;
-        const trimmed = value.trim();
-        return trimmed === "" || /^c[a-z0-9]{24}$/.test(trimmed);
+        // ... (tu lógica de validación regex para CUID) ...
       },
       errorMessage:
         "El campo 'id_trabajo_grado' debe ser vacío o un CUID válido",
     },
   },
+  // id_trabajo_grado: {
+  //   in: ["body"],
+  //   optional: {
+  //     options: { nullable: true },
+  //   },
+  //   custom: {
+  //     options: (value: unknown) => {
+  //       if (value === null || value === undefined) return true;
+  //       if (typeof value !== "string") return false;
+  //       const trimmed = value.trim();
+  //       return trimmed === "" || /^c[a-z0-9]{24}$/.test(trimmed);
+  //     },
+  //     errorMessage:
+  //       "El campo 'id_trabajo_grado' debe ser vacío o un CUID válido",
+  //   },
+  // },
 };
 
 export const DeleteEventSchema: Schema = {
