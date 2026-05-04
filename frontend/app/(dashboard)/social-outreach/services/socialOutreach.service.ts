@@ -31,6 +31,7 @@ type SaveSocialOutreachResponse = {
 
 class SocialOutreachService extends BaseApiClient {
   async saveXlsxToDatabase(payload: SaveSocialOutreachPayload): Promise<SaveSocialOutreachResponse> {
+    console.log("Enviando archivo a la base de datos:", payload.nombre, payload.descripcion, payload.file)
     const formData = new FormData()
     formData.append("nombre", payload.nombre)
     if (payload.descripcion) {
