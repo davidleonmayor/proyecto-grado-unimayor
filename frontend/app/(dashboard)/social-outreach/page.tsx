@@ -8,8 +8,9 @@ import { XlsxPreview } from "./components/XlsxPreview";
 import { PdfViewer } from "./components/PdfViewer";
 import { useSocialOutreach } from "./useSocialOutreach";
 import { socialOutreachService } from "./services/socialOutreach.service";
+import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
 
-export default function SocialOutreachGenerator() {
+function SocialOutreachPageContent() {
   const outreach = useSocialOutreach();
   const [isSavingToDb, setIsSavingToDb] = useState(false);
 
@@ -244,5 +245,13 @@ export default function SocialOutreachGenerator() {
         </div>
       </div>
     </TooltipProvider>
+  );
+}
+
+export default function SocialOutreach() {
+  return (
+    <RoleProtectedRoute allowedRoles={["admin"]} redirectTo="/">
+      <SocialOutreachPageContent />
+    </RoleProtectedRoute>
   );
 }
