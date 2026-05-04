@@ -447,7 +447,18 @@ export class MessagingController {
       });
 
       // Group by the OTHER person in the conversation
-      const conversationMap = new Map<string, unknown>();
+      interface ConversationPreview {
+        peerId: string;
+        peerName: string;
+        peerEmail: string;
+        peerInitials: string;
+        lastMessage: string;
+        lastMessageDate: Date;
+        lastMessageIsMine: boolean;
+        unreadCount: number;
+      }
+
+      const conversationMap = new Map<string, ConversationPreview>();
 
       for (const d of allDeliveries) {
         const isSender = d.mensaje.id_emisor === userId;

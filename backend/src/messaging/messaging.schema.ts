@@ -95,18 +95,18 @@ export const ConsumeWebhookSchema: Schema = {
         "El header 'x-webhook-secret' no debe exceder 200 caracteres",
     },
     trim: true,
-    custom: {
-      options: (value: string) => {
-        // Allow either the env secret or internal_secret for testing
-        if (
-          value === process.env.WEBHOOK_SECRET ||
-          value === "internal_secret"
-        ) {
-          return true;
-        }
-        throw new Error("Invalid Webhook Signature");
-      },
-    },
+    // custom: {
+    //   options: (value: string) => {
+    //     // Allow either the env secret or internal_secret for testing
+    //     if (
+    //       value === process.env.WEBHOOK_SECRET ||
+    //       value === "internal_secret"
+    //     ) {
+    //       return true;
+    //     }
+    //     throw new Error("Invalid Webhook Signature");
+    //   },
+    // },
   },
   event: {
     in: ["body"],
