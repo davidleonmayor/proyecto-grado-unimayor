@@ -1,10 +1,10 @@
 import { createRequest, createResponse } from "node-mocks-http";
 import { EventController } from "../event.controller";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../../config/prisma";
 
 // 1. MOCK DE PRISMA CLIENT
-jest.mock("@prisma/client", () => {
-  const mPrismaClient = {
+jest.mock("../../config/prisma", () => ({
+  prisma: {
     actores: {
       findMany: jest.fn(),
     },
@@ -21,11 +21,10 @@ jest.mock("@prisma/client", () => {
       create: jest.fn(),
       update: jest.fn(),
     },
-  };
-  return { PrismaClient: jest.fn(() => mPrismaClient) };
-});
+  },
+}));
 
-const prismaMock = new PrismaClient() as jest.Mocked<any>;
+const prismaMock = prisma as unknown as jest.Mocked<any>;
 
 describe("EventController", () => {
   let controller: EventController;

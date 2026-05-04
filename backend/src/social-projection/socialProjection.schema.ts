@@ -1,4 +1,5 @@
 import type { ParamSchema, Schema } from "express-validator";
+import type { Request } from "express";
 
 const authorizationHeaderRule: ParamSchema = {
   in: "headers",
@@ -59,12 +60,7 @@ export const SearchSocialProjectionSchema: Schema = {
 };
 
 export const CreateSocialProjectionSchema: Schema = {
-  authorization: {
-    ...authorizationHeaderRule,
-    optional: {
-      options: { nullable: true },
-    },
-  },
+  authorization: authorizationHeaderRule,
   nombre: {
     in: ["body"],
     exists: {
@@ -102,6 +98,17 @@ export const CreateSocialProjectionSchema: Schema = {
     },
     trim: true,
   },
+  // archivo: {
+  //   in: ["body"],
+  //   custom: {
+  //     options: (_value, { req }) => {
+  //       if (!req.file) {
+  //         throw new Error("El archivo Excel es obligatorio");
+  //       }
+  //       return true;
+  //     },
+  //   },
+  // },
 };
 
 export const DownloadByNameSocialProjectionSchema: Schema = {

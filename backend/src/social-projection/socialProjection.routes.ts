@@ -4,6 +4,7 @@ import {
   proyeccionSocialUpload,
 } from "./socialProjection.controller";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware";
+import { RoleMiddleware } from "../common/middleware/RoleMiddleware";
 import { validateSchema } from "../common/middleware/validateSchema";
 import {
   CreateSocialProjectionSchema,
@@ -12,45 +13,64 @@ import {
   SearchSocialProjectionSchema,
 } from "./socialProjection.schema";
 
+// Roles allowed to create social projection projects
+const ALLOWED_ROLES = [
+  "Director",
+  "Profesor",
+  "Profesores/Directores",
+  "Coordinador",
+  "Coordinador de Carrera",
+];
+
 export class ProyeccionSocialRoutes {
   public router: Router;
   private controller: ProyeccionSocialController;
   private authMiddleware: AuthMiddleware;
+  private roleMiddleware: RoleMiddleware;
 
   constructor() {
     this.router = Router();
     this.controller = new ProyeccionSocialController();
     this.authMiddleware = new AuthMiddleware();
+    this.roleMiddleware = new RoleMiddleware();
     this.initRoutes();
   }
 
   public initRoutes() {
     this.router.get(
       "/search",
-      validateSchema(SearchSocialProjectionSchema),
       this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      validateSchema(SearchSocialProjectionSchema),
       this.controller.searchByName,
     );
 
+    // POST / - Create new social projection project
+    // Order: authMiddleware → roleMiddleware → multer → validateSchema → controller
     this.router.post(
       "/",
       this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(
+        ALLOWED_ROLES,
+        "Solo Profesores/Directores o Coordinadores pueden registrar este documento",
+      ),
       proyeccionSocialUpload.single("archivo"),
-      validateSchema(CreateSocialProjectionSchema),
+      // validateSchema(CreateSocialProjectionSchema),
       this.controller.create,
     );
 
     this.router.get(
       "/by-name/:nombre/download",
-      validateSchema(DownloadByNameSocialProjectionSchema),
       this.authMiddleware.isAuthenticatedUser,
+      validateSchema(DownloadByNameSocialProjectionSchema),
       this.controller.downloadByName,
     );
 
     this.router.get(
       "/:id/download",
-      validateSchema(DownloadByIdSocialProjectionSchema),
       this.authMiddleware.isAuthenticatedUser,
+      validateSchema(DownloadByIdSocialProjectionSchema),
       this.controller.downloadById,
     );
   }

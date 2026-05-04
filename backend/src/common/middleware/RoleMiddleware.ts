@@ -210,4 +210,50 @@ export class RoleMiddleware {
             });
         }
     }
+
+    /**
+     * Verifies if the authenticated user has any of the specified roles.
+     * @param allowedRoles - Array of role names that are allowed
+     * @param errorMessage - Custom error message for 403 response
+     */
+    public hasAnyRole(allowedRoles: string[], errorMessage?: string) {
+        return async (req: Request, res: Response, next: NextFunction) => {
+            try {
+                const userId = req.user?.id_persona;
+
+                if (!userId) {
+                    return res.status(401).json({
+                        success: false,
+                        message: "Usuario no autenticado"
+                    });
+                }
+
+                const userRoles = await prisma.actores.findMany({
+                    where: { id_persona: userId, estado: "activo" },
+                    include: { tipo_rol: true }
+                });
+
+                const hasAllowedRole = userRoles.some(actor =>
+                    allowedRoles.includes(actor.tipo_rol.nombre_rol)
+                );
+
+                if (!hasAllowedRole) {
+                    logger.warn(`Access denied for user ${userId}: No allowed role`);
+                    return res.status(403).json({
+                        success: false,
+                        message: errorMessage || "No tienes permisos para realizar esta acción"
+                    });
+                }
+
+                logger.debug(`Role check passed for user ${userId}`);
+                next();
+            } catch (error: any) {
+                logger.error(`Error in hasAnyRole: ${error.message}`);
+                return res.status(500).json({
+                    success: false,
+                    message: "Error verificando permisos"
+                });
+            }
+        };
+    }
 }

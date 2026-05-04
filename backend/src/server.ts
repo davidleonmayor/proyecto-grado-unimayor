@@ -90,7 +90,6 @@ export default class Server {
       res.json({
         success: true,
         message: "API funcionando correctamente",
-        timestamp: new Date().toISOString(),
         environment: envs.NODE_ENV || "development",
       });
     });
@@ -112,10 +111,6 @@ export default class Server {
     const personRoutes = new PersonRoutes();
     const messagingRoutes = new MessagingRoutes();
     const proyeccionSocialRoutes = new ProyeccionSocialRoutes();
-
-    this.app.get("/api", (_req, res) => {
-      res.send("Hello World!");
-    });
 
     this.app.use("/api/auth", authRoutes.router);
     this.app.use("/api/projects", projectRoutes.router);

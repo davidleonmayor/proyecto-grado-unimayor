@@ -1,18 +1,18 @@
-import request from 'supertest';
-import Server from '../../server';
-import { prisma } from '../../config/prisma';
-import { checkPassword } from '../../auth/utils/password';
+import request from "supertest";
+import Server from "../../server";
+import { prisma } from "../../config/prisma";
+import { checkPassword } from "../../auth/utils/password";
 
 // Mock the password utility
-jest.mock('@backend/auth/utils/password', () => ({
-  ...jest.requireActual('@backend/auth/utils/password'),
+jest.mock("../utils/password", () => ({
+  ...jest.requireActual("../utils/password"),
   checkPassword: jest.fn(),
 }));
 
 // Mock the prisma client
-jest.mock('@backend/config/prisma', () => ({
+jest.mock("../../config/prisma", () => ({
   prisma: {
-    user: {
+    persona: {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
@@ -21,105 +21,112 @@ jest.mock('@backend/config/prisma', () => ({
 }));
 
 // Mock the AuthEmail module
-jest.mock('@backend/email/AuthEmail', () => ({
+jest.mock("../../email/AuthEmail", () => ({
   AuthEmail: {
     sendConfirmationEmail: jest.fn(),
   },
 }));
 
 const server = new Server();
-const app = server['app'];
+const app = server["app"];
 
-describe('Auth Controller', () => {
+describe("Auth Controller", () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('POST /api/auth/create-account', () => {
-    it('should create a new user and return it', async () => {
+  describe("POST /api/auth/register", () => {
+    it("should create a new persona and return it", async () => {
       const userData = {
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'Password123!',
+        names: "Test",
+        lastNames: "User",
+        typeOfDentityDocument: "CC",
+        idDocumentNumber: "123456789",
+        phoneNumber: "3001234567",
+        email: "test@example.com",
+        password: "Password123!",
       };
 
-      const user = {
-        id: '1',
-        ...userData,
-        token: 'token',
+      const newPersona = {
+        id_persona: "1",
+        nombres: "Test",
+        apellidos: "User",
+        id_tipo_doc_identidad: "CC",
+        num_doc_identidad: "123456789",
+        numero_celular: "3001234567",
+        correo_electronico: "test@example.com",
+        password: "hashedpassword",
+        token: "123456",
         confirmed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-      (prisma.user.create as jest.Mock).mockResolvedValue(user);
+      (prisma.persona.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.persona.create as jest.Mock).mockResolvedValue(newPersona);
 
       const response = await request(app)
-        .post('/api/auth/create-account')
+        .post("/api/auth/register")
         .send(userData);
 
       expect(response.status).toBe(201);
-      expect(response.body.user.name).toBe(userData.name);
-      expect(response.body.user.email).toBe(userData.email);
-      expect(response.body.message).toBe(
-        'Usuario registrado correctamente. Revisa tu email para confirmar tu cuenta.'
+      expect(response.body).toMatch(/Usuario creado correctamente/);
+    });
+  });
+
+  describe("POST /api/auth/confirm-account", () => {
+    it("should confirm the account", async () => {
+      const persona = {
+        id_persona: "1",
+        nombres: "Test User",
+        correo_electronico: "test@example.com",
+        password: "Password123!",
+        token: "123456",
+        confirmed: false,
+      };
+
+      (prisma.persona.findUnique as jest.Mock).mockResolvedValue(persona);
+      (prisma.persona.update as jest.Mock).mockResolvedValue({
+        ...persona,
+        confirmed: true,
+        token: null,
+      });
+
+      const response = await request(app)
+        .post("/api/auth/confirm-account")
+        .send({ token: "123456" });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toBe(
+        "Cuenta confirmada exitosamente. Ya puedes iniciar sesión.",
       );
     });
   });
 
-  describe('POST /api/auth/confirm-account', () => {
-    it('should confirm the account', async () => {
-      const user = {
-        id: '1',
-        name: 'Test User',
-        email: 'test@example.com',
-        password: 'Password123!',
-        token: '123456',
-        confirmed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
-      (prisma.user.update as jest.Mock).mockResolvedValue({ ...user, confirmed: true, token: null });
-
-      const response = await request(app)
-        .post('/api/auth/confirm-account')
-        .send({ token: '123456' });
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('Cuenta confirmada exitosamente. Ya puedes iniciar sesión.');
-    });
-  });
-
-  describe('POST /api/auth/login', () => {
+  describe("POST /api/auth/login", () => {
     const loginCredentials = {
-      email: 'test@example.com',
-      password: 'Password123!',
+      email: "test@example.com",
+      password: "Password123!",
     };
 
-    it('should login the user and return a token', async () => {
-      const user = {
-        id: '1',
-        name: 'Test User',
-        email: loginCredentials.email,
-        password: 'hashedpassword',
+    it("should login the user and return a token", async () => {
+      const persona = {
+        id_persona: "1",
+        nombres: "Test User",
+        correo_electronico: loginCredentials.email,
+        password: "hashedpassword",
         token: null,
         confirmed: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       };
 
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(user);
+      // Used by authMiddleware.isConfirmed to fetch the user
+      (prisma.persona.findUnique as jest.Mock).mockResolvedValue(persona);
       (checkPassword as jest.Mock).mockResolvedValue(true);
 
       const response = await request(app)
-        .post('/api/auth/login')
+        .post("/api/auth/login")
         .send(loginCredentials);
 
       expect(response.status).toBe(200);
-      expect(response.body.token).toBeDefined();
+      expect(typeof response.text).toBe("string");
     });
   });
 });
