@@ -62,16 +62,22 @@ const menuItems: MenuSection[] = [
     title: "PROYECCIÓN SOCIAL",
     items: [
       {
+        icon: "/home.png",
+        label: "Dashboard",
+        href: "/social-outreach/dashboard",
+        visible: ["admin", "teacher"],
+      },
+      {
         icon: "/calendar.png",
         label: "Extracción",
         href: "/social-outreach",
-        visible: ["teacher", "dean", "admin"],
+        visible: ["teacher", "admin"],
       },
       {
         icon: "/search.png",
         label: "Filtrar",
         href: "/social-outreach/filter",
-        visible: ["teacher", "dean", "admin"],
+        visible: ["teacher", "admin"],
       },
     ],
   },
