@@ -10,10 +10,27 @@ const NAV_LINKS = [
   { href: "/list/students", label: "Estudiantes", icon: "👨–🎓" },
   { href: "/list/teachers", label: "Profesores", icon: "👨–🏫" },
   { href: "/list/events", label: "Eventos", icon: "📅" },
-  { href: "/social-outreach", label: "Proyecciones Sociales", icon: "🌍" },
-  { href: "/social-outreach/filter", label: "Filtrar", icon: "🔍" },
-  { href: "/social-outreach/dashborad", label: "Dashboard", icon: "📊" },
-  { href: "/social-outreach/projects", label: "Projects", icon: "📦" },
+  // social-outreach
+  {
+    href: "/social-outreach/dashboard",
+    label: "Graficas Proyecciones Socales",
+    icon: "📊",
+  },
+  {
+    href: "/social-outreach/projects",
+    label: "Proyectos Proyecciones Sociales",
+    icon: "📦",
+  },
+  {
+    href: "/social-outreach/extraction",
+    label: "Extraccion de datos",
+    icon: "🌍",
+  },
+  {
+    href: "/social-outreach/filter",
+    label: "Filtrar Proyecciones",
+    icon: "🔍",
+  },
 ];
 
 export default function NotFound() {

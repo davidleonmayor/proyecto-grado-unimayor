@@ -76,7 +76,7 @@ const menuItems: MenuSection[] = [
       {
         icon: "/calendar.png",
         label: "Extracción",
-        href: "/social-outreach",
+        href: "/social-outreach/extraction",
         visible: ["teacher", "admin"],
       },
       {
