@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { href: "/social-outreach", label: "Proyecciones Sociales", icon: "🌍" },
   { href: "/social-outreach/filter", label: "Filtrar", icon: "🔍" },
   { href: "/social-outreach/dashborad", label: "Dashboard", icon: "📊" },
+  { href: "/social-outreach/projects", label: "Projects", icon: "📦" },
 ];
 
 export default function NotFound() {
