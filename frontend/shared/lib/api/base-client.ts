@@ -3,7 +3,7 @@
  * Provides core HTTP request functionality with authentication
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export interface RequestOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -17,20 +17,20 @@ export class BaseApiClient {
   }
 
   protected getAuthToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('auth_token');
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("auth_token");
   }
 
   protected async request<T>(
     endpoint: string,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<T> {
     const { requiresAuth = false, headers = {}, ...restOptions } = options;
 
     const config: RequestInit = {
       ...restOptions,
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...headers,
       },
     };
@@ -47,11 +47,13 @@ export class BaseApiClient {
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
+      console.log("--------------- Request URL ---------------");
+      console.log(`${this.baseURL}${endpoint}`);
 
-      const contentType = response.headers.get('content-type');
+      const contentType = response.headers.get("content-type");
       let data;
 
-      if (contentType && contentType.includes('application/json')) {
+      if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       } else {
         data = await response.text();
@@ -63,26 +65,28 @@ export class BaseApiClient {
             ? data.error || data.message
             : typeof data === 'string'
               ? data
-              : 'Error en la solicitud'
+              : "Error en la solicitud",
         );
       }
 
       return data as T;
     } catch (error) {
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        throw new Error(
+          "No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.",
+        );
       }
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Error de conexión con el servidor');
+      throw new Error("Error de conexión con el servidor");
     }
   }
 
   protected async requestFormData<T>(
     endpoint: string,
     formData: FormData,
-    options: RequestOptions = {}
+    options: RequestOptions = {},
   ): Promise<T> {
     const { requiresAuth = false, headers = {}, ...restOptions } = options;
 
@@ -112,33 +116,35 @@ export class BaseApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error en la solicitud');
+        throw new Error(data.error || "Error en la solicitud");
       }
 
       return data as T;
     } catch (error) {
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        throw new Error(
+          "No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.",
+        );
       }
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Error de conexión con el servidor');
+      throw new Error("Error de conexión con el servidor");
     }
   }
 
   protected async downloadFile(
     endpoint: string,
-    filename: string = 'archivo.pdf'
+    filename: string = "archivo.pdf",
   ): Promise<void> {
     const token = this.getAuthToken();
     if (!token) {
-      throw new Error('No se encontró el token de autenticación');
+      throw new Error("No se encontró el token de autenticación");
     }
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, {
-        method: 'GET',
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -147,11 +153,13 @@ export class BaseApiClient {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || errorData.error || 'Error al descargar el archivo'
+          errorData.message ||
+            errorData.error ||
+            "Error al descargar el archivo",
         );
       }
 
-      const contentDisposition = response.headers.get('Content-Disposition');
+      const contentDisposition = response.headers.get("Content-Disposition");
       let finalFilename = filename;
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
@@ -162,7 +170,7 @@ export class BaseApiClient {
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
       a.download = finalFilename;
       document.body.appendChild(a);
@@ -170,13 +178,15 @@ export class BaseApiClient {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.');
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        throw new Error(
+          "No se pudo conectar con el servidor. Verifica que el backend esté ejecutándose.",
+        );
       }
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Error al descargar el archivo');
+      throw new Error("Error al descargar el archivo");
     }
   }
 
