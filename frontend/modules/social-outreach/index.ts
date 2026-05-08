@@ -2,7 +2,7 @@
  * Projects Module Exports
  */
 
-export { projectsService } from "./services/social-projects.service";
+export { socialProjectsService } from "./services/social-projects.service";
 export { ProjectHistory } from "./components/ProjectHistory";
 export { BulkUploadProjects } from "./components/BulkUploadProjects";
 export type {

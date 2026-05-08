@@ -43,6 +43,28 @@ export class SocialProjectsService extends BaseApiClient {
       requiresAuth: true,
     });
   }
+
+  async bulkUploadProjects(file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.requestFormData<any>("/api/proyeccion-social/bulk-upload", formData, {
+      requiresAuth: true,
+    });
+  }
+
+  async downloadBulkTemplate(): Promise<void> {
+    return this.downloadFile(
+      "/api/proyeccion-social/bulk-template",
+      "plantilla-proyeccion-social.xlsx",
+    );
+  }
+
+  async downloadHistoryFile(historyId: string): Promise<void> {
+    return super.downloadFile(
+      `/api/proyeccion-social/history/${historyId}/file`,
+      `archivo-${historyId}.pdf`,
+    );
+  }
 }
 
 export const socialProjectsService = new SocialProjectsService();

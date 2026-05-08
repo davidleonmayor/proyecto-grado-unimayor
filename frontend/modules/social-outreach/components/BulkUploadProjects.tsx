@@ -7,7 +7,8 @@
 
 import { ChangeEvent, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { projectsService } from "../services/social-projects.service";
+import { socialProjectsService } from "../services/social-projects.service";
+
 import type { BulkUploadSummary } from "@/shared/types/common";
 
 export interface BulkUploadProjectsProps {
@@ -55,7 +56,7 @@ export const BulkUploadProjects = ({
 
     try {
       setIsImporting(true);
-      const summary = await projectsService.bulkUploadProjects(selectedFile);
+      const summary = await socialProjectsService.bulkUploadProjects(selectedFile);
 
       setImportSummary(summary);
       setSelectedFile(null);
@@ -93,7 +94,7 @@ export const BulkUploadProjects = ({
   const handleDownloadTemplate = async () => {
     try {
       setIsDownloadingTemplate(true);
-      await projectsService.downloadBulkTemplate();
+      await socialProjectsService.downloadBulkTemplate();
       Swal.fire(
         "Plantilla generada",
         "Revisa tu carpeta de descargas.",

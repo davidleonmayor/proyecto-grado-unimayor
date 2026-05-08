@@ -6,7 +6,7 @@
 "use client";
 
 import { useState } from "react";
-import { projectsService } from "../services/social-projects.service";
+import { socialProjectsService } from "../services/social-projects.service";
 
 export interface HistoryItem {
   id: string;
@@ -59,7 +59,7 @@ export const ProjectHistory = ({ history }: ProjectHistoryProps) => {
   const handleDownload = async (historyId: string) => {
     try {
       setDownloading(historyId);
-      await projectsService.downloadFile(historyId);
+      await socialProjectsService.downloadHistoryFile(historyId);
     } catch (error) {
       console.error("Error al descargar archivo:", error);
       alert(
