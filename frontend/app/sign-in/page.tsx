@@ -103,7 +103,7 @@ export default function SignIn() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            className="w-full bg-[#0ea5e9] text-white font-semibold py-2.5 px-4 rounded-lg hover:bg-[#0284c7] focus:outline-none focus:ring-2 focus:ring-[#0ea5e9] focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             {isLoading ? (
               <span className="flex items-center justify-center">
