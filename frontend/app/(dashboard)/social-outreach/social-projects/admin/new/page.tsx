@@ -8,12 +8,6 @@ import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
 import { projectsService } from "@/modules/projects/services/projects.service";
 import { authService } from "@/modules/auth/services/auth.service";
 
-interface FormData {
-  modalities: Array<{ id: string; name: string }>;
-  statuses: Array<{ id: string; name: string }>;
-  programs: Array<{ id: string; name: string; faculty: string }>;
-  companies: Array<{ id: string; name: string }>;
-}
 
 interface Person {
   id: string;
@@ -22,75 +16,113 @@ interface Person {
   document?: string;
 }
 
+function CurrentUser({ currentUser }: { currentUser: Person }) {
+  return (
+    <div className="mb-3 border border-blue-200 bg-blue-50 rounded-lg p-3 flex items-center gap-3">
+      <input
+        type="checkbox"
+        checked
+        disabled
+        className="h-4 w-4 text-blue-600 border-blue-300 rounded cursor-not-allowed"
+      />
+      <div>
+        <div className="text-sm font-semibold text-blue-800">
+          {currentUser.name} (Tú)
+        </div>
+        <div className="text-xs text-blue-700">
+          {currentUser.document && `Cédula: ${currentUser.document} • `}
+          Código: {currentUser.id} • {currentUser.email}
+        </div>
+        <p className="text-xs text-blue-700 mt-1">
+          Seleccionado automáticamente como Director. No se puede deseleccionar.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+interface IAdvisorList {
+  advisors: Person[];
+  selectedAdvisors: string[];
+  toggleAdvisor: (id: string) => void;
+  currentUser: Person | null;
+}
+
+function AdvisorsList({
+  advisors,
+  selectedAdvisors,
+  toggleAdvisor,
+  currentUser,
+}: IAdvisorList) {
+  return (
+    <div className="space-y-2">
+      {advisors
+        .filter((advisor) => advisor.id !== currentUser?.id)
+        .map((advisor) => (
+          <label
+            key={advisor.id}
+            className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
+              selectedAdvisors.includes(advisor.id)
+                ? "bg-blue-100 border-2 border-blue-500"
+                : "bg-white border border-gray-200 hover:bg-gray-100"
+            }`}
+          >
+            <input
+              type="checkbox"
+              checked={selectedAdvisors.includes(advisor.id)}
+              onChange={() => toggleAdvisor(advisor.id)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <div className="ml-3 flex-1">
+              <div className="text-sm font-medium text-gray-900">
+                {advisor.name}
+              </div>
+              <div className="text-xs text-gray-500">
+                {advisor.document && `Cédula: ${advisor.document}`}
+                {advisor.document && " • "}
+                Código: {advisor.id} • {advisor.email}
+              </div>
+            </div>
+          </label>
+        ))}
+    </div>
+  );
+}
+
 function NewProjectPageContent() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Person | null>(null);
-  const [formData, setFormData] = useState<FormData | null>(null);
   const [students, setStudents] = useState<Person[]>([]);
   const [advisors, setAdvisors] = useState<Person[]>([]);
   const [allStudents, setAllStudents] = useState<Person[]>([]);
   const [allAdvisors, setAllAdvisors] = useState<Person[]>([]);
-  const [companies, setCompanies] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
-  const [allCompanies, setAllCompanies] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
 
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedAdvisors, setSelectedAdvisors] = useState<string[]>([]);
 
-  const [title, setTitle] = useState("");
-  const [summary, setSummary] = useState("");
-  const [objectives, setObjectives] = useState("");
-  const [modalityId, setModalityId] = useState("");
-  const [statusId, setStatusId] = useState("");
-  const [programId, setProgramId] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [descripcion, setDescripcion] = useState("");
 
   // Search filters
   const [studentSearch, setStudentSearch] = useState("");
   const [advisorSearch, setAdvisorSearch] = useState("");
-  const [companySearch, setCompanySearch] = useState("");
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
-  useEffect(() => {
-    // When programId changes, reload students filtered by program
-    if (programId) {
-      loadStudentsByProgram(programId);
-    } else {
-      // If no program selected, load all available students
-      loadAllStudents();
-      setStudentSearch(""); // Clear search when program changes
-    }
-  }, [programId]);
-
   const loadInitialData = async () => {
     try {
-      const [form, advisorsData, userData] = await Promise.all([
-        projectsService.getFormData(),
+      const [advisorsData, userData] = await Promise.all([
         projectsService.getAvailableAdvisors(),
         authService.getCurrentUser(),
       ]);
 
-      if (form && form.statuses) {
-        form.statuses = form.statuses.filter(
-          (s: { id: string; name: string }) =>
-            s.name.trim().toLowerCase() !== "en curso",
-        );
-      }
-
-      setFormData(form);
       setAllAdvisors(advisorsData);
       setAdvisors(advisorsData);
-      setAllCompanies(form.companies || []);
-      setCompanies(form.companies || []);
+      setAllStudents(await projectsService.getAvailableStudents()); // Load all students initially
+      setStudents(await projectsService.getAvailableStudents());
 
       if (userData) {
         const mappedUser: Person = {
@@ -103,38 +135,9 @@ function NewProjectPageContent() {
         setSelectedAdvisors([mappedUser.id]);
       }
     } catch (error) {
-      Swal.fire("Error", "No se pudo cargar los datos del formulario", "error");
+      Swal.fire("Error", "No se pudo cargar los datos iniciales", "error");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const loadAllStudents = async () => {
-    try {
-      const studentsData = await projectsService.getAvailableStudents();
-      setAllStudents(studentsData);
-      setStudents(studentsData);
-    } catch (error) {
-      console.error("Error loading students:", error);
-    }
-  };
-
-  const loadStudentsByProgram = async (programId: string) => {
-    try {
-      const studentsData =
-        await projectsService.getAvailableStudents(programId);
-      setAllStudents(studentsData);
-      // Apply search filter if exists
-      filterStudents(studentsData, studentSearch);
-      // Clear selected students when program changes
-      setSelectedStudents([]);
-    } catch (error) {
-      console.error("Error loading students by program:", error);
-      Swal.fire(
-        "Error",
-        "No se pudieron cargar los estudiantes del programa",
-        "error",
-      );
     }
   };
 
@@ -184,30 +187,6 @@ function NewProjectPageContent() {
     [],
   );
 
-  // Filter companies by search term (id or name)
-  const filterCompanies = useCallback(
-    (
-      companiesList: Array<{ id: string; name: string }>,
-      searchTerm: string,
-    ) => {
-      if (!searchTerm.trim()) {
-        setCompanies(companiesList);
-        return;
-      }
-
-      const search = searchTerm.toLowerCase().trim();
-      const filtered = companiesList.filter((company) => {
-        const idMatch = company.id.toLowerCase().includes(search);
-        const nameMatch = company.name.toLowerCase().includes(search);
-
-        return idMatch || nameMatch;
-      });
-
-      setCompanies(filtered);
-    },
-    [],
-  );
-
   // Handle student search
   useEffect(() => {
     if (allStudents.length > 0) {
@@ -221,13 +200,6 @@ function NewProjectPageContent() {
       filterAdvisors(allAdvisors, advisorSearch);
     }
   }, [advisorSearch, allAdvisors, filterAdvisors]);
-
-  // Handle company search
-  useEffect(() => {
-    if (allCompanies.length > 0) {
-      filterCompanies(allCompanies, companySearch);
-    }
-  }, [companySearch, allCompanies, filterCompanies]);
 
   const toggleStudent = (studentId: string) => {
     if (selectedStudents.includes(studentId)) {
@@ -252,7 +224,7 @@ function NewProjectPageContent() {
     } else if (selectedAdvisors.length < 2) {
       setSelectedAdvisors([...selectedAdvisors, advisorId]);
     } else {
-      Swal.fire("Límite alcanzado", "Máximo 2 asesores permitidos", "warning");
+      Swal.fire("Límite alcanzado", "Máximo 2 docentes permitidos", "warning");
     }
   };
 
@@ -265,26 +237,19 @@ function NewProjectPageContent() {
     }
 
     try {
-      await projectsService.createProject({
-        title,
-        summary,
-        objectives,
-        modalityId,
-        statusId,
-        programId,
-        companyId: companyId || null,
-        startDate,
-        endDate: endDate || null,
-        students: selectedStudents,
-        advisors: selectedAdvisors,
+      await socialProjectsService.createProject({
+        nombre: title,
+        descripcion: summary,
+        estudiantes: selectedStudents,
+        docentes: selectedAdvisors,
       });
 
-      await Swal.fire("¡Éxito!", "Proyecto creado exitosamente", "success");
-      router.push("/projects/admin");
+      await Swal.fire("¡Éxito!", "Proyecto de proyección social creado exitosamente", "success");
+      router.push("/social-outreach/social-projects/admin");
     } catch (error: any) {
       Swal.fire(
         "Error",
-        error.message || "No se pudo crear el proyecto",
+        error.message || "No se pudo crear el proyecto de proyección social",
         "error",
       );
     }
@@ -301,7 +266,7 @@ function NewProjectPageContent() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Crear Nuevo Proyecto de Grado
+        Crear Nueva Proyección Social
       </h1>
       <form
         onSubmit={handleSubmit}
@@ -310,7 +275,7 @@ function NewProjectPageContent() {
         {/* Título */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Título del Proyecto *
+            Título de la proyección *
           </label>
           <input
             type="text"
@@ -325,200 +290,15 @@ function NewProjectPageContent() {
         {/* Resumen */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Resumen
+            Descripción
           </label>
           <textarea
-            value={summary}
-            onChange={(e) => setSummary(e.target.value)}
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
             rows={4}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Descripción breve del proyecto..."
           />
-        </div>
-
-        {/* Objetivos */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Objetivos del Proyecto
-          </label>
-          <textarea
-            value={objectives}
-            onChange={(e) => setObjectives(e.target.value)}
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Describe los objetivos principales del proyecto..."
-          />
-        </div>
-
-        {/* Modalidad y Estado */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Modalidad *
-            </label>
-            <select
-              required
-              value={modalityId}
-              onChange={(e) => setModalityId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar...</option>
-              {formData?.modalities.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Estado *
-            </label>
-            <select
-              required
-              value={statusId}
-              onChange={(e) => setStatusId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar...</option>
-              {formData?.statuses.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Programa y Empresa */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Programa Académico *
-            </label>
-            <select
-              required
-              value={programId}
-              onChange={(e) => setProgramId(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Seleccionar...</option>
-              {formData?.programs.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} - {p.faculty}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Empresa (Opcional)
-            </label>
-            <div className="mb-3">
-              <input
-                type="text"
-                value={companySearch}
-                onChange={(e) => setCompanySearch(e.target.value)}
-                placeholder="Buscar por nombre o ID..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-              />
-            </div>
-            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-              {companies.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-4">
-                  {companySearch
-                    ? `No se encontraron empresas que coincidan con "${companySearch}"`
-                    : "No hay empresas disponibles"}
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  <label
-                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                      companyId === ""
-                        ? "bg-primary-100 border-2 border-primary-500"
-                        : "bg-white border border-gray-200 hover:bg-gray-100"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="company"
-                      checked={companyId === ""}
-                      onChange={() => setCompanyId("")}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                    />
-                    <div className="ml-3 flex-1">
-                      <div className="text-sm font-medium text-gray-900">
-                        Ninguna
-                      </div>
-                    </div>
-                  </label>
-                  {companies.map((company) => (
-                    <label
-                      key={company.id}
-                      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                        companyId === company.id
-                          ? "bg-primary-100 border-2 border-primary-500"
-                          : "bg-white border border-gray-200 hover:bg-gray-100"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="company"
-                        checked={companyId === company.id}
-                        onChange={() => setCompanyId(company.id)}
-                        className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-gray-900">
-                          {company.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          ID: {company.id}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-            {companySearch && (
-              <p className="text-xs text-gray-500 mt-1">
-                {companies.length} resultado
-                {companies.length !== 1 ? "s" : ""} encontrado
-                {companies.length !== 1 ? "s" : ""}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Fechas */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha de Inicio *
-            </label>
-            <input
-              type="date"
-              required
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Fecha Estimada de Fin
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
         </div>
 
         {/* Estudiantes */}
@@ -602,31 +382,9 @@ function NewProjectPageContent() {
         {/* Asesores */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Asesores/Directores (Máximo 2, opcional)
+            Participante (Máximo 2, opcional)
           </label>
-          {currentUser && (
-            <div className="mb-3 border border-blue-200 bg-blue-50 rounded-lg p-3 flex items-center gap-3">
-              <input
-                type="checkbox"
-                checked
-                disabled
-                className="h-4 w-4 text-blue-600 border-blue-300 rounded cursor-not-allowed"
-              />
-              <div>
-                <div className="text-sm font-semibold text-blue-800">
-                  {currentUser.name} (Tú)
-                </div>
-                <div className="text-xs text-blue-700">
-                  {currentUser.document && `Cédula: ${currentUser.document} • `}
-                  Código: {currentUser.id} • {currentUser.email}
-                </div>
-                <p className="text-xs text-blue-700 mt-1">
-                  Seleccionado automáticamente como Director. No se puede
-                  deseleccionar.
-                </p>
-              </div>
-            </div>
-          )}
+          {currentUser && <CurrentUser {...{ currentUser }} />}
           <div className="mb-3">
             <input
               type="text"
@@ -644,37 +402,14 @@ function NewProjectPageContent() {
                   : "No hay asesores disponibles"}
               </p>
             ) : (
-              <div className="space-y-2">
-                {advisors
-                  .filter((advisor) => advisor.id !== currentUser?.id)
-                  .map((advisor) => (
-                    <label
-                      key={advisor.id}
-                      className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                        selectedAdvisors.includes(advisor.id)
-                          ? "bg-blue-100 border-2 border-blue-500"
-                          : "bg-white border border-gray-200 hover:bg-gray-100"
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedAdvisors.includes(advisor.id)}
-                        onChange={() => toggleAdvisor(advisor.id)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-gray-900">
-                          {advisor.name}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {advisor.document && `Cédula: ${advisor.document}`}
-                          {advisor.document && " • "}
-                          Código: {advisor.id} • {advisor.email}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-              </div>
+              <AdvisorsList
+                {...{
+                  advisors,
+                  selectedAdvisors,
+                  toggleAdvisor,
+                  currentUser,
+                }}
+              />
             )}
           </div>
           <div className="flex justify-between items-center mt-1">
@@ -714,6 +449,64 @@ function NewProjectPageContent() {
 export default function NewProjectPage() {
   return (
     <RoleProtectedRoute allowedRoles={["admin", "dean"]} redirectTo="/projects">
+      <NewProjectPageContent />
+    </RoleProtectedRoute>
+  );
+}
+User?.id).length === 0 ? (
+              <p className="text-gray-500 text-sm text-center py-4">
+                {advisorSearch
+                  ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
+                  : "No hay asesores disponibles"}
+              </p>
+            ) : (
+              <AdvisorsList
+                {...{
+                  advisors,
+                  selectedAdvisors,
+                  toggleAdvisor,
+                  currentUser,
+                }}
+              />
+            )}
+          </div>
+          <div className="flex justify-between items-center mt-1">
+            <p className="text-xs text-gray-500">
+              Seleccionados: {selectedAdvisors.length}/2
+            </p>
+            {advisorSearch && (
+              <p className="text-xs text-gray-500">
+                {advisors.length} resultado{advisors.length !== 1 ? "s" : ""}{" "}
+                encontrado{advisors.length !== 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Botones */}
+        <div className="flex justify-end gap-4 pt-4 border-t">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+          >
+            Crear Proyecto
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+export default function NewProjectPage() {
+  return (
+    <RoleProtectedRoute allowedRoles={["admin", "dean"]} redirectTo="/social-outreach/social-projects/admin">
       <NewProjectPageContent />
     </RoleProtectedRoute>
   );

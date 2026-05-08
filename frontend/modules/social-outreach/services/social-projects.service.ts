@@ -35,6 +35,14 @@ export class SocialProjectsService extends BaseApiClient {
       requiresAuth: true,
     });
   }
+
+  async createProject(data: any): Promise<any> {
+    return this.request<any>("/api/proyeccion-social/manual", {
+      method: "POST",
+      body: data,
+      requiresAuth: true,
+    });
+  }
 }
 
 export const socialProjectsService = new SocialProjectsService();

@@ -94,6 +94,31 @@ export class ProyeccionSocialController {
     }
   };
 
+  createManual = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id_persona;
+      const { nombre, descripcion, estudiantes, docentes } = req.body;
+
+      const created = await this.service.createManual({
+        nombre,
+        descripcion,
+        id_persona_registra: userId,
+        estudiantes,
+        docentes,
+      });
+
+      return res.status(201).json({
+        message: "Proyecto de proyección social registrado exitosamente",
+        data: created,
+      });
+    } catch (error: any) {
+      logger.error("[ProyeccionSocialService] Error creating manual project:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
+
   downloadByName = async (req: Request, res: Response) => {
     try {
       // req.params.nombre is guaranteed to exist and valid - schema validated it

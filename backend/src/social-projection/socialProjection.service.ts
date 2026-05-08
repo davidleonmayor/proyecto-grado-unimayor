@@ -8,6 +8,14 @@ export interface CreateProyeccionSocialInput {
   id_persona_registra: string;
 }
 
+export interface CreateManualProyeccionSocialInput {
+  nombre: string;
+  descripcion: string | null;
+  id_persona_registra: string;
+  estudiantes: string[];
+  docentes: string[];
+}
+
 interface SearchResult {
   id_proyecto_social: string;
   nombre: string;
@@ -161,6 +169,57 @@ export class ProyeccionSocialService {
     } catch (error) {
       logger.error(
         "[ProyeccionSocialService] Error finding project by id:",
+        error,
+      );
+      throw new Error("Error al buscar el proyecto.");
+    }
+  }
+
+  /**
+   * Actualiza los datos de un proyecto de proyección social.
+   */
+  async update(
+    id: string,
+    data: { nombre: string; descripcion?: string | null },
+  ) {
+    try {
+      return await prisma.proyecto_proyeccion_social.update({
+        where: { id_proyecto_social: id },
+        data: {
+          nombre: data.nombre,
+          descripcion: data.descripcion,
+        },
+      });
+    } catch (error: any) {
+      logger.error("[ProyeccionSocialService] Error updating project:", error);
+      throw new Error("Error al actualizar el proyecto de proyección social.");
+    }
+  }
+
+  /**
+   * Busca un proyecto por ID (para descarga).
+   */
+  async findById(id: string): Promise<DownloadResult | null> {
+    try {
+      return await prisma.proyecto_proyeccion_social.findUnique({
+        where: { id_proyecto_social: id },
+        select: {
+          archivo: true,
+          tipo_mime: true,
+          nombre: true,
+          fecha_registro: true,
+        },
+      });
+    } catch (error) {
+      logger.error(
+        "[ProyeccionSocialService] Error finding project by id:",
+        error,
+      );
+      throw new Error("Error al buscar el proyecto.");
+    }
+  }
+}
+nSocialService] Error finding project by id:",
         error,
       );
       throw new Error("Error al buscar el proyecto.");

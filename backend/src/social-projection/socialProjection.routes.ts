@@ -11,6 +11,7 @@ import {
   DownloadByIdSocialProjectionSchema,
   DownloadByNameSocialProjectionSchema,
   SearchSocialProjectionSchema,
+  CreateManualSocialProjectionSchema,
 } from "./socialProjection.schema";
 
 // Roles allowed to create social projection projects
@@ -46,6 +47,8 @@ export class ProyeccionSocialRoutes {
       this.controller.getAll,
     );
 
+    // CREA AQUI EL POST PARA CREAR UNA NUEVA PROYECCION SOCIAL.
+
     this.router.get(
       "/search",
       this.authMiddleware.isAuthenticatedUser,
@@ -54,7 +57,22 @@ export class ProyeccionSocialRoutes {
       this.controller.searchByName,
     );
 
-    // POST / - Create new social projection project
+    );
+
+    // POST /manual - Create new social projection project manually
+    this.router.post(
+      "/manual",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(
+        ALLOWED_ROLES,
+        "Solo Profesores/Directores o Coordinadores pueden registrar este documento",
+      ),
+      validateSchema(CreateManualSocialProjectionSchema),
+      this.controller.createManual,
+    );
+
+    // POST / - Create new Proyeccion social DE ARCHIVO EXCEL
     // Order: authMiddleware → roleMiddleware → multer → validateSchema → controller
     this.router.post(
       "/",

@@ -12,7 +12,7 @@ function CreateNewAdmin() {
   return (
     <div className="flex l-0 gap-3">
       <Link
-        href="/social-outreach/projects/admin/new"
+        href="/social-outreach/social-projects/admin/new"
         className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2"
       >
         <svg

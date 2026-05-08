@@ -136,3 +136,61 @@ export const DownloadByIdSocialProjectionSchema: Schema = {
     trim: true,
   },
 };
+
+export const CreateManualSocialProjectionSchema: Schema = {
+  authorization: authorizationHeaderRule,
+  nombre: {
+    in: ["body"],
+    exists: { errorMessage: "El campo 'nombre' es obligatorio" },
+    isString: { errorMessage: "El campo 'nombre' debe ser texto" },
+    trim: true,
+    notEmpty: { errorMessage: "El campo 'nombre' no puede estar vacío" },
+    isLength: { options: { min: 1, max: 200 }, errorMessage: "El campo 'nombre' debe tener entre 1 y 200 caracteres" },
+    matches: { options: socialProjectionNameRegex, errorMessage: "El campo 'nombre' solo puede contener letras, números, espacios, guiones y puntos" },
+  },
+  descripcion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'descripcion' debe ser texto" },
+    isLength: { options: { min: 1, max: 2000 }, errorMessage: "El campo 'descripcion' debe tener entre 1 y 2000 caracteres" },
+    trim: true,
+  },
+  estudiantes: {
+    in: ["body"],
+    exists: { errorMessage: "El campo 'estudiantes' es obligatorio" },
+    isArray: { errorMessage: "El campo 'estudiantes' debe ser un arreglo" },
+    custom: {
+      options: (value: string[]) => {
+        if (value.length < 1 || value.length > 2) {
+          throw new Error("Debe seleccionar entre 1 y 2 estudiantes");
+        }
+        if (new Set(value).size !== value.length) {
+          throw new Error("Los IDs de estudiantes no pueden estar duplicados");
+        }
+        if (!value.every((id) => /^c[a-z0-9]{24}$/.test(id))) {
+            throw new Error("Uno o más IDs de estudiantes no son CUIDs válidos");
+        }
+        return true;
+      },
+    },
+  },
+  docentes: {
+    in: ["body"],
+    exists: { errorMessage: "El campo 'docentes' es obligatorio" },
+    isArray: { errorMessage: "El campo 'docentes' debe ser un arreglo" },
+    custom: {
+      options: (value: string[]) => {
+        if (value.length < 1 || value.length > 2) {
+          throw new Error("Debe seleccionar entre 1 y 2 docentes");
+        }
+        if (new Set(value).size !== value.length) {
+          throw new Error("Los IDs de docentes no pueden estar duplicados");
+        }
+        if (!value.every((id) => /^c[a-z0-9]{24}$/.test(id))) {
+            throw new Error("Uno o más IDs de docentes no son CUIDs válidos");
+        }
+        return true;
+      },
+    },
+  },
+};
