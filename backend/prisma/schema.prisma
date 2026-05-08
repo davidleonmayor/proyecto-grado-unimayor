@@ -40,6 +40,7 @@ model persona {
   mensajes_enviados  mensaje[]           @relation("MensajesEnviados")
   mensajes_recibidos mensaje_entrega[]   @relation("MensajesRecibidos")
   proyectos_proyeccion_social proyecto_proyeccion_social[]
+  integrante_proyecto_social             integrante_proyecto_social[]
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])

@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 
 import Swal from "sweetalert2";
 import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
+import { socialProjectsService } from "@/modules/social-outreach/services/social-projects.service";
 import { projectsService } from "@/modules/projects/services/projects.service";
 import { authService } from "@/modules/auth/services/auth.service";
-
 
 interface Person {
   id: string;
@@ -34,7 +34,7 @@ function CurrentUser({ currentUser }: { currentUser: Person }) {
           Código: {currentUser.id} • {currentUser.email}
         </div>
         <p className="text-xs text-blue-700 mt-1">
-          Seleccionado automáticamente como Director. No se puede deseleccionar.
+          Seleccionado automáticamente como participante. No se puede deseleccionar.
         </p>
       </div>
     </div>
@@ -121,7 +121,7 @@ function NewProjectPageContent() {
 
       setAllAdvisors(advisorsData);
       setAdvisors(advisorsData);
-      setAllStudents(await projectsService.getAvailableStudents()); // Load all students initially
+      setAllStudents(await projectsService.getAvailableStudents());
       setStudents(await projectsService.getAvailableStudents());
 
       if (userData) {
@@ -231,15 +231,25 @@ function NewProjectPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!nombre.trim()) {
+      Swal.fire("Error", "El título es obligatorio", "error");
+      return;
+    }
+
     if (selectedStudents.length < 1) {
       Swal.fire("Error", "Debe seleccionar al menos 1 estudiante", "error");
       return;
     }
 
+    if (selectedAdvisors.length < 1) {
+      Swal.fire("Error", "Debe seleccionar al menos 1 docente", "error");
+      return;
+    }
+
     try {
       await socialProjectsService.createProject({
-        nombre: title,
-        descripcion: summary,
+        nombre,
+        descripcion: descripcion || null,
         estudiantes: selectedStudents,
         docentes: selectedAdvisors,
       });
@@ -280,14 +290,14 @@ function NewProjectPageContent() {
           <input
             type="text"
             required
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Ej: Sistema de gestión académica"
           />
         </div>
 
-        {/* Resumen */}
+        {/* Descripción */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Descripción
@@ -306,33 +316,21 @@ function NewProjectPageContent() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Estudiantes * (Selecciona 1 o 2)
           </label>
-          {!programId && (
-            <p className="text-xs text-amber-600 mb-2">
-              ⚠️ Selecciona un programa académico para ver los estudiantes
-              asociados
-            </p>
-          )}
-          {programId && (
-            <div className="mb-3">
-              <input
-                type="text"
-                value={studentSearch}
-                onChange={(e) => setStudentSearch(e.target.value)}
-                placeholder="Buscar por cédula, código o nombre..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-              />
-            </div>
-          )}
+          <div className="mb-3">
+            <input
+              type="text"
+              value={studentSearch}
+              onChange={(e) => setStudentSearch(e.target.value)}
+              placeholder="Buscar por cédula, código o nombre..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+            />
+          </div>
           <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-            {!programId ? (
-              <p className="text-gray-500 text-sm text-center py-4">
-                Por favor selecciona un programa académico primero
-              </p>
-            ) : students.length === 0 ? (
+            {students.length === 0 ? (
               <p className="text-gray-500 text-sm text-center py-4">
                 {studentSearch
                   ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
-                  : "No hay estudiantes disponibles para este programa"}
+                  : "No hay estudiantes disponibles"}
               </p>
             ) : (
               <div className="space-y-2">
@@ -370,7 +368,7 @@ function NewProjectPageContent() {
             <p className="text-xs text-gray-500">
               Seleccionados: {selectedStudents.length}/2
             </p>
-            {programId && studentSearch && (
+            {studentSearch && (
               <p className="text-xs text-gray-500">
                 {students.length} resultado{students.length !== 1 ? "s" : ""}{" "}
                 encontrado{students.length !== 1 ? "s" : ""}
@@ -379,10 +377,10 @@ function NewProjectPageContent() {
           </div>
         </div>
 
-        {/* Asesores */}
+        {/* Docentes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Participante (Máximo 2, opcional)
+            Docentes * (Selecciona 1 o 2)
           </label>
           {currentUser && <CurrentUser {...{ currentUser }} />}
           <div className="mb-3">
@@ -398,66 +396,8 @@ function NewProjectPageContent() {
             {advisors.filter((a) => a.id !== currentUser?.id).length === 0 ? (
               <p className="text-gray-500 text-sm text-center py-4">
                 {advisorSearch
-                  ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
-                  : "No hay asesores disponibles"}
-              </p>
-            ) : (
-              <AdvisorsList
-                {...{
-                  advisors,
-                  selectedAdvisors,
-                  toggleAdvisor,
-                  currentUser,
-                }}
-              />
-            )}
-          </div>
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-gray-500">
-              Seleccionados: {selectedAdvisors.length}/2
-            </p>
-            {advisorSearch && (
-              <p className="text-xs text-gray-500">
-                {advisors.length} resultado{advisors.length !== 1 ? "s" : ""}{" "}
-                encontrado{advisors.length !== 1 ? "s" : ""}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Botones */}
-        <div className="flex justify-end gap-4 pt-4 border-t">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
-          >
-            Crear Proyecto
-          </button>
-        </div>
-      </form>
-    </div>
-  );
-}
-
-export default function NewProjectPage() {
-  return (
-    <RoleProtectedRoute allowedRoles={["admin", "dean"]} redirectTo="/projects">
-      <NewProjectPageContent />
-    </RoleProtectedRoute>
-  );
-}
-User?.id).length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">
-                {advisorSearch
-                  ? `No se encontraron asesores que coincidan con "${advisorSearch}"`
-                  : "No hay asesores disponibles"}
+                  ? `No se encontraron docentes que coincidan con "${advisorSearch}"`
+                  : "No hay docentes disponibles"}
               </p>
             ) : (
               <AdvisorsList

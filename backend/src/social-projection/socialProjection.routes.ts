@@ -57,8 +57,6 @@ export class ProyeccionSocialRoutes {
       this.controller.searchByName,
     );
 
-    );
-
     // POST /manual - Create new social projection project manually
     this.router.post(
       "/manual",
