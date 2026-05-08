@@ -143,7 +143,53 @@ export class ProyeccionSocialService {
   }
 
   /**
-   * Busca un proyecto por ID.
+   * Busca un proyecto por ID para detalles de edición.
+   */
+  async getById(id: string): Promise<SearchResult | null> {
+    try {
+      return await prisma.proyecto_proyeccion_social.findUnique({
+        where: { id_proyecto_social: id },
+        select: {
+          id_proyecto_social: true,
+          nombre: true,
+          descripcion: true,
+          tipo_mime: true,
+          fecha_registro: true,
+          id_persona_registra: true,
+        },
+      });
+    } catch (error) {
+      logger.error(
+        "[ProyeccionSocialService] Error finding project by id:",
+        error,
+      );
+      throw new Error("Error al buscar el proyecto.");
+    }
+  }
+
+  /**
+   * Actualiza los datos de un proyecto de proyección social.
+   */
+  async update(
+    id: string,
+    data: { nombre: string; descripcion?: string | null },
+  ) {
+    try {
+      return await prisma.proyecto_proyeccion_social.update({
+        where: { id_proyecto_social: id },
+        data: {
+          nombre: data.nombre,
+          descripcion: data.descripcion,
+        },
+      });
+    } catch (error: any) {
+      logger.error("[ProyeccionSocialService] Error updating project:", error);
+      throw new Error("Error al actualizar el proyecto de proyección social.");
+    }
+  }
+
+  /**
+   * Busca un proyecto por ID (para descarga).
    */
   async findById(id: string): Promise<DownloadResult | null> {
     try {

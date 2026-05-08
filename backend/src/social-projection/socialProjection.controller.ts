@@ -225,4 +225,41 @@ export class ProyeccionSocialController {
       });
     }
   };
+
+  getById = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const record = await this.service.getById(id);
+
+      if (!record) {
+        return res.status(404).json({ error: "Proyecto no encontrado" });
+      }
+
+      return res.status(200).json(record);
+    } catch (error: any) {
+      logger.error("Error fetching social projection project by id:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
+
+  update = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { nombre, descripcion } = req.body;
+
+      const updated = await this.service.update(id, { nombre, descripcion });
+
+      return res.status(200).json({
+        message: "Proyecto de proyección social actualizado exitosamente",
+        data: updated,
+      });
+    } catch (error: any) {
+      logger.error("Error updating social projection project:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
 }

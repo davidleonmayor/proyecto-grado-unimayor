@@ -7,6 +7,7 @@ import ProjectHistory from "@/modules/projects/components/ProjectHistory";
 import Swal from "sweetalert2";
 import { projectsService } from "@/modules/projects/services/projects.service";
 import { useUserRole } from "@/shared/hooks/useUserRole";
+import Link from "next/link";
 
 // Privileged roles that can make reviews
 const PRIVILEGED_ROLES = [
@@ -209,8 +210,45 @@ export default function ProjectDetailPage() {
 
         {/* Review Tab (Privileged) */}
         {activeTab === "review" && (
-          <div className="max-w-2xl mx-auto">
-            <div className="mb-6">
+          <div className="max-w-2xl mx-auto space-y-8">
+            {/* Sección de Proyección Social */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Información de Proyección Social
+              </h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase">
+                      Nombre
+                    </p>
+                    <p className="text-sm text-gray-900 font-medium">
+                      {"Proyecto Ejemplo"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 uppercase">
+                      Fecha Registro
+                    </p>
+                    <p className="text-sm text-gray-900 font-medium">
+                      {new Date().toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase">
+                    Descripción
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {
+                      "Esta es una descripción del proyecto de proyección social."
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-800">
                 Registrar Revisión
               </h2>
@@ -218,9 +256,9 @@ export default function ProjectDetailPage() {
                 Completa el formulario para registrar una iteración o cambiar el
                 estado del proyecto.
               </p>
-            </div>
+            </div> */}
 
-            <form onSubmit={handleReview} className="space-y-5">
+            {/* <form onSubmit={handleReview} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Comentarios y Observaciones *
@@ -355,7 +393,26 @@ export default function ProjectDetailPage() {
                   {isSubmitting ? "Guardando..." : "Registrar Revisión"}
                 </button>
               </div>
-            </form>
+            </form> */}
+            <Link
+              href={`/social-outreach/social-projects/admin/edit/${projectId}`}
+              className="inline-flex items-center gap-1 text-sm px-3 py-2 rounded-md bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5h2m-1-1v2m-6 9l9-9a2.121 2.121 0 113 3l-9 9-4 1 1-4z"
+                />
+              </svg>
+              Editar
+            </Link>
           </div>
         )}
       </div>

@@ -21,6 +21,20 @@ export class SocialProjectsService extends BaseApiClient {
       requiresAuth: true,
     });
   }
+
+  async getProjectById(id: string): Promise<any> {
+    return this.request<any>(`/api/proyeccion-social/${id}`, {
+      requiresAuth: true,
+    });
+  }
+
+  async updateProject(id: string, data: any): Promise<any> {
+    return this.request<any>(`/api/proyeccion-social/${id}`, {
+      method: "PUT",
+      body: data,
+      requiresAuth: true,
+    });
+  }
 }
 
 export const socialProjectsService = new SocialProjectsService();

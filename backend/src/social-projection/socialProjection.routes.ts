@@ -82,5 +82,20 @@ export class ProyeccionSocialRoutes {
       validateSchema(DownloadByIdSocialProjectionSchema),
       this.controller.downloadById,
     );
+
+    this.router.get(
+      "/:id",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.controller.getById,
+    );
+
+    this.router.put(
+      "/:id",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
+      this.controller.update,
+    );
   }
 }
