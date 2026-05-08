@@ -40,6 +40,7 @@ model persona {
   mensajes_enviados  mensaje[]           @relation("MensajesEnviados")
   mensajes_recibidos mensaje_entrega[]   @relation("MensajesRecibidos")
   proyectos_proyeccion_social proyecto_proyeccion_social[]
+  integrante_proyecto_social             integrante_proyecto_social[]
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])
@@ -318,15 +319,30 @@ model proyecto_proyeccion_social {
   nombre               String    @db.VarChar(200)
   descripcion          String?   @db.Text
   fecha_registro       DateTime  @default(now()) @db.DateTime(0)
-  tipo_mime            String    @db.VarChar(100)
-  archivo              Bytes     @db.LongBlob
+  tipo_mime            String?   @db.VarChar(100)
+  archivo              Bytes?    @db.LongBlob
   id_persona_registra  String?
 
   persona_registra     persona?  @relation(fields: [id_persona_registra], references: [id_persona])
+  integrantes          integrante_proyecto_social[]
 
   @@index([id_persona_registra])
   @@index([fecha_registro])
   @@map("PROYECTO_PROYECCION_SOCIAL")
+}
+
+model integrante_proyecto_social {
+  id_integrante      String    @id @default(cuid())
+  id_proyecto_social String
+  id_persona         String
+  rol                String    @db.VarChar(50) // "Estudiante", "Docente"
+
+  proyecto           proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social])
+  persona            persona                    @relation(fields: [id_persona], references: [id_persona])
+
+  @@index([id_proyecto_social])
+  @@index([id_persona])
+  @@map("INTEGRANTE_PROYECTO_SOCIAL")
 }
 
 model webhook_subscription {

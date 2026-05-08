@@ -62,16 +62,28 @@ const menuItems: MenuSection[] = [
     title: "PROYECCIÓN SOCIAL",
     items: [
       {
+        icon: "/report.png",
+        label: "Dashboard",
+        href: "/social-outreach/dashboard",
+        visible: ["admin", "teacher"],
+      },
+      {
+        icon: "/documents.png",
+        label: "Proyectos",
+        href: "/social-outreach/social-projects",
+        visible: ["admin", "teacher"],
+      },
+      {
         icon: "/calendar.png",
         label: "Extracción",
-        href: "/social-outreach",
-        visible: ["teacher", "dean", "admin"],
+        href: "/social-outreach/extraction",
+        visible: ["teacher", "admin"],
       },
       {
         icon: "/search.png",
-        label: "Filtrar",
+        label: "Filtrar Projecciónes",
         href: "/social-outreach/filter",
-        visible: ["teacher", "dean", "admin"],
+        visible: ["teacher", "admin"],
       },
     ],
   },

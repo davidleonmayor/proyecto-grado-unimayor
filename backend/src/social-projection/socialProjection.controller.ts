@@ -39,6 +39,20 @@ export class ProyeccionSocialController {
   constructor() {
     this.service = new ProyeccionSocialService();
   }
+  getAll = async (req: Request, res: Response) => {
+    try {
+      const records = await this.service.getAll();
+      return res.status(200).json({
+        total: records.length,
+        items: records,
+      });
+    } catch (error: any) {
+      logger.error("Error fetching all social projection records:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
 
   create = async (req: Request, res: Response) => {
     try {
@@ -74,6 +88,31 @@ export class ProyeccionSocialController {
       });
     } catch (error: any) {
       logger.error("Error creating social projection project:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
+
+  createManual = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id_persona;
+      const { nombre, descripcion, estudiantes, docentes } = req.body;
+
+      const created = await this.service.createManual({
+        nombre,
+        descripcion,
+        id_persona_registra: userId,
+        estudiantes,
+        docentes,
+      });
+
+      return res.status(201).json({
+        message: "Proyecto de proyección social registrado exitosamente",
+        data: created,
+      });
+    } catch (error: any) {
+      logger.error("[ProyeccionSocialService] Error creating manual project:", error);
       return res.status(500).json({
         error: error.message || "Error interno del servidor",
       });
@@ -206,6 +245,43 @@ export class ProyeccionSocialController {
       return res.send(record.archivo);
     } catch (error: any) {
       logger.error("Error downloading social projection file by id:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
+
+  getById = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const record = await this.service.getById(id);
+
+      if (!record) {
+        return res.status(404).json({ error: "Proyecto no encontrado" });
+      }
+
+      return res.status(200).json(record);
+    } catch (error: any) {
+      logger.error("Error fetching social projection project by id:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
+
+  update = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { nombre, descripcion } = req.body;
+
+      const updated = await this.service.update(id, { nombre, descripcion });
+
+      return res.status(200).json({
+        message: "Proyecto de proyección social actualizado exitosamente",
+        data: updated,
+      });
+    } catch (error: any) {
+      logger.error("Error updating social projection project:", error);
       return res.status(500).json({
         error: error.message || "Error interno del servidor",
       });

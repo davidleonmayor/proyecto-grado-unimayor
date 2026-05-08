@@ -3,14 +3,14 @@ import { useState, useRef, useEffect } from "react";
 import { GripVertical } from "lucide-react";
 import { TooltipProvider } from "@/shared/components/ui/tooltip";
 import Swal from "sweetalert2";
-import { PdfFileList } from "./components/PdfFileList";
-import { XlsxPreview } from "./components/XlsxPreview";
-import { PdfViewer } from "./components/PdfViewer";
-import { useSocialOutreach } from "./useSocialOutreach";
-import { socialOutreachService } from "./services/socialOutreach.service";
+import { PdfFileList } from "../components/PdfFileList";
+import { XlsxPreview } from "../components/XlsxPreview";
+import { PdfViewer } from "../components/PdfViewer";
+import { useSocialOutreach } from "../useSocialOutreach";
+import { socialOutreachService } from "../services/socialOutreach.service";
 import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
 
-function SocialOutreachPageContent() {
+function SocialOutreachExtraction() {
   const outreach = useSocialOutreach();
   const [isSavingToDb, setIsSavingToDb] = useState(false);
 
@@ -251,7 +251,7 @@ function SocialOutreachPageContent() {
 export default function SocialOutreach() {
   return (
     <RoleProtectedRoute allowedRoles={["admin"]} redirectTo="/">
-      <SocialOutreachPageContent />
+      <SocialOutreachExtraction />
     </RoleProtectedRoute>
   );
 }
