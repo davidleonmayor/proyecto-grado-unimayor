@@ -88,7 +88,11 @@ async function main() {
     // Clean messaging tables before persona (FK constraints)
     await (prisma as any).mensaje_entrega.deleteMany({});
     await (prisma as any).mensaje.deleteMany({});
-    await (prisma as any).suscripcion_webhook.deleteMany({});
+    // Clean social projection tables before persona (FK constraints)
+    await prisma.integrante_proyecto_social.deleteMany({});
+    await prisma.proyecto_proyeccion_social.deleteMany({});
+    // Clean webhook subscriptions
+    await prisma.suscripcionWebhook.deleteMany({});
     await prisma.persona.deleteMany({});
     await prisma.distinciones.deleteMany({});
     await prisma.accion_seg.deleteMany({});
@@ -981,6 +985,98 @@ async function main() {
 
     const eventos = await Promise.all(eventosPromises);
 
+    // 16. PROYECTOS DE PROYECCIÓN SOCIAL (20)
+    console.log("Creando proyectos de proyección social (20)...");
+
+    const nombresproyeccionSocial = [
+        "Alfabetización Digital en Zonas Rurales",
+        "Huertos Urbanos Comunitarios",
+        "Reciclaje y Medio Ambiente",
+        "Apoyo Escolar para Niños Vulnerables",
+        "Salud Preventiva en Comunidades Indígenas",
+        "Emprendimiento Juvenil Sostenible",
+        "Conservación del Patrimonio Cultural",
+        "Acceso a Agua Potable en Veredas",
+        "Educación Financiera para Adultos Mayores",
+        "Arte y Cultura en Barrios Marginales",
+        "Prevención de Violencia Escolar",
+        "Reforestación de Cuencas Hídricas",
+        "Capacitación Tecnológica para Mujeres",
+        "Recuperación de Espacios Públicos",
+        "Deporte y Convivencia en Comunidades",
+        "Nutrición Infantil en Zonas de Riesgo",
+        "Fortalecimiento de Pequeños Agricultores",
+        "Primeros Auxilios en Comunidades Remotas",
+        "Inclusión Digital para Personas Mayores",
+        "Reducción de Deserción Escolar Rural",
+    ];
+
+    const descripcionesSociales = [
+        "Proyecto orientado a reducir la brecha digital y promover el uso responsable de las tecnologías de la información.",
+        "Iniciativa comunitaria para el cultivo urbano sostenible y la seguridad alimentaria local.",
+        "Programa de sensibilización ambiental y gestión de residuos sólidos en comunidades urbanas.",
+        "Programa de refuerzo académico y acompañamiento socioemocional para menores en situación vulnerable.",
+        "Proyecto de prevención y educación en salud dirigido a comunidades con acceso limitado a servicios médicos.",
+        "Formación en competencias emprendedoras y financieras para jóvenes desescolarizados.",
+        "Rescate, documentación y difusión del patrimonio cultural inmaterial de comunidades locales.",
+        "Construcción de sistemas de captación y distribución de agua potable en zonas rurales.",
+        "Talleres de planificación financiera básica y ahorro dirigidos a adultos mayores.",
+        "Desarrollo de talleres creativos y expresión artística como herramienta de transformación social.",
+        "Estrategias de mediación y resolución de conflictos para reducir el matoneo escolar.",
+        "Siembra masiva de especies nativas para recuperar ecosistemas hídricos degradados.",
+        "Formación en ofimática, internet y comercio electrónico para mujeres cabeza de hogar.",
+        "Intervención participativa para recuperar parques, plazas y zonas verdes en abandono.",
+        "Ligas deportivas comunitarias como estrategia de convivencia ciudadana e integración social.",
+        "Programa de complementación nutricional y educación alimentaria en primera infancia.",
+        "Asistencia técnica y transferencia de conocimiento para mejorar la productividad agropecuaria.",
+        "Capacitación en primeros auxilios básicos y atención de emergencias en zonas de difícil acceso.",
+        "Acompañamiento y formación digital para personas mayores de 60 años.",
+        "Identificación de causas de deserción y estrategias de retención escolar en zonas rurales.",
+    ];
+
+    const proyeccionesSociales = [];
+    const docentesParaSocial = profesores.slice(0, 20); // Usar los primeros 20 docentes
+    const estudiantesParaSocial = estudiantes.slice(0, 60); // Usar los primeros 60 estudiantes
+
+    for (let i = 0; i < 20; i++) {
+        const proyecto = await prisma.proyecto_proyeccion_social.create({
+            data: {
+                nombre: nombresproyeccionSocial[i],
+                descripcion: descripcionesSociales[i],
+                id_persona_registra: docentesParaSocial[i].id_persona,
+            },
+        });
+
+        // Agregar 2-3 estudiantes al proyecto
+        const numEstudiantes = i % 3 === 0 ? 3 : 2;
+        const baseIdx = i * 3;
+        for (let j = 0; j < numEstudiantes; j++) {
+            const estudianteIdx = baseIdx + j;
+            if (estudianteIdx < estudiantesParaSocial.length) {
+                await prisma.integrante_proyecto_social.create({
+                    data: {
+                        id_proyecto_social: proyecto.id_proyecto_social,
+                        id_persona: estudiantesParaSocial[estudianteIdx].id_persona,
+                        rol: "Estudiante",
+                    },
+                });
+            }
+        }
+
+        // Agregar 1 docente al proyecto
+        await prisma.integrante_proyecto_social.create({
+            data: {
+                id_proyecto_social: proyecto.id_proyecto_social,
+                id_persona: docentesParaSocial[i].id_persona,
+                rol: "Docente",
+            },
+        });
+
+        proyeccionesSociales.push(proyecto);
+    }
+
+    console.log(`✓ ${proyeccionesSociales.length} proyectos de proyección social creados`);
+
     console.log("Seed completado exitosamente!");
     console.log(`
 Resumen de datos creados:
@@ -1000,6 +1096,7 @@ Resumen de datos creados:
 - ${actores.length} asignaciones de actores
 - 100+ seguimientos registrados
 - ${eventos.length} eventos creados
+- ${proyeccionesSociales.length} proyectos de proyección social
 
 AUTENTICACIÓN:
 - ${personas.filter((p) => p.password && p.confirmed).length} usuarios con acceso (password: Password123!)
