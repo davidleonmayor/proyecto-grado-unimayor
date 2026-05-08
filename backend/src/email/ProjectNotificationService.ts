@@ -1,7 +1,6 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../config/prisma";
+import { logger } from "../config";
 import { ProjectEmail } from "./ProjectEmail";
-
-const prisma = new PrismaClient();
 
 export class ProjectNotificationService {
     private static async getProjectEventsHtml(projectId: string): Promise<string> {

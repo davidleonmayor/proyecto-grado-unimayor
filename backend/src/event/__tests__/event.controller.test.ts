@@ -48,7 +48,7 @@ describe("EventController", () => {
       const res = createResponse();
 
       // Act
-      await controller.getEvents(req, res);
+      await controller.getEvents(req, res, jest.fn());
 
       // Assert
       expect(res.statusCode).toBe(401);
@@ -96,7 +96,7 @@ describe("EventController", () => {
       ]);
 
       // Act
-      await controller.getEvents(req, res);
+      await controller.getEvents(req, res, jest.fn());
 
       // Assert
       const data = res._getJSONData();
@@ -133,7 +133,7 @@ describe("EventController", () => {
       prismaMock.evento.findMany.mockResolvedValue([]);
 
       // Act
-      await controller.getEvents(req, res);
+      await controller.getEvents(req, res, jest.fn());
 
       // Assert
       const data = res._getJSONData();
@@ -163,7 +163,7 @@ describe("EventController", () => {
 
       prismaMock.actores.findMany.mockRejectedValue(new Error("Prisma Error"));
 
-      await controller.getEvents(req, res);
+      await controller.getEvents(req, res, jest.fn());
 
       expect(res.statusCode).toBe(500);
       expect(res._getJSONData().message).toBe("Error al obtener eventos");
@@ -193,7 +193,7 @@ describe("EventController", () => {
       };
       prismaMock.evento.create.mockResolvedValue(mockCreatedEvent);
 
-      await controller.createEvent(req, res);
+      await controller.createEvent(req, res, jest.fn());
 
       expect(res.statusCode).toBe(201);
       expect(res._getJSONData()).toMatchObject({ id_evento: "new-ev-1" });
@@ -216,7 +216,7 @@ describe("EventController", () => {
       });
       const res = createResponse();
 
-      await controller.createEvent(req, res);
+      await controller.createEvent(req, res, jest.fn());
 
       expect(res.statusCode).toBe(400);
       expect(res._getJSONData().message).toBe("Faltan campos requeridos");
@@ -239,7 +239,7 @@ describe("EventController", () => {
         prioridad: "baja",
       });
 
-      await controller.updateEvent(req, res);
+      await controller.updateEvent(req, res, jest.fn());
 
       expect(res.statusCode).toBe(200);
       expect(res._getJSONData().prioridad).toBe("baja");
@@ -263,7 +263,7 @@ describe("EventController", () => {
 
       prismaMock.evento.update.mockResolvedValue({});
 
-      await controller.deleteEvent(req, res);
+      await controller.deleteEvent(req, res, jest.fn());
 
       expect(res.statusCode).toBe(200);
       expect(res._getJSONData().message).toBe("Evento eliminado correctamente");
@@ -283,7 +283,7 @@ describe("EventController", () => {
 
       prismaMock.evento.update.mockRejectedValue(new Error("No existe"));
 
-      await controller.deleteEvent(req, res);
+      await controller.deleteEvent(req, res, jest.fn());
 
       expect(res.statusCode).toBe(500);
     });

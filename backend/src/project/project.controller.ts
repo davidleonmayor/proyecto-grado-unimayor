@@ -1,10 +1,8 @@
 import { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../config/prisma";
 import multer, { FileFilterCallback } from "multer";
 import { logger } from "../config";
 import * as XLSX from "xlsx";
-
-const prisma = new PrismaClient();
 
 const allowedExcelMimeTypes = new Set([
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

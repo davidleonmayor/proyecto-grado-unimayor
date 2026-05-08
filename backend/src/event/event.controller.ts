@@ -1,15 +1,13 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import { matchedData } from "express-validator";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "../config/prisma";
 
 import { EventService } from "./event.service";
 import { logger } from "../config";
 
-const prisma = new PrismaClient();
-
 export class EventController {
   // Get all events (notifications) with pagination, filtered by user role
-  getEvents = async (req: Request, res: Response) => {
+  getEvents = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { user } = req;
 
@@ -80,8 +78,6 @@ export class EventController {
             },
           };
         } else {
-          // If coordinator has no faculty assigned, show no events
-          // Use a condition that will never match
           whereClause.AND = [
             { id_trabajo_grado: { not: null } },
             { id_trabajo_grado: null },
@@ -98,7 +94,6 @@ export class EventController {
             in: studentProjectIds,
           };
         } else {
-          // No projects, no events - use condition that never matches
           whereClause.AND = [
             { id_trabajo_grado: { not: null } },
             { id_trabajo_grado: null },
@@ -115,14 +110,12 @@ export class EventController {
             in: teacherProjectIds,
           };
         } else {
-          // No projects, no events - use condition that never matches
           whereClause.AND = [
             { id_trabajo_grado: { not: null } },
             { id_trabajo_grado: null },
           ];
         }
       } else {
-        // Unknown role, show no events
         whereClause.AND = [
           { id_trabajo_grado: { not: null } },
           { id_trabajo_grado: null },
@@ -140,7 +133,7 @@ export class EventController {
         take: limit,
       });
 
-      // Sort manually: alta first, then by days remaining (ascending for future, descending for past)
+      // Sort manually
       const now = new Date();
       events.sort((a, b) => {
         const priorityOrder: { [key: string]: number } = {
@@ -155,7 +148,6 @@ export class EventController {
           return aPriority - bPriority;
         }
 
-        // If same priority, sort by date (future events first, then past)
         const aDate = new Date(a.fecha_inicio);
         const bDate = new Date(b.fecha_inicio);
         const aDaysRemaining = Math.ceil(
@@ -165,17 +157,15 @@ export class EventController {
           (bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        // Future events first (ascending), then past events (descending)
         if (aDaysRemaining >= 0 && bDaysRemaining >= 0) {
-          return aDaysRemaining - bDaysRemaining; // Future: ascending
+          return aDaysRemaining - bDaysRemaining;
         } else if (aDaysRemaining < 0 && bDaysRemaining < 0) {
-          return bDaysRemaining - aDaysRemaining; // Past: descending (most recent first)
+          return bDaysRemaining - aDaysRemaining;
         } else {
-          return aDaysRemaining >= 0 ? -1 : 1; // Future before past
+          return aDaysRemaining >= 0 ? -1 : 1;
         }
       });
 
-      // Calculate days remaining and add color based on priority and days
       const eventsWithColors = events.map((event) => {
         const now = new Date();
         const eventDate = new Date(event.fecha_inicio);
@@ -183,11 +173,10 @@ export class EventController {
           (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        let color = "gray"; // default
+        let color = "gray";
         let borderColor = "border-gray-300";
 
         if (daysRemaining < 0) {
-          // Past events
           color = "gray";
           borderColor = "border-gray-300";
         } else if (event.prioridad === "alta") {
@@ -213,7 +202,6 @@ export class EventController {
             borderColor = "border-blue-400";
           }
         } else {
-          // baja
           if (daysRemaining <= 1) {
             color = "yellow";
             borderColor = "border-yellow-400";
@@ -253,29 +241,25 @@ export class EventController {
           hasPrevPage: page > 1,
         },
       });
-    } catch (error: any) {
-      console.error("Error getting events:", error);
-      res
-        .status(500)
-        .json({ message: "Error al obtener eventos", error: error.message });
+    } catch (error) {
+      logger.error("Error getting events:", error);
+      next(error);
     }
   };
 
   // Create event (coordinator only)
-  createEvent = async (req: Request, res: Response) => {
+  createEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const event = await EventService.create(req.body);
       res.status(201).json(event);
-    } catch (error: any) {
-      console.error("Error creating event:", error);
-      res
-        .status(500)
-        .json({ message: "Error al crear evento", error: error.message });
+    } catch (error) {
+      logger.error("Error creating event:", error);
+      next(error);
     }
   };
 
   // Update event (coordinator only)
-  updateEvent = async (req: Request, res: Response) => {
+  updateEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       const cleanData = matchedData(req, { locations: ["body"] });
@@ -283,25 +267,21 @@ export class EventController {
       const event = await EventService.update(id, cleanData);
 
       res.json(event);
-    } catch (error: any) {
+    } catch (error) {
       logger.error("Error updating event:", error);
-      res
-        .status(500)
-        .json({ message: "Error al actualizar evento", error: error.message });
+      next(error);
     }
   };
 
   // Delete event (admin only)
-  deleteEvent = async (req: Request, res: Response) => {
+  deleteEvent = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id } = req.params;
       await EventService.delete(id);
       res.json({ message: "Evento eliminado correctamente" });
-    } catch (error: any) {
+    } catch (error) {
       logger.error("Error deleting event:", error);
-      res
-        .status(500)
-        .json({ message: "Error al eliminar evento", error: error.message });
+      next(error);
     }
   };
 }
