@@ -33,8 +33,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
-# Generate the Prisma client in the prod image so it matches the environment
-RUN npx prisma@6.18.0 generate
+# Generate the Prisma client using the local installation (avoids network call)
+RUN pnpm run db:generate
 
 EXPOSE 5050
 CMD ["node", "dist/index.js"]
