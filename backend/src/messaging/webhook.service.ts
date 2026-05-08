@@ -1,38 +1,41 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from "../config/prisma";
+import { logger } from "../config";
 
 export class WebhookService {
+    private readonly timeout: number = 5000;
+
     /**
      * Dispatches an event to all active webhook subscriptions listening to a specific topic.
+     * @param topic - The event topic (e.g., "MESSAGE_CREATED")
+     * @param payload - The event payload to send
      */
-    public async dispatch(topic: string, payload: any): Promise<void> {
+    public async dispatch(topic: string, payload: Record<string, unknown>): Promise<void> {
         try {
             // Find all active subscriptions for this topic
-            const subscriptions = await (prisma as any).suscripcion_webhook.findMany({
+            const subscriptions = await (prisma as any).suscripcionWebhook.findMany({
                 where: { topico: topic, activo: true }
             });
 
             if (subscriptions.length === 0) {
-                console.log(`[WebhookService] No active subscriptions for topic: ${topic}`);
+                logger.info(`[WebhookService] No active subscriptions for topic: ${topic}`);
                 return;
             }
 
-            console.log(`[WebhookService] Found ${subscriptions.length} subscriptions for topic: ${topic}. Dispatching...`);
+            logger.info(`[WebhookService] Found ${subscriptions.length} subscriptions for topic: ${topic}. Dispatching...`);
 
             // Fire all webhooks asynchronously (fire and forget)
             // In a production system, this would be queued in Redis/RabbitMQ/Kafka
             for (const sub of subscriptions) {
                 this.sendPayload(sub.url, payload, sub.secreto).catch(err => {
-                    console.error(`[WebhookService] Failed to dispatch ${topic} to ${sub.url}`, err.message);
+                    logger.error(`[WebhookService] Failed to dispatch ${topic} to ${sub.url}:`, err);
                 });
             }
         } catch (error) {
-            console.error('[WebhookService] Error fetching subscriptions:', error);
+            logger.error('[WebhookService] Error fetching subscriptions:', error);
         }
     }
 
-    private async sendPayload(url: string, payload: any, secret: string | null): Promise<void> {
+    private async sendPayload(url: string, payload: Record<string, unknown>, secret: string | null): Promise<void> {
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'User-Agent': 'GestionProyectos-Webhook-Dispatcher/1.0',
@@ -43,17 +46,27 @@ export class WebhookService {
             headers['X-Webhook-Secret'] = secret;
         }
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload)
-            // Small timeout for resilience
-            // timeout: 5000 // Only available in node-fetch options but skipping here for simplicity
-        });
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
-        if (!response.ok) {
-            throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(payload),
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+            }
+
+            logger.info(`[WebhookService] Successfully delivered to ${url}`);
+        } catch (error) {
+            logger.error(`[WebhookService] Failed to send to ${url}:`, error);
+            throw error; // Re-throw for the caller's catch
         }
-        console.log(`[WebhookService] Successfully delivered to ${url}`);
     }
 }

@@ -43,7 +43,8 @@ metadata:
 |-----------|--------|
 | "a test", "one test", "new test", "add test" | Create ONE test() in existing spec |
 | "comprehensive tests", "all tests", "test suite", "generate tests" | Create full suite |
-| "create route" | crear una ruta en y agregarla al router|
+| "create route", "create router" | Trigger `backend-router` skill and add it |
+| "create schema", "add validation" | Trigger `backend-schema` skill and add it |
 
 **Examples:**
 - "Create a test for user sign-up" → ONE test only
@@ -263,3 +264,8 @@ pnpm test                # Run tests (uses .env.test)
 
 - **Repositories**: See [references/](references/) for detailed context on each repository module
   - [auth-context.md](references/auth-context.md) — Auth repository: endpoints, schemas, JWT, password flows
+
+## Related AI Skills
+
+- **`backend-schema`**: Guidelines for creating `express-validator` schemas.
+- **`backend-router`**: Guidelines for writing class-based Express routers.

@@ -1,0 +1,1 @@
+export { ActoresService } from "./actores.service";

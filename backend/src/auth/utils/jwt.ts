@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { envs } from "../../config";
 
 type Payload = {
   id: string;
@@ -6,7 +7,7 @@ type Payload = {
 };
 
 export const generateJWT = (payload: Payload) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, {
+  return jwt.sign(payload, envs.JWT_SECRET, {
     expiresIn: "6h",
   });
 };
