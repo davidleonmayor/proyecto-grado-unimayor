@@ -25,12 +25,36 @@ interface DownloadResult {
 }
 
 export class ProyeccionSocialService {
+  async getAll(): Promise<SearchResult[]> {
+    try {
+      return await prisma.proyecto_proyeccion_social.findMany({
+        select: {
+          id_proyecto_social: true,
+          nombre: true,
+          descripcion: true,
+          tipo_mime: true,
+          fecha_registro: true,
+          id_persona_registra: true,
+        },
+        orderBy: { fecha_registro: "desc" },
+      });
+    } catch (error) {
+      logger.error(
+        "[ProyeccionSocialService] Error fetching all projects:",
+        error,
+      );
+      throw new Error("Error al obtener los proyectos de proyección social.");
+    }
+  }
+
   /**
    * Crea un nuevo proyecto de proyección social.
    */
-  async create(
-    input: CreateProyeccionSocialInput,
-  ): Promise<{ id_proyecto_social: string; nombre: string; fecha_registro: Date }> {
+  async create(input: CreateProyeccionSocialInput): Promise<{
+    id_proyecto_social: string;
+    nombre: string;
+    fecha_registro: Date;
+  }> {
     try {
       const created = await prisma.proyecto_proyeccion_social.create({
         data: {

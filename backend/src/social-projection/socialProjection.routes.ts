@@ -37,6 +37,15 @@ export class ProyeccionSocialRoutes {
   }
 
   public initRoutes() {
+    //
+    this.router.get(
+      "/",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.isPrivilegedUser,
+      this.controller.getAll,
+    );
+
     this.router.get(
       "/search",
       this.authMiddleware.isAuthenticatedUser,

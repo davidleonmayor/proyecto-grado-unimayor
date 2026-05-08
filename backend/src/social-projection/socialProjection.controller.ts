@@ -39,6 +39,20 @@ export class ProyeccionSocialController {
   constructor() {
     this.service = new ProyeccionSocialService();
   }
+  getAll = async (req: Request, res: Response) => {
+    try {
+      const records = await this.service.getAll();
+      return res.status(200).json({
+        total: records.length,
+        items: records,
+      });
+    } catch (error: any) {
+      logger.error("Error fetching all social projection records:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
 
   create = async (req: Request, res: Response) => {
     try {

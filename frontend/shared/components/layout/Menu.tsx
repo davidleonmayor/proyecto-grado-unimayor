@@ -70,7 +70,7 @@ const menuItems: MenuSection[] = [
       {
         icon: "/documents.png",
         label: "Proyectos",
-        href: "/social-outreach/projects",
+        href: "/social-outreach/social-projects",
         visible: ["admin", "teacher"],
       },
       {

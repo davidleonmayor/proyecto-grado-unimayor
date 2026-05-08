@@ -17,7 +17,7 @@ const NAV_LINKS = [
     icon: "📊",
   },
   {
-    href: "/social-outreach/projects",
+    href: "/social-outreach/social-projects",
     label: "Proyectos Proyecciones Sociales",
     icon: "📦",
   },
