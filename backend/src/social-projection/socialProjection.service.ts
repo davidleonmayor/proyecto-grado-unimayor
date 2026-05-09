@@ -55,6 +55,42 @@ export class ProyeccionSocialService {
     }
   }
 
+  async getByUser(userId: string): Promise<SearchResult[]> {
+    try {
+      return await prisma.proyecto_proyeccion_social.findMany({
+        where: {
+          OR: [
+            {
+              integrantes: {
+                some: {
+                  id_persona: userId,
+                },
+              },
+            },
+            {
+              id_persona_registra: userId,
+            },
+          ],
+        },
+        select: {
+          id_proyecto_social: true,
+          nombre: true,
+          descripcion: true,
+          tipo_mime: true,
+          fecha_registro: true,
+          id_persona_registra: true,
+        },
+        orderBy: { fecha_registro: "desc" },
+      });
+    } catch (error) {
+      logger.error(
+        "[ProyeccionSocialService] Error fetching projects by user:",
+        error,
+      );
+      throw new Error("Error al obtener los proyectos de proyección social del usuario.");
+    }
+  }
+
   /**
    * Crea un nuevo proyecto de proyección social.
    */

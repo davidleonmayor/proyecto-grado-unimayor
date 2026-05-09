@@ -161,13 +161,11 @@ export default function ProjectsPage() {
       try {
         let data;
         if (isCoordinator) {
-          //data = await projectsService.getAllProjects();
           data = await socialProjectsService.getAllProjects();
         } else {
-          data = []; //await projectsService.getProjects();
+          data = await socialProjectsService.getProjects();
         }
-        // console.log("here fuck:", data);
-        setProjects(Array.isArray(data) ? data : []);
+        setProjects(data?.items || []);
       } catch (err) {
         setError("Error al cargar proyectos");
         console.error(err);

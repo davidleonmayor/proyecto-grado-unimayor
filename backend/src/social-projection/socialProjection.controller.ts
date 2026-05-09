@@ -54,6 +54,26 @@ export class ProyeccionSocialController {
     }
   };
 
+  getByUser = async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id_persona;
+      if (!userId) {
+        return res.status(401).json({ error: "Usuario no autenticado" });
+      }
+      
+      const records = await this.service.getByUser(userId);
+      return res.status(200).json({
+        total: records.length,
+        items: records,
+      });
+    } catch (error: any) {
+      logger.error("Error fetching user social projection records:", error);
+      return res.status(500).json({
+        error: error.message || "Error interno del servidor",
+      });
+    }
+  };
+
   create = async (req: Request, res: Response) => {
     try {
       // req.user is guaranteed to exist - middleware handled auth

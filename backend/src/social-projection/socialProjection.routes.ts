@@ -38,13 +38,20 @@ export class ProyeccionSocialRoutes {
   }
 
   public initRoutes() {
-    //
+    // Get all projects (Coordinators/Deans — role check done in frontend)
     this.router.get(
       "/",
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
-      this.roleMiddleware.isPrivilegedUser,
       this.controller.getAll,
+    );
+
+    // Get user's projects
+    this.router.get(
+      "/me",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.controller.getByUser,
     );
 
     // CREA AQUI EL POST PARA CREAR UNA NUEVA PROYECCION SOCIAL.

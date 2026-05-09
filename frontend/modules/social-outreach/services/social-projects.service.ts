@@ -16,8 +16,14 @@ import type {
 import type { BulkUploadSummary } from "@/shared/types/common";
 
 export class SocialProjectsService extends BaseApiClient {
-  async getAllProjects(): Promise<any[]> {
-    return this.request<any[]>("/api/proyeccion-social/", {
+  async getAllProjects(): Promise<{ total: number; items: any[] }> {
+    return this.request<{ total: number; items: any[] }>("/api/proyeccion-social/", {
+      requiresAuth: true,
+    });
+  }
+
+  async getProjects(): Promise<{ total: number; items: any[] }> {
+    return this.request<{ total: number; items: any[] }>("/api/proyeccion-social/me", {
       requiresAuth: true,
     });
   }
