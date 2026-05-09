@@ -37,7 +37,7 @@ export class SocialProjectsService extends BaseApiClient {
   async updateProject(id: string, data: any): Promise<any> {
     return this.request<any>(`/api/proyeccion-social/${id}`, {
       method: "PUT",
-      body: data,
+      body: JSON.stringify(data),
       requiresAuth: true,
     });
   }

@@ -200,6 +200,20 @@ export class ProyeccionSocialService {
           tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
+          integrantes: {
+            select: {
+              id_persona: true,
+              rol: true,
+              persona: {
+                select: {
+                  nombres: true,
+                  apellidos: true,
+                  correo_electronico: true,
+                  num_doc_identidad: true,
+                }
+              }
+            }
+          }
         },
       });
     } catch (error) {
@@ -216,15 +230,48 @@ export class ProyeccionSocialService {
    */
   async update(
     id: string,
-    data: { nombre: string; descripcion?: string | null },
+    data: { nombre: string; descripcion?: string | null; estudiantes?: string[]; docentes?: string[] },
   ) {
     try {
-      return await prisma.proyecto_proyeccion_social.update({
-        where: { id_proyecto_social: id },
-        data: {
-          nombre: data.nombre,
-          descripcion: data.descripcion,
-        },
+      return await prisma.$transaction(async (tx) => {
+        const updated = await tx.proyecto_proyeccion_social.update({
+          where: { id_proyecto_social: id },
+          data: {
+            nombre: data.nombre,
+            descripcion: data.descripcion,
+          },
+        });
+
+        if (data.estudiantes && data.docentes) {
+          // Delete existing integrantes
+          await tx.integrante_proyecto_social.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          // Insert new students
+          if (data.estudiantes.length > 0) {
+            await tx.integrante_proyecto_social.createMany({
+              data: data.estudiantes.map((estId) => ({
+                id_proyecto_social: id,
+                id_persona: estId,
+                rol: "Estudiante",
+              })),
+            });
+          }
+
+          // Insert new advisors
+          if (data.docentes.length > 0) {
+            await tx.integrante_proyecto_social.createMany({
+              data: data.docentes.map((docId) => ({
+                id_proyecto_social: id,
+                id_persona: docId,
+                rol: "Docente",
+              })),
+            });
+          }
+        }
+
+        return updated;
       });
     } catch (error: any) {
       logger.error("[ProyeccionSocialService] Error updating project:", error);

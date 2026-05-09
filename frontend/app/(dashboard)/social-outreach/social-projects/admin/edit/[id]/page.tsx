@@ -20,6 +20,16 @@ interface SocialProjectDetail {
     descripcion?: string | null;
     fecha_registro: string;
     id_persona_registra?: string | null;
+    integrantes?: {
+        id_persona: string;
+        rol: string;
+        persona: {
+            nombres: string;
+            apellidos: string;
+            correo_electronico: string;
+            num_doc_identidad: string;
+        };
+    }[];
 }
 
 const mergePeopleLists = (base: Person[], required: Person[]) => {
@@ -77,10 +87,24 @@ function EditSocialProjectPageContent() {
                 socialProjectsService.getProjectById(id)
             ]);
 
-            // For now, since Social Projects don't have assigned students/advisors in DB,
-            // we initialize them as empty. If they were supported, we would get them from 'project'.
-            const projectStudents: Person[] = []; 
-            const projectAdvisors: Person[] = [];
+            // Extract assigned students and advisors from project.integrantes
+            const projectStudents = project.integrantes
+                ?.filter(i => i.rol === 'Estudiante')
+                .map(i => ({
+                    id: i.id_persona,
+                    name: `${i.persona.nombres} ${i.persona.apellidos}`,
+                    email: i.persona.correo_electronico,
+                    document: i.persona.num_doc_identidad,
+                })) || [];
+
+            const projectAdvisors = project.integrantes
+                ?.filter(i => i.rol === 'Docente')
+                .map(i => ({
+                    id: i.id_persona,
+                    name: `${i.persona.nombres} ${i.persona.apellidos}`,
+                    email: i.persona.correo_electronico,
+                    document: i.persona.num_doc_identidad,
+                })) || [];
 
             setAllStudents(studentsData);
             setAllAdvisors(advisorsData);
@@ -175,10 +199,6 @@ function EditSocialProjectPageContent() {
 
     // Move student from available to assigned
     const addStudent = (student: Person) => {
-        if (assignedStudents.length >= 2) {
-            Swal.fire('Límite alcanzado', 'Máximo 2 estudiantes permitidos', 'warning');
-            return;
-        }
         setAssignedStudents([...assignedStudents, student]);
         const newAvailable = availableStudents.filter(s => s.id !== student.id);
         setAvailableStudents(newAvailable);
@@ -201,10 +221,6 @@ function EditSocialProjectPageContent() {
     };
 
     const addAdvisor = (advisor: Person) => {
-        if (assignedAdvisors.length >= 2) {
-            Swal.fire('Límite alcanzado', 'Máximo 2 asesores permitidos', 'warning');
-            return;
-        }
         setAssignedAdvisors([...assignedAdvisors, advisor]);
         const newAvailable = availableAdvisors.filter(a => a.id !== advisor.id);
         setAvailableAdvisors(newAvailable);
@@ -235,10 +251,9 @@ function EditSocialProjectPageContent() {
             await socialProjectsService.updateProject(projectId, {
                 nombre,
                 descripcion,
-                // Students and advisors are kept in state but not currently saved in backend
-                // until the backend is updated to support relations for social projection.
-                students: assignedStudents.map(s => s.id),
-                advisors: assignedAdvisors.map(a => a.id)
+                // Update students and advisors
+                estudiantes: assignedStudents.map(s => s.id),
+                docentes: assignedAdvisors.map(a => a.id)
             });
 
             await Swal.fire('¡Actualizado!', 'Proyecto de proyección social actualizado correctamente', 'success');
@@ -292,13 +307,13 @@ function EditSocialProjectPageContent() {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Estudiantes (Máximo 2)
+                        Estudiantes (Selecciona 1 o más)
                     </label>
                     <div className="grid grid-cols-2 gap-4">
                         {/* Assigned Students */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedStudents.length}/2)</span>
+                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedStudents.length})</span>
                             </div>
                             <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                                 {assignedStudents.length === 0 ? (
@@ -378,13 +393,13 @@ function EditSocialProjectPageContent() {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Docentes / Asesores (Máximo 2)
+                        Docentes / Asesores (Selecciona 1 o más)
                     </label>
                     <div className="grid grid-cols-2 gap-4">
                         {/* Assigned Advisors */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedAdvisors.length}/2)</span>
+                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedAdvisors.length})</span>
                             </div>
                             <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
                                 {assignedAdvisors.length === 0 ? (

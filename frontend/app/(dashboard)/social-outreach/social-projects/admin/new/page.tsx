@@ -204,14 +204,8 @@ function NewProjectPageContent() {
   const toggleStudent = (studentId: string) => {
     if (selectedStudents.includes(studentId)) {
       setSelectedStudents(selectedStudents.filter((id) => id !== studentId));
-    } else if (selectedStudents.length < 2) {
-      setSelectedStudents([...selectedStudents, studentId]);
     } else {
-      Swal.fire(
-        "Límite alcanzado",
-        "Máximo 2 estudiantes permitidos",
-        "warning",
-      );
+      setSelectedStudents([...selectedStudents, studentId]);
     }
   };
 
@@ -221,10 +215,8 @@ function NewProjectPageContent() {
 
     if (selectedAdvisors.includes(advisorId)) {
       setSelectedAdvisors(selectedAdvisors.filter((id) => id !== advisorId));
-    } else if (selectedAdvisors.length < 2) {
-      setSelectedAdvisors([...selectedAdvisors, advisorId]);
     } else {
-      Swal.fire("Límite alcanzado", "Máximo 2 docentes permitidos", "warning");
+      setSelectedAdvisors([...selectedAdvisors, advisorId]);
     }
   };
 
@@ -314,7 +306,7 @@ function NewProjectPageContent() {
         {/* Estudiantes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estudiantes * (Selecciona 1 o 2)
+            Estudiantes * (Selecciona 1 o más)
           </label>
           <div className="mb-3">
             <input
@@ -366,7 +358,7 @@ function NewProjectPageContent() {
           </div>
           <div className="flex justify-between items-center mt-1">
             <p className="text-xs text-gray-500">
-              Seleccionados: {selectedStudents.length}/2
+              Seleccionados: {selectedStudents.length}
             </p>
             {studentSearch && (
               <p className="text-xs text-gray-500">
@@ -380,7 +372,7 @@ function NewProjectPageContent() {
         {/* Docentes */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Docentes * (Selecciona 1 o 2)
+            Docentes * (Selecciona 1 o más)
           </label>
           {currentUser && <CurrentUser {...{ currentUser }} />}
           <div className="mb-3">
@@ -412,7 +404,7 @@ function NewProjectPageContent() {
           </div>
           <div className="flex justify-between items-center mt-1">
             <p className="text-xs text-gray-500">
-              Seleccionados: {selectedAdvisors.length}/2
+              Seleccionados: {selectedAdvisors.length}
             </p>
             {advisorSearch && (
               <p className="text-xs text-gray-500">

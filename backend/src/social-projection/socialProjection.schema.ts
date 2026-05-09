@@ -161,8 +161,8 @@ export const CreateManualSocialProjectionSchema: Schema = {
     isArray: { errorMessage: "El campo 'estudiantes' debe ser un arreglo" },
     custom: {
       options: (value: string[]) => {
-        if (value.length < 1 || value.length > 2) {
-          throw new Error("Debe seleccionar entre 1 y 2 estudiantes");
+        if (value.length < 1) {
+          throw new Error("Debe seleccionar al menos 1 estudiante");
         }
         if (new Set(value).size !== value.length) {
           throw new Error("Los IDs de estudiantes no pueden estar duplicados");
@@ -180,8 +180,8 @@ export const CreateManualSocialProjectionSchema: Schema = {
     isArray: { errorMessage: "El campo 'docentes' debe ser un arreglo" },
     custom: {
       options: (value: string[]) => {
-        if (value.length < 1 || value.length > 2) {
-          throw new Error("Debe seleccionar entre 1 y 2 docentes");
+        if (value.length < 1) {
+          throw new Error("Debe seleccionar al menos 1 docente");
         }
         if (new Set(value).size !== value.length) {
           throw new Error("Los IDs de docentes no pueden estar duplicados");

@@ -292,9 +292,9 @@ export class ProyeccionSocialController {
   update = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { nombre, descripcion } = req.body;
+      const { nombre, descripcion, estudiantes, docentes } = req.body;
 
-      const updated = await this.service.update(id, { nombre, descripcion });
+      const updated = await this.service.update(id, { nombre, descripcion, estudiantes, docentes });
 
       return res.status(200).json({
         message: "Proyecto de proyección social actualizado exitosamente",
