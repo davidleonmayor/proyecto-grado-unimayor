@@ -122,6 +122,33 @@ export class EventController {
         ];
       }
 
+      // Apply optional query filters
+      const filterStatus = (req.query.status as string) || 'all';
+      const filterPriority = (req.query.priority as string) || 'all';
+      const search = (req.query.search as string) || '';
+      const now = new Date();
+
+      if (filterStatus === 'active') {
+        whereClause.fecha_fin = { gte: now };
+      } else if (filterStatus === 'past') {
+        whereClause.fecha_fin = { lt: now };
+      } else if (filterStatus === 'today') {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+        whereClause.fecha_inicio = { gte: startOfDay, lte: endOfDay };
+      }
+
+      if (filterPriority !== 'all') {
+        whereClause.prioridad = filterPriority;
+      }
+
+      if (search) {
+        whereClause.OR = [
+          { titulo: { contains: search } },
+          { descripcion: { contains: search } },
+        ];
+      }
+
       // Get total count for pagination
       const total = await prisma.evento.count({
         where: whereClause,
@@ -134,7 +161,6 @@ export class EventController {
       });
 
       // Sort manually
-      const now = new Date();
       events.sort((a, b) => {
         const priorityOrder: { [key: string]: number } = {
           alta: 0,

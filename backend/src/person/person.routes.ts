@@ -40,6 +40,24 @@ export class PersonRoutes {
       this.controller.getStudents,
     );
 
+    // POST /teachers — Create teacher (admin only)
+    this.router.post(
+      "/teachers",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.isPrivilegedUser,
+      this.controller.createTeacher,
+    );
+
+    // POST /students — Create student (admin only)
+    this.router.post(
+      "/students",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.isPrivilegedUser,
+      this.controller.createStudent,
+    );
+
     this.router.get(
       "/:id",
       validateSchema(GetPersonByIdSchema),

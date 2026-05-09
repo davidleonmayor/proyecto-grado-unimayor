@@ -15,6 +15,7 @@ import { EventRoutes } from "./event/event.routes";
 import { PersonRoutes } from "./person/person.routes";
 import { MessagingRoutes } from "./messaging/messaging.routes";
 import { ProyeccionSocialRoutes } from "./social-projection/socialProjection.routes";
+import { AnnouncementRoutes } from "./announcement/announcement.routes";
 
 export default class Server {
   private app: Application;
@@ -111,6 +112,7 @@ export default class Server {
     const personRoutes = new PersonRoutes();
     const messagingRoutes = new MessagingRoutes();
     const proyeccionSocialRoutes = new ProyeccionSocialRoutes();
+    const announcementRoutes = new AnnouncementRoutes();
 
     this.app.use("/api/auth", authRoutes.router);
     this.app.use("/api/projects", projectRoutes.router);
@@ -118,6 +120,7 @@ export default class Server {
     this.app.use("/api/persons", personRoutes.router);
     this.app.use("/api/messaging", messagingRoutes.router);
     this.app.use("/api/proyeccion-social", proyeccionSocialRoutes.router);
+    this.app.use("/api/announcement", announcementRoutes.router);
 
     // 404 handler (ANTES del error handler)
     this.app.use(notFound);
