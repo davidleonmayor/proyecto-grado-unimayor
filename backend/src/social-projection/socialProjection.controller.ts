@@ -8,6 +8,14 @@ const allowedExcelMimeTypes = new Set([
   "application/vnd.ms-excel",
 ]);
 
+const allowedAnexoMimeTypes = new Set([
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
 const storage = multer.memoryStorage();
 
 const excelFileFilter = (
@@ -27,10 +35,37 @@ const excelFileFilter = (
   cb(null, true);
 };
 
+const anexoFileFilter = (
+  _req: Request,
+  file: Express.Multer.File,
+  cb: FileFilterCallback,
+) => {
+  const ext = file.originalname.toLowerCase();
+  const isAllowed =
+    allowedAnexoMimeTypes.has(file.mimetype) ||
+    ext.endsWith(".pdf") ||
+    ext.endsWith(".doc") ||
+    ext.endsWith(".docx") ||
+    ext.endsWith(".xls") ||
+    ext.endsWith(".xlsx");
+
+  if (!isAllowed) {
+    return cb(new Error("Solo se permiten archivos PDF, Word (.doc/.docx) o Excel (.xls/.xlsx)."));
+  }
+
+  cb(null, true);
+};
+
 export const proyeccionSocialUpload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: excelFileFilter,
+});
+
+export const anexoUpload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB para anexos
+  fileFilter: anexoFileFilter,
 });
 
 export class ProyeccionSocialController {
@@ -98,7 +133,7 @@ export class ProyeccionSocialController {
         nombre,
         descripcion,
         tipo_mime: file.mimetype,
-        archivo: Buffer.from(file.buffer),
+        archivo: file.buffer as any,
         id_persona_registra: userId,
       });
 
@@ -307,4 +342,69 @@ export class ProyeccionSocialController {
       });
     }
   };
+
+  uploadAnexo = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: "No se proporcionó ningún archivo." });
+      }
+
+      const anexo = await this.service.uploadAnexo(id, file.originalname, file.mimetype, file.buffer as any);
+      
+      return res.status(201).json({
+        message: "Anexo subido exitosamente",
+        data: anexo,
+      });
+    } catch (error: any) {
+      logger.error("Error uploading anexo:", error);
+      return res.status(500).json({ error: error.message || "Error interno del servidor" });
+    }
+  };
+
+  getAnexos = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const anexos = await this.service.getAnexos(id);
+      return res.status(200).json(anexos);
+    } catch (error: any) {
+      logger.error("Error getting anexos:", error);
+      return res.status(500).json({ error: error.message || "Error interno del servidor" });
+    }
+  };
+
+  downloadAnexo = async (req: Request, res: Response) => {
+    try {
+      const { id, anexoId } = req.params;
+      const anexo = await this.service.getAnexo(id, anexoId);
+      
+      if (!anexo) {
+        return res.status(404).json({ error: "Anexo no encontrado" });
+      }
+
+      res.setHeader("Content-Type", anexo.tipo_mime);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${anexo.nombre_archivo}"`
+      );
+      return res.send(anexo.archivo);
+    } catch (error: any) {
+      logger.error("Error downloading anexo:", error);
+      return res.status(500).json({ error: error.message || "Error interno del servidor" });
+    }
+  };
+
+  deleteAnexo = async (req: Request, res: Response) => {
+    try {
+      const { id, anexoId } = req.params;
+      await this.service.deleteAnexo(id, anexoId);
+      return res.status(200).json({ message: "Anexo eliminado exitosamente" });
+    } catch (error: any) {
+      logger.error("Error deleting anexo:", error);
+      return res.status(500).json({ error: error.message || "Error interno del servidor" });
+    }
+  };
 }
+

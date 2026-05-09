@@ -325,10 +325,25 @@ model proyecto_proyeccion_social {
 
   persona_registra     persona?  @relation(fields: [id_persona_registra], references: [id_persona])
   integrantes          integrante_proyecto_social[]
+  anexos               anexo_proyecto_social[]
 
   @@index([id_persona_registra])
   @@index([fecha_registro])
   @@map("PROYECTO_PROYECCION_SOCIAL")
+}
+
+model anexo_proyecto_social {
+  id_anexo           String    @id @default(cuid())
+  id_proyecto_social String
+  nombre_archivo     String    @db.VarChar(255)
+  tipo_mime          String    @db.VarChar(100)
+  archivo            Bytes     @db.LongBlob
+  fecha_subida       DateTime  @default(now()) @db.DateTime(0)
+
+  proyecto           proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social], onDelete: Cascade)
+
+  @@index([id_proyecto_social])
+  @@map("ANEXO_PROYECTO_SOCIAL")
 }
 
 

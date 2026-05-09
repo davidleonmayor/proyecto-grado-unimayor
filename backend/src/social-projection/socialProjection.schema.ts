@@ -194,3 +194,41 @@ export const CreateManualSocialProjectionSchema: Schema = {
     },
   },
 };
+
+export const UploadAnexoSchema: Schema = {
+  authorization: authorizationHeaderRule,
+  id: {
+    in: ["params"],
+    exists: { errorMessage: "El parámetro 'id' es obligatorio" },
+    isString: { errorMessage: "El parámetro 'id' debe ser texto" },
+    matches: {
+      options: /^c[a-z0-9]{24}$/,
+      errorMessage: "El parámetro 'id' debe ser un CUID válido",
+    },
+    trim: true,
+  },
+  archivo: {
+    in: ["body"],
+    custom: {
+      options: (_value, { req }) => {
+        if (!req.file) {
+          throw new Error("El archivo es obligatorio");
+        }
+        
+        const validMimes = [
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // xlsx
+          "application/vnd.ms-excel", // xls
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // docx
+          "application/msword" // doc
+        ];
+
+        if (!validMimes.includes(req.file.mimetype)) {
+            throw new Error("El archivo debe ser PDF, Excel (xlsx/xls) o Word (docx/doc)");
+        }
+        
+        return true;
+      },
+    },
+  },
+};

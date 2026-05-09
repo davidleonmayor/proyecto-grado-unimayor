@@ -91,6 +91,7 @@ export class BaseApiClient {
     const { requiresAuth = false, headers = {}, ...restOptions } = options;
 
     const config: RequestInit = {
+      method: "POST", // default for form data uploads
       ...restOptions,
       headers: {
         ...headers,

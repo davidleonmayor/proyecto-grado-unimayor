@@ -398,4 +398,68 @@ export class ProyeccionSocialService {
       throw new Error("Error al crear el proyecto de proyección social manualmente.");
     }
   }
+
+  async uploadAnexo(idProyecto: string, nombreArchivo: string, tipoMime: string, archivo: Buffer) {
+    try {
+      return await prisma.anexo_proyecto_social.create({
+        data: {
+          id_proyecto_social: idProyecto,
+          nombre_archivo: nombreArchivo,
+          tipo_mime: tipoMime,
+          archivo: new Uint8Array(archivo),
+        },
+        select: {
+          id_anexo: true,
+          id_proyecto_social: true,
+          nombre_archivo: true,
+          tipo_mime: true,
+          fecha_subida: true,
+        }
+      });
+    } catch (error) {
+      logger.error("[ProyeccionSocialService] Error uploading anexo:", error);
+      throw new Error("Error al guardar el anexo del proyecto.");
+    }
+  }
+
+  async getAnexos(idProyecto: string) {
+    try {
+      return await prisma.anexo_proyecto_social.findMany({
+        where: { id_proyecto_social: idProyecto },
+        select: {
+          id_anexo: true,
+          id_proyecto_social: true,
+          nombre_archivo: true,
+          tipo_mime: true,
+          fecha_subida: true,
+        },
+        orderBy: { fecha_subida: "desc" }
+      });
+    } catch (error) {
+      logger.error("[ProyeccionSocialService] Error getting anexos:", error);
+      throw new Error("Error al obtener los anexos del proyecto.");
+    }
+  }
+
+  async getAnexo(idProyecto: string, idAnexo: string) {
+    try {
+      return await prisma.anexo_proyecto_social.findFirst({
+        where: { id_proyecto_social: idProyecto, id_anexo: idAnexo },
+      });
+    } catch (error) {
+      logger.error("[ProyeccionSocialService] Error getting anexo by id:", error);
+      throw new Error("Error al obtener el anexo.");
+    }
+  }
+
+  async deleteAnexo(idProyecto: string, idAnexo: string) {
+    try {
+      return await prisma.anexo_proyecto_social.deleteMany({
+        where: { id_proyecto_social: idProyecto, id_anexo: idAnexo },
+      });
+    } catch (error) {
+      logger.error("[ProyeccionSocialService] Error deleting anexo:", error);
+      throw new Error("Error al eliminar el anexo.");
+    }
+  }
 }

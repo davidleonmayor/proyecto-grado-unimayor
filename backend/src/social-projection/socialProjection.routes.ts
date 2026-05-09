@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   ProyeccionSocialController,
   proyeccionSocialUpload,
+  anexoUpload,
 } from "./socialProjection.controller";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware";
 import { RoleMiddleware } from "../common/middleware/RoleMiddleware";
@@ -12,6 +13,7 @@ import {
   DownloadByNameSocialProjectionSchema,
   SearchSocialProjectionSchema,
   CreateManualSocialProjectionSchema,
+  UploadAnexoSchema,
 } from "./socialProjection.schema";
 
 // Roles allowed to create social projection projects
@@ -119,6 +121,38 @@ export class ProyeccionSocialRoutes {
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
       this.controller.update,
+    );
+
+    this.router.post(
+      "/:id/anexos",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
+      anexoUpload.single("archivo"),
+      validateSchema(UploadAnexoSchema),
+      this.controller.uploadAnexo,
+    );
+
+    this.router.get(
+      "/:id/anexos",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.controller.getAnexos,
+    );
+
+    this.router.get(
+      "/:id/anexos/:anexoId/download",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.controller.downloadAnexo,
+    );
+
+    this.router.delete(
+      "/:id/anexos/:anexoId",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
+      this.controller.deleteAnexo,
     );
   }
 }

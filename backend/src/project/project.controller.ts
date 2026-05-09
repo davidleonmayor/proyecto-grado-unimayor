@@ -253,7 +253,7 @@ export class ProjectController {
                     id_actor: actor.id_actor,
                     id_accion: action.id_accion,
                     resumen: description || "Entrega de avance",
-                    archivo: Buffer.from(file.buffer) as any, // Convert to Bytes
+                    archivo: file.buffer as any, // Convert to Bytes
                     nombre_documento: file.originalname,
                     tipo_documento: file.mimetype,
                     numero_resolucion: numero_resolucion || null
@@ -371,7 +371,7 @@ export class ProjectController {
                     numero_resolucion: numero_resolucion || null,
                     // Include file data if provided
                     ...(file && {
-                        archivo: Buffer.from(file.buffer) as any,
+                        archivo: file.buffer as any,
                         nombre_documento: file.originalname,
                         tipo_documento: file.mimetype
                     })

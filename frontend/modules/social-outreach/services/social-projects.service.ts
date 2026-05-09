@@ -71,6 +71,35 @@ export class SocialProjectsService extends BaseApiClient {
       `archivo-${historyId}.pdf`,
     );
   }
+
+  async getAnexos(id: string): Promise<any[]> {
+    return this.request<any[]>(`/api/proyeccion-social/${id}/anexos`, {
+      requiresAuth: true,
+    });
+  }
+
+  async uploadAnexo(id: string, file: File): Promise<any> {
+    const formData = new FormData();
+    formData.append("archivo", file);
+    return this.requestFormData<any>(`/api/proyeccion-social/${id}/anexos`, formData, {
+      method: "POST",
+      requiresAuth: true,
+    });
+  }
+
+  async deleteAnexo(id: string, anexoId: string): Promise<any> {
+    return this.request<any>(`/api/proyeccion-social/${id}/anexos/${anexoId}`, {
+      method: "DELETE",
+      requiresAuth: true,
+    });
+  }
+
+  async downloadAnexo(id: string, anexoId: string, filename: string): Promise<void> {
+    return this.downloadFile(
+      `/api/proyeccion-social/${id}/anexos/${anexoId}/download`,
+      filename,
+    );
+  }
 }
 
 export const socialProjectsService = new SocialProjectsService();
