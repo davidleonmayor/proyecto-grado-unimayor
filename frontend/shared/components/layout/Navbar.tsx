@@ -94,6 +94,17 @@ export const Navbar = () => {
     }
   };
 
+  const markAllAsRead = async () => {
+    const unread = announcements.filter(a => !a.leido);
+    for (const a of unread) {
+      try {
+        await announcementService.markAsRead(a.id_anuncio);
+      } catch (_) { /* continúa con el resto */ }
+    }
+    setAnnouncements(prev => prev.map(a => ({ ...a, leido: true })));
+    setUnreadAnnouncementsCount(0);
+  };
+
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: "¿Cerrar sesión?",
@@ -145,14 +156,6 @@ export const Navbar = () => {
     const hrs = Math.floor(mins / 60);
     if (hrs < 24) return `${hrs}h`;
     return `${Math.floor(hrs / 24)}d`;
-  };
-
-  const markAllAsRead = async () => {
-    const unread = announcements.filter(a => !a.leido);
-    for (const ann of unread) {
-      await announcementService.markAsRead(ann.id_anuncio).catch(() => { });
-    }
-    loadAnnouncements();
   };
 
   return (
@@ -300,7 +303,7 @@ export const Navbar = () => {
 
         {/* Announcements Dropdown */}
         <div className="relative" ref={announcementsRef}>
-          {/* <div
+          <div
             className={`bg-white rounded-full w-9 h-9 flex items-center justify-center cursor-pointer relative transition-colors ${showAnnouncements ? "bg-primary-50 ring-2 ring-primary-100" : "hover:bg-gray-50 ring-1 ring-gray-100"}`}
             onClick={() => {
               setShowAnnouncements(!showAnnouncements);
@@ -317,10 +320,10 @@ export const Navbar = () => {
                 {unreadAnnouncementsCount}
               </div>
             )}
-          </div> */}
+          </div>
 
           {/* Dropdown Box for Announcements */}
-          {/* {showAnnouncements && (
+          {showAnnouncements && (
             <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] py-0 z-50 border border-gray-100 overflow-hidden flex flex-col">
               <div className="px-5 py-4 border-b border-gray-50 flex justify-between items-center bg-slate-50/50">
                 <h3 className="text-[15px] font-semibold text-gray-800">Notificaciones</h3>
@@ -370,7 +373,7 @@ export const Navbar = () => {
                 </div>
               )}
             </div>
-          )} */}
+          )}
         </div>
 
         {/* User Info with Dropdown */}
