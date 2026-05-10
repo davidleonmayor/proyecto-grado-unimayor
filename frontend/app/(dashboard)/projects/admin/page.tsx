@@ -141,11 +141,11 @@ function AdminProjectsPageContent() {
                                         <td className="px-6 py-5 whitespace-nowrap align-top">
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${project.status === 'Aprobado' ? 'bg-emerald-500' :
-                                                    project.status === 'Rechazado' ? 'bg-rose-500' :
+                                                    project.status === 'Rechazado' || project.status === 'Finalizado' || project.status === 'finalizado' || project.status === 'Terminado' || project.status === 'terminado' ? 'bg-rose-500' :
                                                         'bg-amber-400'
                                                     }`}></span>
                                                 <span className={`text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded border ${project.status === 'Aprobado' ? 'text-emerald-700 border-emerald-200' :
-                                                    project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
+                                                    project.status === 'Rechazado' || project.status === 'Finalizado' || project.status === 'finalizado' || project.status === 'Terminado' || project.status === 'terminado' ? 'text-rose-700 border-rose-200' :
                                                         'text-amber-700 border-amber-200'
                                                     }`}>
                                                     {project.status}
