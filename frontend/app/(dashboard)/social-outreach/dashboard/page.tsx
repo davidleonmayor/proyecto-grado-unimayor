@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import CountCharts from "@/modules/dashboard/components/CountCharts";
 import UserCard from "@/modules/dashboard/components/UserCard";
-import ProjectStatusChart from "@/modules/dashboard/components/ProjectStatusChart";
 import ImpactBarChart from "@/modules/dashboard/components/ImpactBarChart";
 import FinanceChart from "@/modules/dashboard/components/FinanceChart";
 import EventCalendar from "@/modules/events/components/EventCalendar";
@@ -18,18 +17,19 @@ function SocialOutreachDashboard() {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [mainData, socialData] = await Promise.allSettled([
+        const [data, social] = await Promise.all([
           dashboardService.getDashboardStats(),
           dashboardService.getSocialProjectionDashboard(),
         ]);
-        if (mainData.status === "fulfilled") setStats(mainData.value);
-        if (socialData.status === "fulfilled") setSocialStats(socialData.value);
+        setStats(data);
+        setSocialStats(social);
       } catch (error) {
         console.error("Error loading stats:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     loadStats();
   }, []);
 
@@ -45,61 +45,34 @@ function SocialOutreachDashboard() {
     <div className="p-4 flex gap-4 flex-col md:flex-row">
       {/* LEFT */}
       <div className="w-full lg:w-2/3 flex flex-col gap-8">
-
-        {/* ── ROW 1: Proyectos de Grado (igual que inicio) ── */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Proyectos de Grado
-          </h2>
-          <div className="flex gap-4 justify-between flex-wrap">
-            <UserCard
-              type="Total proyectos grado registrados"
-              value={stats?.stats?.totalProjects ?? 0}
-              href="/projects"
-              bgColor="bg-[#0ea5e9]"
-            />
-            <UserCard
-              type="Proyectos en curso"
-              value={stats?.stats?.proyectosEnCurso ?? 0}
-              href="/projects"
-            />
-            <UserCard
-              type="Proyectos finalizados"
-              value={stats?.stats?.proyectosFinalizados ?? 0}
-              href="/projects"
-              bgColor="bg-[#0ea5e9]"
-            />
-            <UserCard
-              type="Profesores/directores activos"
-              value={stats?.stats?.profesoresActivos ?? 0}
-              href="/list/teachers"
-            />
-          </div>
+        {/* USER CARDS */}
+        <div className="flex gap-4 justify-between flex-wrap">
+          <UserCard
+            type="Total proyectos de proyección social"
+            value={socialStats?.totalProjects ?? stats?.stats?.totalProjects ?? 0}
+            href="/social-outreach/social-projects"
+            bgColor="bg-[#0ea5e9]"
+          />
+          <UserCard
+            type="Personas impactadas (total)"
+            value={socialStats?.totalImpactadas ?? 0}
+            href="/social-outreach/social-projects"
+          />
+          <UserCard
+            type="Proyectos en curso"
+            value={stats?.stats?.proyectosEnCurso ?? 0}
+            href="/social-outreach/social-projects"
+            bgColor="bg-[#0ea5e9]"
+          />
+          <UserCard
+            type="Profesores/directores activos"
+            value={stats?.stats?.profesoresActivos ?? 0}
+            href="/list/teachers"
+          />
         </div>
-
-        {/* ── ROW 2: Proyección Social ── */}
-        <div>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Proyección Social
-          </h2>
-          <div className="flex gap-4 justify-between flex-wrap">
-            <UserCard
-              type="Proyectos de proyección social"
-              value={socialStats?.totalProjects ?? 0}
-              href="/social-outreach/social-projects"
-              bgColor="bg-[#0ea5e9]"
-            />
-            <UserCard
-              type="Personas impactadas (total)"
-              value={socialStats?.totalImpactadas ?? 0}
-              href="/social-outreach/social-projects"
-            />
-          </div>
-        </div>
-
-        {/* ── MIDDLE CHARTS ── */}
+        {/* MIDDLE CHARTS */}
         <div className="flex gap-4 flex-col lg:flex-row">
-          {/* Donut: estudiantes con/sin entrega */}
+          {/* COUNT CHART */}
           <div className="w-full lg:w-1/3 h-[450px]">
             <CountCharts
               entregado={stats?.students?.entregado ?? 0}
@@ -110,32 +83,19 @@ function SocialOutreachDashboard() {
               href="/list/students"
             />
           </div>
-          {/* Barras: proyectos aprobados/rechazados por semana */}
+          {/* IMPACT BAR CHART */}
           <div className="w-full lg:w-2/3 h-[450px]">
-            <ProjectStatusChart
-              data={stats?.weeklyChart ?? []}
-              href="/projects"
+            <ImpactBarChart
+              data={socialStats?.weeklyImpact ?? []}
+              href="/social-outreach/social-projects"
             />
           </div>
         </div>
-
-        {/* ── IMPACT CHART ── */}
-        <div className="h-[400px]">
-          <ImpactBarChart
-            data={socialStats?.weeklyImpact ?? []}
-            href="/social-outreach/social-projects"
-          />
-        </div>
-
-        {/* ── BOTTOM CHART: evolución mensual ── */}
+        {/* BOTTOM CHARTS */}
         <div className="w-full h-[500px]">
-          <FinanceChart
-            data={stats?.monthlyChart ?? []}
-            href="/projects"
-          />
+          <FinanceChart data={stats?.monthlyChart ?? []} href="/social-outreach/social-projects" />
         </div>
       </div>
-
       {/* RIGHT */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
         <EventCalendar />
@@ -144,7 +104,7 @@ function SocialOutreachDashboard() {
   );
 }
 
-export default function SocialOutreachPage() {
+export default function AdminPage() {
   return (
     <RoleProtectedRoute allowedRoles={["admin"]} redirectTo="/teacher">
       <SocialOutreachDashboard />
