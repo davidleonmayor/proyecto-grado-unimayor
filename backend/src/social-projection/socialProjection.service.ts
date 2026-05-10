@@ -6,6 +6,7 @@ export interface CreateProyeccionSocialInput {
   tipo_mime: string;
   archivo: Buffer;
   id_persona_registra: string;
+  personas_impactadas?: number;
 }
 
 export interface CreateManualProyeccionSocialInput {
@@ -14,15 +15,17 @@ export interface CreateManualProyeccionSocialInput {
   id_persona_registra: string;
   estudiantes: string[];
   docentes: string[];
+  personas_impactadas?: number;
 }
 
 interface SearchResult {
   id_proyecto_social: string;
   nombre: string;
   descripcion: string | null;
-  tipo_mime: string;
+  tipo_mime: string | null;
   fecha_registro: Date;
-  id_persona_registra: string;
+  id_persona_registra: string | null;
+  personas_impactadas: number;
 }
 
 interface DownloadResult {
@@ -43,6 +46,7 @@ export class ProyeccionSocialService {
           tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
+          personas_impactadas: true,
         },
         orderBy: { fecha_registro: "desc" },
       });
@@ -79,6 +83,7 @@ export class ProyeccionSocialService {
           tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
+          personas_impactadas: true,
         },
         orderBy: { fecha_registro: "desc" },
       });
@@ -107,6 +112,7 @@ export class ProyeccionSocialService {
           tipo_mime: input.tipo_mime,
           archivo: new Uint8Array(input.archivo),
           id_persona_registra: input.id_persona_registra,
+          personas_impactadas: input.personas_impactadas ?? 0,
         },
         select: {
           id_proyecto_social: true,
@@ -149,6 +155,7 @@ export class ProyeccionSocialService {
           tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
+          personas_impactadas: true,
         },
         orderBy: { fecha_registro: "desc" },
         take: limit,
@@ -200,6 +207,7 @@ export class ProyeccionSocialService {
           tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
+          personas_impactadas: true,
           integrantes: {
             select: {
               id_persona: true,
@@ -230,7 +238,7 @@ export class ProyeccionSocialService {
    */
   async update(
     id: string,
-    data: { nombre: string; descripcion?: string | null; estudiantes?: string[]; docentes?: string[] },
+    data: { nombre: string; descripcion?: string | null; personas_impactadas?: number; estudiantes?: string[]; docentes?: string[] },
   ) {
     try {
       return await prisma.$transaction(async (tx) => {
@@ -239,6 +247,7 @@ export class ProyeccionSocialService {
           data: {
             nombre: data.nombre,
             descripcion: data.descripcion,
+            ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
           },
         });
 
@@ -342,6 +351,7 @@ export class ProyeccionSocialService {
             nombre: input.nombre,
             descripcion: input.descripcion,
             id_persona_registra: input.id_persona_registra,
+            personas_impactadas: input.personas_impactadas ?? 0,
           },
         });
 
@@ -461,5 +471,56 @@ export class ProyeccionSocialService {
       logger.error("[ProyeccionSocialService] Error deleting anexo:", error);
       throw new Error("Error al eliminar el anexo.");
     }
+  }
+
+  /**
+   * Retorna estadísticas del dashboard de proyección social:
+   * - Totales generales
+   * - Gráfica de personas impactadas por semana (últimas 4 semanas)
+   */
+  async getSocialDashboardStats() {
+    const now = new Date();
+
+    // Total projects
+    const totalProjects = await prisma.proyecto_proyeccion_social.count();
+
+    // Total impacto acumulado
+    const impactoAgg = await prisma.proyecto_proyeccion_social.aggregate({
+      _sum: { personas_impactadas: true },
+    });
+    const totalImpactadas = impactoAgg._sum.personas_impactadas ?? 0;
+
+    // Proyectos recientes (últimas 4 semanas)
+    const fourWeeksAgo = new Date(now);
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+
+    const proyectosRecientes = await prisma.proyecto_proyeccion_social.findMany({
+      where: { fecha_registro: { gte: fourWeeksAgo } },
+      select: { fecha_registro: true, personas_impactadas: true },
+      orderBy: { fecha_registro: 'asc' },
+    });
+
+    // Group by week (Semana 1..4 from oldest to newest)
+    const weeklyImpact: { name: string; personas_impactadas: number }[] = [
+      { name: 'Semana 1', personas_impactadas: 0 },
+      { name: 'Semana 2', personas_impactadas: 0 },
+      { name: 'Semana 3', personas_impactadas: 0 },
+      { name: 'Semana 4', personas_impactadas: 0 },
+    ];
+
+    proyectosRecientes.forEach(p => {
+      const diffDays = Math.floor((now.getTime() - new Date(p.fecha_registro).getTime()) / (1000 * 60 * 60 * 24));
+      // diffDays: 0-6 → semana 4 (más reciente), 7-13 → semana 3, 14-20 → semana 2, 21-27 → semana 1
+      let weekIdx = 3 - Math.floor(diffDays / 7);
+      if (weekIdx < 0) weekIdx = 0;
+      if (weekIdx > 3) weekIdx = 3;
+      weeklyImpact[weekIdx].personas_impactadas += p.personas_impactadas;
+    });
+
+    return {
+      totalProjects,
+      totalImpactadas,
+      weeklyImpact,
+    };
   }
 }

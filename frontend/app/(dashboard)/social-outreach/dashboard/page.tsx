@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import CountCharts from "@/modules/dashboard/components/CountCharts";
 import UserCard from "@/modules/dashboard/components/UserCard";
-import ProjectStatusChart from "@/modules/dashboard/components/ProjectStatusChart";
+import ImpactBarChart from "@/modules/dashboard/components/ImpactBarChart";
 import FinanceChart from "@/modules/dashboard/components/FinanceChart";
 import EventCalendar from "@/modules/events/components/EventCalendar";
 import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
@@ -11,13 +11,18 @@ import { dashboardService } from "@/modules/dashboard/services/dashboard.service
 
 function SocialOutreachDashboard() {
   const [stats, setStats] = useState<any>(null);
+  const [socialStats, setSocialStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const data = await dashboardService.getDashboardStats();
+        const [data, social] = await Promise.all([
+          dashboardService.getDashboardStats(),
+          dashboardService.getSocialProjectionDashboard(),
+        ]);
         setStats(data);
+        setSocialStats(social);
       } catch (error) {
         console.error("Error loading stats:", error);
       } finally {
@@ -44,24 +49,24 @@ function SocialOutreachDashboard() {
         <div className="flex gap-4 justify-between flex-wrap">
           <UserCard
             type="Total proyectos de proyección social"
-            value={stats?.stats?.totalProjects || 0}
-            href="/projects"
+            value={socialStats?.totalProjects ?? stats?.stats?.totalProjects ?? 0}
+            href="/social-outreach/social-projects"
             bgColor="bg-[#0ea5e9]"
           />
           <UserCard
-            type="Proyectos en curso"
-            value={stats?.stats?.proyectosEnCurso || 0}
-            href="/projects"
+            type="Personas impactadas (total)"
+            value={socialStats?.totalImpactadas ?? 0}
+            href="/social-outreach/social-projects"
           />
           <UserCard
-            type="Proyectos finalizados"
-            value={stats?.stats?.proyectosFinalizados || 0}
-            href="/projects"
+            type="Proyectos en curso"
+            value={stats?.stats?.proyectosEnCurso ?? 0}
+            href="/social-outreach/social-projects"
             bgColor="bg-[#0ea5e9]"
           />
           <UserCard
             type="Profesores/directores activos"
-            value={stats?.stats?.profesoresActivos || 0}
+            value={stats?.stats?.profesoresActivos ?? 0}
             href="/list/teachers"
           />
         </div>
@@ -70,27 +75,25 @@ function SocialOutreachDashboard() {
           {/* COUNT CHART */}
           <div className="w-full lg:w-1/3 h-[450px]">
             <CountCharts
-              entregado={stats?.students?.entregado || 0}
-              sinEntregar={stats?.students?.sinEntregar || 0}
-              total={stats?.students?.total || 0}
-              porcentajeEntregado={stats?.students?.porcentajeEntregado || 0}
-              porcentajeSinEntregar={
-                stats?.students?.porcentajeSinEntregar || 0
-              }
+              entregado={stats?.students?.entregado ?? 0}
+              sinEntregar={stats?.students?.sinEntregar ?? 0}
+              total={stats?.students?.total ?? 0}
+              porcentajeEntregado={stats?.students?.porcentajeEntregado ?? 0}
+              porcentajeSinEntregar={stats?.students?.porcentajeSinEntregar ?? 0}
               href="/list/students"
             />
           </div>
-          {/* PROJECT STATUS CHART */}
+          {/* IMPACT BAR CHART */}
           <div className="w-full lg:w-2/3 h-[450px]">
-            <ProjectStatusChart
-              data={stats?.weeklyChart || []}
-              href="/projects"
+            <ImpactBarChart
+              data={socialStats?.weeklyImpact ?? []}
+              href="/social-outreach/social-projects"
             />
           </div>
         </div>
         {/* BOTTOM CHARTS */}
         <div className="w-full h-[500px]">
-          <FinanceChart data={stats?.monthlyChart || []} href="/projects" />
+          <FinanceChart data={stats?.monthlyChart ?? []} href="/social-outreach/social-projects" />
         </div>
       </div>
       {/* RIGHT */}

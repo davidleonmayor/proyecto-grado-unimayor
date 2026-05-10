@@ -98,6 +98,15 @@ export const CreateSocialProjectionSchema: Schema = {
     },
     trim: true,
   },
+  personas_impactadas: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isInt: {
+      options: { min: 0 },
+      errorMessage: "El campo 'personas_impactadas' debe ser un entero no negativo",
+    },
+    toInt: true,
+  },
   // archivo: {
   //   in: ["body"],
   //   custom: {
@@ -192,6 +201,15 @@ export const CreateManualSocialProjectionSchema: Schema = {
         return true;
       },
     },
+  },
+  personas_impactadas: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isInt: {
+      options: { min: 0 },
+      errorMessage: "El campo 'personas_impactadas' debe ser un entero no negativo",
+    },
+    toInt: true,
   },
 };
 

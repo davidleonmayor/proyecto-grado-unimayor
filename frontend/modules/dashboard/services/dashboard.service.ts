@@ -12,6 +12,12 @@ export interface DashboardStats {
     recentActivity: Array<{ id: string; user: string; action: string; date: string }>;
 }
 
+export interface SocialProjectionDashboardStats {
+    totalProjects: number;
+    totalImpactadas: number;
+    weeklyImpact: Array<{ name: string; personas_impactadas: number }>;
+}
+
 export class DashboardService extends BaseApiClient {
     async getDashboardStats(): Promise<DashboardStats> {
         return this.request<DashboardStats>('/api/projects/stats/dashboard', {
@@ -25,6 +31,13 @@ export class DashboardService extends BaseApiClient {
             {
                 requiresAuth: true,
             }
+        );
+    }
+
+    async getSocialProjectionDashboard(): Promise<SocialProjectionDashboardStats> {
+        return this.request<SocialProjectionDashboardStats>(
+            '/api/social-projection/dashboard',
+            { requiresAuth: true }
         );
     }
 }

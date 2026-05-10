@@ -406,5 +406,16 @@ export class ProyeccionSocialController {
       return res.status(500).json({ error: error.message || "Error interno del servidor" });
     }
   };
+
+  getDashboardStats = async (_req: Request, res: Response) => {
+    try {
+      const data = await this.service.getSocialDashboardStats();
+      return res.json(data);
+    } catch (error: any) {
+      logger.error("Error getting social dashboard stats:", error);
+      return res.status(500).json({ error: error.message || "Error interno del servidor" });
+    }
+  };
 }
+
 

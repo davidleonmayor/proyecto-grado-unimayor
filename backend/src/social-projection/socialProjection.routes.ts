@@ -48,6 +48,14 @@ export class ProyeccionSocialRoutes {
       this.controller.getAll,
     );
 
+    // GET /dashboard - Social projection dashboard stats
+    this.router.get(
+      "/dashboard",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.controller.getDashboardStats,
+    );
+
     // Get user's projects
     this.router.get(
       "/me",

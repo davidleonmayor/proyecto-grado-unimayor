@@ -322,6 +322,7 @@ model proyecto_proyeccion_social {
   tipo_mime            String?   @db.VarChar(100)
   archivo              Bytes?    @db.LongBlob
   id_persona_registra  String?
+  personas_impactadas  Int       @default(0)
 
   persona_registra     persona?  @relation(fields: [id_persona_registra], references: [id_persona])
   integrantes          integrante_proyecto_social[]
