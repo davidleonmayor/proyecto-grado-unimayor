@@ -972,6 +972,8 @@ async function main() {
                 nombre: nombresproyeccionSocial[i],
                 descripcion: descripcionesSociales[i],
                 id_persona_registra: docentesParaSocial[i].id_persona,
+                personas_impactadas: Math.floor(Math.random() * 450) + 50, // Entre 50 y 500 personas impactadas
+                estado: i % 3 === 0 ? "Finalizado" : "Sin entregar", // Mezclar estados para métricas
             },
         });
 

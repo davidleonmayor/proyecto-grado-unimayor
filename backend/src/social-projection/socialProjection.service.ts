@@ -547,6 +547,29 @@ export class ProyeccionSocialService {
     const porcentajeFinalizado = totalStatus > 0 ? Math.round((finalizados / totalStatus) * 100) : 0;
     const porcentajeSinEntregar = totalStatus > 0 ? 100 - porcentajeFinalizado : 0;
 
+    // Obtener proyecciones sociales finalizadas agrupadas por mes (Ene - Dic)
+    const proyectosFinalizados = await prisma.proyecto_proyeccion_social.findMany({
+      where: {
+        estado: {
+          in: ["Finalizado", "Finalizados"]
+        }
+      },
+      select: {
+        fecha_registro: true
+      }
+    });
+
+    const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const monthlyFinalized = meses.map(m => ({ name: m, finalizados: 0 }));
+
+    proyectosFinalizados.forEach(p => {
+      const fecha = new Date(p.fecha_registro);
+      const mesIdx = fecha.getMonth(); // 0 - 11
+      if (mesIdx >= 0 && mesIdx <= 11) {
+        monthlyFinalized[mesIdx].finalizados += 1;
+      }
+    });
+
     return {
       totalProjects,
       totalImpactadas,
@@ -557,7 +580,8 @@ export class ProyeccionSocialService {
         total: totalStatus,
         porcentajeFinalizado,
         porcentajeSinEntregar
-      }
+      },
+      monthlyFinalized
     };
   }
 }

@@ -58,12 +58,12 @@ function SocialOutreachDashboard() {
             value={socialStats?.totalImpactadas ?? 0}
             href="/social-outreach/social-projects"
           />
-          <UserCard
+          {/* <UserCard
             type="Proyectos en curso"
             value={stats?.stats?.proyectosEnCurso ?? 0}
             href="/social-outreach/social-projects"
             bgColor="bg-[#0ea5e9]"
-          />
+          /> */}
           <UserCard
             type="Profesores/directores activos"
             value={stats?.stats?.profesoresActivos ?? 0}
@@ -96,12 +96,16 @@ function SocialOutreachDashboard() {
         </div>
         {/* BOTTOM CHARTS */}
         <div className="w-full h-[500px]">
-          <FinanceChart data={stats?.monthlyChart ?? []} href="/social-outreach/social-projects" />
+          <FinanceChart
+            data={socialStats?.monthlyFinalized ?? []}
+            title="Terminados por mes"
+            href="/social-outreach/social-projects"
+          />
         </div>
       </div>
       {/* RIGHT */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
-        <EventCalendar />
+        <EventCalendar showEventsList={false} />
       </div>
     </div>
   );

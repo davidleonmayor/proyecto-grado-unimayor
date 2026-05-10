@@ -23,6 +23,7 @@ export interface SocialProjectionDashboardStats {
         porcentajeFinalizado: number;
         porcentajeSinEntregar: number;
     };
+    monthlyFinalized?: Array<{ name: string; finalizados: number }>;
 }
 
 export class DashboardService extends BaseApiClient {

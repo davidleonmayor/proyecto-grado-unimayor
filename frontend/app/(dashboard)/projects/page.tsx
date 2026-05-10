@@ -100,50 +100,92 @@ export default function ProjectsPage() {
                 </div>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {projects.map((project) => (
-                        <Link
-                            key={project.id}
-                            href={`/projects/${project.id}`}
-                            className="block group"
-                        >
-                            <div className="bg-white rounded-lg border border-gray-100 p-6 transition-all duration-300 h-full flex flex-col">
-                                <div className="flex justify-between items-center mb-5">
-                                    <div className="flex items-center gap-2">
-                                        {/* Status Dot */}
-                                        <span className={`w-2 h-2 rounded-full ${project.status === 'Aprobado' ? 'bg-emerald-500' :
-                                            project.status === 'Rechazado' ? 'bg-rose-500' :
-                                                'bg-amber-400'
-                                            }`}></span>
-                                        {/* Status Text Outline */}
-                                        <span className={`text-[11px] font-medium tracking-wide uppercase px-2 py-0.5 rounded border ${project.status === 'Aprobado' ? 'text-emerald-700 border-emerald-200' :
-                                            project.status === 'Rechazado' ? 'text-rose-700 border-rose-200' :
-                                                'text-amber-700 border-amber-200'
+                    {projects.map((project) => {
+                        const isAprobado = project.status === 'Aprobado';
+                        const isRechazado = project.status === 'Rechazado';
+
+                        return (
+                            <Link
+                                key={project.id}
+                                href={`/projects/${project.id}`}
+                                className="block group"
+                            >
+                                <div className="bg-white rounded-xl border border-gray-100 hover:border-primary-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 transition-all duration-300 h-full flex flex-col relative overflow-hidden">
+                                    {/* Decorative Top Accent */}
+                                    <div className={`absolute top-0 left-0 right-0 h-1 transition-colors duration-300 ${
+                                        isAprobado ? 'bg-emerald-500' : 
+                                        isRechazado ? 'bg-rose-500' : 
+                                        'bg-amber-400 group-hover:bg-primary-500'
+                                    }`} />
+
+                                    <div className="flex justify-between items-center mb-5">
+                                        <div className="flex items-center gap-2">
+                                            {/* Status Indicator */}
+                                            <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase border ${
+                                                isAprobado ? 'bg-emerald-50/50 border-emerald-100 text-emerald-700' :
+                                                isRechazado ? 'bg-rose-50/50 border-rose-100 text-rose-700' :
+                                                'bg-amber-50/50 border-amber-100 text-amber-700'
                                             }`}>
-                                            {project.status}
-                                        </span>
-                                    </div>
-                                    <span className="text-[11px] text-gray-400 font-light whitespace-nowrap">
-                                        {new Date(project.lastUpdate).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </span>
-                                </div>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${
+                                                    isAprobado ? 'bg-emerald-500 animate-pulse' : 
+                                                    isRechazado ? 'bg-rose-500' : 
+                                                    'bg-amber-400'
+                                                }`}></span>
+                                                {project.status}
+                                            </span>
+                                        </div>
 
-                                <h3 className="text-[17px] leading-snug font-medium text-gray-800 mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
-                                    {project.title}
-                                </h3>
-
-                                <div className="mt-auto pt-5 border-t border-gray-50 flex flex-col gap-2">
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-gray-400">Modalidad</span>
-                                        <span className="text-gray-700 font-medium">{project.modality}</span>
+                                        <div className="flex items-center gap-1 text-gray-400 text-xs font-light">
+                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            <span>
+                                                {new Date(project.lastUpdate).toLocaleDateString('es-CO', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    year: 'numeric'
+                                                })}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-gray-400">Mi Rol</span>
-                                        <span className="text-gray-700 font-medium bg-gray-50 px-2 py-1 rounded">{project.role || 'Coordinador/Observador'}</span>
+
+                                    <h3 className="text-[17px] leading-snug font-bold text-gray-800 mb-6 group-hover:text-primary-600 transition-colors line-clamp-2">
+                                        {project.title}
+                                    </h3>
+
+                                    <div className="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-3">
+                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <span className="flex items-center gap-1.5 font-light">
+                                                <svg className="w-4 h-4 text-gray-400 group-hover:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                                </svg>
+                                                Modalidad
+                                            </span>
+                                            <span className="text-gray-700 font-semibold bg-gray-50/50 px-2 py-0.5 rounded border border-gray-100">{project.modality}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-xs text-gray-500">
+                                            <span className="flex items-center gap-1.5 font-light">
+                                                <svg className="w-4 h-4 text-gray-400 group-hover:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                Mi Rol
+                                            </span>
+                                            <span className="text-gray-700 font-semibold bg-gray-50/50 px-2 py-0.5 rounded border border-gray-100">{project.role || 'Coordinador/Observador'}</span>
+                                        </div>
+
+                                        <div className="flex justify-end pt-2">
+                                            <span className="text-xs font-semibold text-primary-600 group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
+                                                Detalles
+                                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </Link>
-                    ))}
+                            </Link>
+                        );
+                    })}
                 </div>
             )}
         </div>

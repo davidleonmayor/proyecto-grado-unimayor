@@ -26,7 +26,7 @@ interface MenuSection {
 
 const menuItems: MenuSection[] = [
   {
-    title: "MENÚ",
+    title: "PROYECTOS DE GRADO",
     items: [
       {
         icon: "/home.png",
@@ -34,18 +34,18 @@ const menuItems: MenuSection[] = [
         href: "/",
         visible: ["admin", "teacher", "dean", "student"],
       },
-      {
-        icon: "/teacher.png",
-        label: "Profesores",
-        href: "/list/teachers",
-        visible: ["admin", "dean"],
-      },
-      {
-        icon: "/student.png",
-        label: "Estudiantes",
-        href: "/list/students",
-        visible: ["admin", "teacher", "dean"],
-      },
+      // {
+      //   icon: "/teacher.png",
+      //   label: "Profesores",
+      //   href: "/list/teachers",
+      //   visible: ["admin", "dean"],
+      // },
+      // {
+      //   icon: "/student.png",
+      //   label: "Estudiantes",
+      //   href: "/list/students",
+      //   visible: ["admin", "teacher", "dean"],
+      // },
       {
         icon: "/project.png",
         label: "Proyectos de Grado",
@@ -97,6 +97,23 @@ const menuItems: MenuSection[] = [
     ],
   },
 
+  {
+    title: 'GENERAL',
+    items: [
+      {
+        icon: "/teacher.png",
+        label: "Profesores",
+        href: "/list/teachers",
+        visible: ["admin", "dean"],
+      },
+      {
+        icon: "/student.png",
+        label: "Estudiantes",
+        href: "/list/students",
+        visible: ["admin", "teacher", "dean"],
+      },
+    ]
+  },
   {
     title: 'CONFIGURACIÓN',
     items: [

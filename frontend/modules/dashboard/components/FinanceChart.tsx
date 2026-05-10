@@ -11,13 +11,15 @@ const Legend = RechartsLegend as unknown as React.FC<any>;
 interface FinanceChartProps {
   data?: Array<{
     name: string;
-    aprobado: number;
-    rechazado: number;
+    aprobado?: number;
+    rechazado?: number;
+    finalizados?: number;
   }>;
   href?: string;
+  title?: string;
 }
 
-export default function FinanceChart({ data = [], href }: FinanceChartProps) {
+export default function FinanceChart({ data = [], href, title = "Gráfico" }: FinanceChartProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -35,24 +37,27 @@ export default function FinanceChart({ data = [], href }: FinanceChartProps) {
 
   // Use provided data or default empty data
   const chartData = data.length > 0 ? data : [
-    { name: 'Ene', aprobado: 0, rechazado: 0 },
-    { name: 'Feb', aprobado: 0, rechazado: 0 },
-    { name: 'Mar', aprobado: 0, rechazado: 0 },
-    { name: 'Abr', aprobado: 0, rechazado: 0 },
-    { name: 'May', aprobado: 0, rechazado: 0 },
-    { name: 'Jun', aprobado: 0, rechazado: 0 },
-    { name: 'Jul', aprobado: 0, rechazado: 0 },
-    { name: 'Ago', aprobado: 0, rechazado: 0 },
-    { name: 'Sep', aprobado: 0, rechazado: 0 },
-    { name: 'Oct', aprobado: 0, rechazado: 0 },
-    { name: 'Nov', aprobado: 0, rechazado: 0 },
-    { name: 'Dic', aprobado: 0, rechazado: 0 },
+    { name: 'Ene', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Feb', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Mar', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Abr', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'May', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Jun', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Jul', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Ago', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Sep', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Oct', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Nov', aprobado: 0, rechazado: 0, finalizados: 0 },
+    { name: 'Dic', aprobado: 0, rechazado: 0, finalizados: 0 },
   ];
+
+  const hasFinalizados = chartData.some(item => 'finalizados' in item);
+
   return (
     <div className="bg-white rounded-xl w-full h-full p-4 relative z-0">
       {/* TITLE */}
       <div className="flex justify-between items-center relative z-10">
-        <h1 className="text-lg font-semibold">Gráfico</h1>
+        <h1 className="text-lg font-semibold">{title}</h1>
 
         {href ? (
           <div className="relative" ref={menuRef}>
@@ -96,8 +101,14 @@ export default function FinanceChart({ data = [], href }: FinanceChartProps) {
           <YAxis axisLine={false} tickLine={false} />
           <Tooltip />
           <Legend align="center" verticalAlign="top" wrapperStyle={{ paddingTop: '20px', paddingBottom: '40px' }} />
-          <Line type="monotone" dataKey="aprobado" stroke="#0EA5E9" strokeWidth={5} />
-          <Line type="monotone" dataKey="rechazado" stroke="#F44336" strokeWidth={5} />
+          {hasFinalizados ? (
+            <Line type="monotone" dataKey="finalizados" name="Finalizados" stroke="#0EA5E9" strokeWidth={5} />
+          ) : (
+            <>
+              <Line type="monotone" dataKey="aprobado" stroke="#0EA5E9" strokeWidth={5} />
+              <Line type="monotone" dataKey="rechazado" stroke="#F44336" strokeWidth={5} />
+            </>
+          )}
         </LineChart>
       </ResponsiveContainer>
     </div>
