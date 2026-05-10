@@ -11,6 +11,18 @@ export class EventController {
     try {
       const { user } = req;
 
+      // Auto-cleanup: delete events expired more than 60 days ago
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+      const deleted = await prisma.evento.deleteMany({
+        where: {
+          fecha_fin: { lt: sixtyDaysAgo },
+        },
+      });
+      if (deleted.count > 0) {
+        logger.info(`Auto-cleanup: deleted ${deleted.count} events expired more than 60 days ago.`);
+      }
+
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const skip = (page - 1) * limit;
@@ -160,41 +172,39 @@ export class EventController {
         take: limit,
       });
 
-      // Sort manually
+      // Sort: upcoming events first (closest deadline first), expired events last
       events.sort((a, b) => {
-        const priorityOrder: { [key: string]: number } = {
-          alta: 0,
-          media: 1,
-          baja: 2,
-        };
-        const aPriority = priorityOrder[a.prioridad] ?? 3;
-        const bPriority = priorityOrder[b.prioridad] ?? 3;
-
-        if (aPriority !== bPriority) {
-          return aPriority - bPriority;
-        }
-
-        const aDate = new Date(a.fecha_inicio);
-        const bDate = new Date(b.fecha_inicio);
+        const aEndDate = new Date(a.fecha_fin);
+        const bEndDate = new Date(b.fecha_fin);
         const aDaysRemaining = Math.ceil(
-          (aDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+          (aEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
         const bDaysRemaining = Math.ceil(
-          (bDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
+          (bEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
 
-        if (aDaysRemaining >= 0 && bDaysRemaining >= 0) {
-          return aDaysRemaining - bDaysRemaining;
-        } else if (aDaysRemaining < 0 && bDaysRemaining < 0) {
-          return bDaysRemaining - aDaysRemaining;
+        const aIsUpcoming = aDaysRemaining >= 0;
+        const bIsUpcoming = bDaysRemaining >= 0;
+
+        // Upcoming always before expired
+        if (aIsUpcoming && !bIsUpcoming) return -1;
+        if (!aIsUpcoming && bIsUpcoming) return 1;
+
+        // Both upcoming: closest deadline first
+        if (aIsUpcoming && bIsUpcoming) {
+          if (aDaysRemaining !== bDaysRemaining) return aDaysRemaining - bDaysRemaining;
         } else {
-          return aDaysRemaining >= 0 ? -1 : 1;
+          // Both expired: closest to today first (least negative)
+          if (aDaysRemaining !== bDaysRemaining) return bDaysRemaining - aDaysRemaining;
         }
+
+        // Secondary sort: priority
+        const priorityOrder: { [key: string]: number } = { alta: 0, media: 1, baja: 2 };
+        return (priorityOrder[a.prioridad] ?? 3) - (priorityOrder[b.prioridad] ?? 3);
       });
 
       const eventsWithColors = events.map((event) => {
-        const now = new Date();
-        const eventDate = new Date(event.fecha_inicio);
+        const eventDate = new Date(event.fecha_fin);
         const daysRemaining = Math.ceil(
           (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
         );
