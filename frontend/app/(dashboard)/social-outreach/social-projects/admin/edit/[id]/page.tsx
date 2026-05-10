@@ -18,6 +18,7 @@ interface SocialProjectDetail {
     id_proyecto_social: string;
     nombre: string;
     descripcion?: string | null;
+    personas_impactadas?: number;
     fecha_registro: string;
     id_persona_registra?: string | null;
     integrantes?: {
@@ -66,6 +67,7 @@ function EditSocialProjectPageContent() {
 
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
+    const [personasImpactadas, setPersonasImpactadas] = useState<number>(0);
 
     // Search filters
     const [studentSearch, setStudentSearch] = useState('');
@@ -122,6 +124,7 @@ function EditSocialProjectPageContent() {
 
             setNombre(project.nombre);
             setDescripcion(project.descripcion || '');
+            setPersonasImpactadas(project.personas_impactadas || 0);
         } catch (error: any) {
             Swal.fire('Error', error.message || 'No se pudo cargar el proyecto', 'error');
             router.push('/social-outreach/social-projects');
@@ -251,6 +254,7 @@ function EditSocialProjectPageContent() {
             await socialProjectsService.updateProject(projectId, {
                 nombre,
                 descripcion,
+                personas_impactadas: personasImpactadas,
                 // Update students and advisors
                 estudiantes: assignedStudents.map(s => s.id),
                 docentes: assignedAdvisors.map(a => a.id)
@@ -303,6 +307,30 @@ function EditSocialProjectPageContent() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Descripción detallada del proyecto..."
                     />
+                </div>
+
+                {/* Personas Impactadas */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Cantidad de personas impactadas *
+                    </label>
+                    <p className="text-xs text-gray-500 mb-2">
+                        Ingresa el número estimado o real de personas beneficiadas por este proyecto de proyección social.
+                    </p>
+                    <input
+                        type="number"
+                        min={0}
+                        required
+                        value={personasImpactadas}
+                        onChange={(e) => setPersonasImpactadas(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Ej: 150"
+                    />
+                    {personasImpactadas > 0 && (
+                        <p className="text-xs text-sky-600 mt-1 font-medium">
+                            {personasImpactadas.toLocaleString()} personas impactadas
+                        </p>
+                    )}
                 </div>
 
                 <div>
