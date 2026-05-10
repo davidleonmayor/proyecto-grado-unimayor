@@ -18,7 +18,7 @@ export const validateSchema = (schema: Schema): RequestHandler[] => [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       res.status(400).json({ errors: errors.array() });
-      logger.warn("Validation error: ", errors.array());
+      logger.warn(`Validation error: ${JSON.stringify(errors.array())}`);
       return;
     }
     next();

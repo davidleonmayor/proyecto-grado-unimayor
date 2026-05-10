@@ -12,10 +12,7 @@ export class ProjectNotificationService {
                 where: {
                     activo: true,
                     fecha_fin: { gte: now },
-                    OR: [
-                        { id_trabajo_grado: projectId },
-                        { id_trabajo_grado: null }
-                    ]
+                    id_trabajo_grado: projectId
                 },
                 orderBy: [
                     { fecha_inicio: 'asc' }

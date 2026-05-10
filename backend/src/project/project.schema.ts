@@ -311,8 +311,8 @@ export const CreateProjectSchema: Schema = {
       options: { nullable: true },
     },
     isArray: {
-      options: { min: 0, max: 1 },
-      errorMessage: "El campo 'advisors' debe ser un arreglo con máximo 1 elemento",
+      options: { min: 0, max: 2 },
+      errorMessage: "El campo 'advisors' debe ser un arreglo con máximo 2 elementos",
     },
   },
   "advisors.*": {
