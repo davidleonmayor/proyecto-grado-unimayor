@@ -152,11 +152,12 @@ export class ProyeccionSocialController {
   createManual = async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id_persona;
-      const { nombre, descripcion, estudiantes, docentes } = req.body;
+      const { nombre, descripcion, personas_impactadas, estudiantes, docentes } = req.body;
 
       const created = await this.service.createManual({
         nombre,
         descripcion,
+        personas_impactadas,
         id_persona_registra: userId,
         estudiantes,
         docentes,
