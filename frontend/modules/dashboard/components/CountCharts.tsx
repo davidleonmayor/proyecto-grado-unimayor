@@ -27,6 +27,9 @@ interface CountChartsProps {
   porcentajeEntregado: number;
   porcentajeSinEntregar: number;
   href?: string;
+  title?: string;
+  label1?: string;
+  label2?: string;
 }
 
 export default function CountCharts({
@@ -35,7 +38,10 @@ export default function CountCharts({
   total = 0,
   porcentajeEntregado = 0,
   porcentajeSinEntregar = 0,
-  href
+  href,
+  title = "Estudiantes",
+  label1 = "Entregado",
+  label2 = "Sin entregar"
 }: CountChartsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -63,12 +69,12 @@ export default function CountCharts({
       fill: 'white',
     },
     {
-      name: 'Sin entregar',
+      name: label2,
       count: porcentajeSinEntregar,
       fill: '#a2a1f0',
     },
     {
-      name: 'Entregado',
+      name: label1,
       count: porcentajeEntregado,
       fill: '#fcdf5d',
     },
@@ -83,7 +89,7 @@ export default function CountCharts({
     <div className="bg-white rounded-xl w-full h-full p-4 relative z-0">
       {/* TITLE */}
       <div className="flex justify-between items-center relative z-10">
-        <h1 className="text-lg font-semibold">Estudiantes</h1>
+        <h1 className="text-lg font-semibold">{title}</h1>
 
         {href ? (
           <div className="relative" ref={menuRef}>
@@ -142,12 +148,12 @@ export default function CountCharts({
         <div className="flex flex-col gap-1">
           <div className="w-5 h-5 bg-principal rounded-full" />
           <h1 className="font-bold">{formatNumber(entregado)}</h1>
-          <h2 className="text-xs text-gray-500">Entregado ({porcentajeEntregado}%)</h2>
+          <h2 className="text-xs text-gray-500">{label1} ({porcentajeEntregado}%)</h2>
         </div>
         <div className="flex flex-col gap-1">
           <div className="w-5 h-5 bg-tertiary rounded-full" />
           <h1 className="font-bold">{formatNumber(sinEntregar)}</h1>
-          <h2 className="text-xs text-gray-500">Sin entregar ({porcentajeSinEntregar}%)</h2>
+          <h2 className="text-xs text-gray-500">{label2} ({porcentajeSinEntregar}%)</h2>
         </div>
       </div>
     </div>

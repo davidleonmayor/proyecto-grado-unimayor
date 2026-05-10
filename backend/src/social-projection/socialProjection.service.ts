@@ -16,6 +16,7 @@ export interface CreateManualProyeccionSocialInput {
   estudiantes: string[];
   docentes: string[];
   personas_impactadas?: number;
+  estado?: string;
 }
 
 interface SearchResult {
@@ -26,6 +27,7 @@ interface SearchResult {
   fecha_registro: Date;
   id_persona_registra: string | null;
   personas_impactadas: number;
+  estado: string;
 }
 
 interface DownloadResult {
@@ -47,6 +49,7 @@ export class ProyeccionSocialService {
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
+          estado: true,
         },
         orderBy: { fecha_registro: "desc" },
       });
@@ -84,6 +87,7 @@ export class ProyeccionSocialService {
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
+          estado: true,
         },
         orderBy: { fecha_registro: "desc" },
       });
@@ -156,6 +160,7 @@ export class ProyeccionSocialService {
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
+          estado: true,
         },
         orderBy: { fecha_registro: "desc" },
         take: limit,
@@ -208,6 +213,7 @@ export class ProyeccionSocialService {
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
+          estado: true,
           integrantes: {
             select: {
               id_persona: true,
@@ -238,7 +244,7 @@ export class ProyeccionSocialService {
    */
   async update(
     id: string,
-    data: { nombre: string; descripcion?: string | null; personas_impactadas?: number; estudiantes?: string[]; docentes?: string[] },
+    data: { nombre: string; descripcion?: string | null; personas_impactadas?: number; estado?: string; estudiantes?: string[]; docentes?: string[] },
   ) {
     try {
       return await prisma.$transaction(async (tx) => {
@@ -248,6 +254,7 @@ export class ProyeccionSocialService {
             nombre: data.nombre,
             descripcion: data.descripcion,
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
+            ...(data.estado !== undefined && { estado: data.estado }),
           },
         });
 
@@ -352,6 +359,7 @@ export class ProyeccionSocialService {
             descripcion: input.descripcion,
             id_persona_registra: input.id_persona_registra,
             personas_impactadas: input.personas_impactadas ?? 0,
+            estado: input.estado ?? "Sin entregar",
           },
         });
 
@@ -517,10 +525,39 @@ export class ProyeccionSocialService {
       weeklyImpact[weekIdx].personas_impactadas += p.personas_impactadas;
     });
 
+    const statusCounts = await prisma.proyecto_proyeccion_social.groupBy({
+      by: ['estado'],
+      _count: {
+        id_proyecto_social: true
+      }
+    });
+
+    let finalizados = 0;
+    let sinEntregar = 0;
+
+    statusCounts.forEach(status => {
+      if (status.estado === 'Finalizado' || status.estado === 'Finalizados') {
+        finalizados += status._count.id_proyecto_social;
+      } else {
+        sinEntregar += status._count.id_proyecto_social;
+      }
+    });
+
+    const totalStatus = finalizados + sinEntregar;
+    const porcentajeFinalizado = totalStatus > 0 ? Math.round((finalizados / totalStatus) * 100) : 0;
+    const porcentajeSinEntregar = totalStatus > 0 ? 100 - porcentajeFinalizado : 0;
+
     return {
       totalProjects,
       totalImpactadas,
       weeklyImpact,
+      status: {
+        finalizados,
+        sinEntregar,
+        total: totalStatus,
+        porcentajeFinalizado,
+        porcentajeSinEntregar
+      }
     };
   }
 }

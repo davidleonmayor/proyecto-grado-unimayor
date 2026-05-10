@@ -211,6 +211,12 @@ export const CreateManualSocialProjectionSchema: Schema = {
     },
     toInt: true,
   },
+  estado: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'estado' debe ser texto" },
+    trim: true,
+  },
 };
 
 export const UploadAnexoSchema: Schema = {

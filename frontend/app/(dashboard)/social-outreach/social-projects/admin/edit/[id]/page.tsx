@@ -68,6 +68,7 @@ function EditSocialProjectPageContent() {
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [personasImpactadas, setPersonasImpactadas] = useState<number>(0);
+    const [estado, setEstado] = useState<string>('Sin entregar');
 
     // Search filters
     const [studentSearch, setStudentSearch] = useState('');
@@ -125,6 +126,7 @@ function EditSocialProjectPageContent() {
             setNombre(project.nombre);
             setDescripcion(project.descripcion || '');
             setPersonasImpactadas(project.personas_impactadas || 0);
+            setEstado((project as any).estado || 'Sin entregar');
         } catch (error: any) {
             Swal.fire('Error', error.message || 'No se pudo cargar el proyecto', 'error');
             router.push('/social-outreach/social-projects');
@@ -255,6 +257,7 @@ function EditSocialProjectPageContent() {
                 nombre,
                 descripcion,
                 personas_impactadas: personasImpactadas,
+                estado,
                 // Update students and advisors
                 estudiantes: assignedStudents.map(s => s.id),
                 docentes: assignedAdvisors.map(a => a.id)
@@ -307,6 +310,21 @@ function EditSocialProjectPageContent() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         placeholder="Descripción detallada del proyecto..."
                     />
+                </div>
+
+                {/* Estado */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Estado del Proyecto
+                    </label>
+                    <select
+                        value={estado}
+                        onChange={(e) => setEstado(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                        <option value="Sin entregar">Sin entregar</option>
+                        <option value="Finalizado">Finalizado</option>
+                    </select>
                 </div>
 
                 {/* Personas Impactadas */}

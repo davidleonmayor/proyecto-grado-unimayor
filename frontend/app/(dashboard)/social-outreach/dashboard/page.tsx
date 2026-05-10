@@ -75,12 +75,15 @@ function SocialOutreachDashboard() {
           {/* COUNT CHART */}
           <div className="w-full lg:w-1/3 h-[450px]">
             <CountCharts
-              entregado={stats?.students?.entregado ?? 0}
-              sinEntregar={stats?.students?.sinEntregar ?? 0}
-              total={stats?.students?.total ?? 0}
-              porcentajeEntregado={stats?.students?.porcentajeEntregado ?? 0}
-              porcentajeSinEntregar={stats?.students?.porcentajeSinEntregar ?? 0}
-              href="/list/students"
+              entregado={socialStats?.status?.finalizados ?? 0}
+              sinEntregar={socialStats?.status?.sinEntregar ?? 0}
+              total={socialStats?.status?.total ?? 0}
+              porcentajeEntregado={socialStats?.status?.porcentajeFinalizado ?? 0}
+              porcentajeSinEntregar={socialStats?.status?.porcentajeSinEntregar ?? 0}
+              href="/social-outreach/social-projects"
+              title="Finalizados"
+              label1="Finalizado"
+              label2="Sin entregar"
             />
           </div>
           {/* IMPACT BAR CHART */}

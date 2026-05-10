@@ -16,6 +16,13 @@ export interface SocialProjectionDashboardStats {
     totalProjects: number;
     totalImpactadas: number;
     weeklyImpact: Array<{ name: string; personas_impactadas: number }>;
+    status?: {
+        finalizados: number;
+        sinEntregar: number;
+        total: number;
+        porcentajeFinalizado: number;
+        porcentajeSinEntregar: number;
+    };
 }
 
 export class DashboardService extends BaseApiClient {
