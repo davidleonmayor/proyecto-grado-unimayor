@@ -172,35 +172,37 @@ export class RoleMiddleware {
                 });
             }
 
-            // Get Director role
-            const directorRole = await prisma.tipo_rol.findFirst({
-                where: { nombre_rol: "Director" }
-            });
+            // Permitir explícitamente Administradores, Coordinadores, Decanos y Directores
+            const allowedRoles = [
+                "Director",
+                "Coordinador de Carrera",
+                "Coordinador",
+                "Decano",
+                "admin",
+                "Administrador",
+                "Admin"
+            ];
 
-            if (!directorRole) {
-                return res.status(500).json({
-                    success: false,
-                    message: "Configuración del sistema incorrecta: Rol Director no encontrado"
-                });
-            }
-
-            // Check if user has been a director at least once
-            const hasDirectorRole = await prisma.actores.findFirst({
+            const hasAllowedRole = await prisma.actores.findFirst({
                 where: {
                     id_persona: userId,
-                    id_tipo_rol: directorRole.id_rol
+                    tipo_rol: {
+                        nombre_rol: {
+                            in: allowedRoles
+                        }
+                    }
                 }
             });
 
-            if (!hasDirectorRole) {
-                logger.warn(`Access denied for user ${userId}: Not a Director/Professor`);
+            if (!hasAllowedRole) {
+                logger.warn(`Access denied for user ${userId}: Not an allowed creator role`);
                 return res.status(403).json({
                     success: false,
-                    message: "Solo los profesores/directores pueden crear proyectos de grado"
+                    message: "Solo los directores, coordinadores o administradores pueden crear proyectos de grado"
                 });
             }
 
-            logger.debug(`Director access granted for user ${userId}`);
+            logger.debug(`Creator access granted for user ${userId}`);
             next();
         } catch (error: any) {
             logger.error(`Error in RoleMiddleware: ${error.message}`);
