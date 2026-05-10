@@ -103,6 +103,7 @@ function NewProjectPageContent() {
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
+  const [personasImpactadas, setPersonasImpactadas] = useState<number>(0);
 
   // Search filters
   const [studentSearch, setStudentSearch] = useState("");
@@ -242,6 +243,7 @@ function NewProjectPageContent() {
       await socialProjectsService.createProject({
         nombre,
         descripcion: descripcion || null,
+        personas_impactadas: personasImpactadas,
         estudiantes: selectedStudents,
         docentes: selectedAdvisors,
       });
@@ -301,6 +303,30 @@ function NewProjectPageContent() {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             placeholder="Descripción breve del proyecto..."
           />
+        </div>
+
+        {/* Personas Impactadas */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Cantidad de personas impactadas *
+          </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Ingresa el número estimado o real de personas beneficiadas por este proyecto de proyección social.
+          </p>
+          <input
+            type="number"
+            min={0}
+            required
+            value={personasImpactadas}
+            onChange={(e) => setPersonasImpactadas(Math.max(0, parseInt(e.target.value) || 0))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Ej: 150"
+          />
+          {personasImpactadas > 0 && (
+            <p className="text-xs text-sky-600 mt-1 font-medium">
+              {personasImpactadas.toLocaleString()} personas impactadas
+            </p>
+          )}
         </div>
 
         {/* Estudiantes */}

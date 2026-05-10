@@ -36,7 +36,7 @@ export class DashboardService extends BaseApiClient {
 
     async getSocialProjectionDashboard(): Promise<SocialProjectionDashboardStats> {
         return this.request<SocialProjectionDashboardStats>(
-            '/api/social-projection/dashboard',
+            '/api/proyeccion-social/dashboard',
             { requiresAuth: true }
         );
     }
