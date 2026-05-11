@@ -27,15 +27,17 @@ export interface SocialProjectionDashboardStats {
 }
 
 export class DashboardService extends BaseApiClient {
-    async getDashboardStats(): Promise<DashboardStats> {
-        return this.request<DashboardStats>('/api/projects/stats/dashboard', {
+    async getDashboardStats(modality?: string): Promise<DashboardStats> {
+        const query = modality ? `?modality=${encodeURIComponent(modality)}` : '';
+        return this.request<DashboardStats>(`/api/projects/stats/dashboard${query}`, {
             requiresAuth: true,
         });
     }
 
-    async getTeacherDashboardStats(): Promise<DashboardStats> {
+    async getTeacherDashboardStats(modality?: string): Promise<DashboardStats> {
+        const query = modality ? `?modality=${encodeURIComponent(modality)}` : '';
         return this.request<DashboardStats>(
-            '/api/projects/stats/teacher-dashboard',
+            `/api/projects/stats/teacher-dashboard${query}`,
             {
                 requiresAuth: true,
             }

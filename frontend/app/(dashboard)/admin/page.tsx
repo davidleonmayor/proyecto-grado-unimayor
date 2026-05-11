@@ -13,11 +13,15 @@ import { dashboardService } from '@/modules/dashboard/services/dashboard.service
 function AdminPageContent() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedModality, setSelectedModality] = useState<string>('Todos');
 
   useEffect(() => {
     const loadStats = async () => {
+      setIsLoading(true);
       try {
-        const data = await dashboardService.getDashboardStats();
+        const data = await dashboardService.getDashboardStats(
+          selectedModality === 'Todos' ? undefined : selectedModality
+        );
         setStats(data);
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -27,7 +31,7 @@ function AdminPageContent() {
     };
 
     loadStats();
-  }, []);
+  }, [selectedModality]);
 
   if (isLoading) {
     return (
@@ -43,7 +47,14 @@ function AdminPageContent() {
       <div className="w-full lg:w-2/3 flex flex-col gap-8">
         {/* USER CARDS */}
         <div className="flex gap-4 justify-between flex-wrap">
-          <UserCard type="Total proyectos grado registrados" value={stats?.stats?.totalProjects || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
+          <UserCard 
+            type={selectedModality === 'Todos' ? "Total proyectos grado registrados" : `Proyectos registrados (${selectedModality})`} 
+            value={stats?.stats?.totalProjects || 0} 
+            href="/projects" 
+            bgColor="bg-[#0ea5e9]" 
+            onSelectModality={setSelectedModality}
+            selectedModality={selectedModality}
+          />
           <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
           <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
           <UserCard type="Profesores/directores activos" value={stats?.stats?.profesoresActivos || 0} href="/list/teachers" />

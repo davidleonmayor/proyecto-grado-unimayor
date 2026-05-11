@@ -13,18 +13,21 @@ import { dashboardService } from '@/modules/dashboard/services/dashboard.service
 function DeanPageContent() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedModality, setSelectedModality] = useState<string>('Todos');
 
   useEffect(() => {
     const loadStats = async () => {
+      setIsLoading(true);
       try {
         // Dean can use either admin stats or teacher stats depending on their role
         // Try admin first, fallback to teacher
+        const modParam = selectedModality === 'Todos' ? undefined : selectedModality;
         try {
-          const data = await dashboardService.getDashboardStats();
+          const data = await dashboardService.getDashboardStats(modParam);
           setStats(data);
         } catch (error) {
           // If not admin, try teacher dashboard
-          const data = await dashboardService.getTeacherDashboardStats();
+          const data = await dashboardService.getTeacherDashboardStats(modParam);
           setStats(data);
         }
       } catch (error) {
@@ -35,7 +38,7 @@ function DeanPageContent() {
     };
 
     loadStats();
-  }, []);
+  }, [selectedModality]);
 
   if (isLoading) {
     return (
@@ -56,14 +59,28 @@ function DeanPageContent() {
         <div className="flex gap-4 justify-between flex-wrap">
           {isAdminStats ? (
             <>
-              <UserCard type="Total proyectos grado registrados" value={stats?.stats?.totalProjects || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
+              <UserCard 
+                type={selectedModality === 'Todos' ? "Total proyectos grado registrados" : `Proyectos registrados (${selectedModality})`} 
+                value={stats?.stats?.totalProjects || 0} 
+                href="/projects" 
+                bgColor="bg-[#0ea5e9]" 
+                onSelectModality={setSelectedModality}
+                selectedModality={selectedModality}
+              />
               <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
               <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
               <UserCard type="Profesores/directores activos" value={stats?.stats?.profesoresActivos || 0} href="/list/teachers" />
             </>
           ) : (
             <>
-              <UserCard type="Proyectos asignados" value={stats?.stats?.totalProjects || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
+              <UserCard 
+                type={selectedModality === 'Todos' ? "Proyectos asignados" : `Proyectos asignados (${selectedModality})`} 
+                value={stats?.stats?.totalProjects || 0} 
+                href="/projects" 
+                bgColor="bg-[#0ea5e9]" 
+                onSelectModality={setSelectedModality}
+                selectedModality={selectedModality}
+              />
               <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
               <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
               <UserCard type="Estudiantes asignados" value={stats?.stats?.estudiantesAsignados || 0} href="/list/students" />

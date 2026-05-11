@@ -13,11 +13,15 @@ import { dashboardService } from '@/modules/dashboard/services/dashboard.service
 function TeacherPageContent() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedModality, setSelectedModality] = useState<string>('Todos');
 
   useEffect(() => {
     const loadStats = async () => {
+      setIsLoading(true);
       try {
-        const data = await dashboardService.getTeacherDashboardStats();
+        const data = await dashboardService.getTeacherDashboardStats(
+          selectedModality === 'Todos' ? undefined : selectedModality
+        );
         setStats(data);
       } catch (error) {
         console.error('Error loading stats:', error);
@@ -27,7 +31,7 @@ function TeacherPageContent() {
     };
 
     loadStats();
-  }, []);
+  }, [selectedModality]);
 
   if (isLoading) {
     return (
@@ -43,7 +47,13 @@ function TeacherPageContent() {
       <div className="w-full lg:w-2/3 flex flex-col gap-8">
         {/* USER CARDS */}
         <div className="flex gap-4 justify-between flex-wrap">
-          <UserCard type="Proyectos asignados" value={stats?.stats?.totalProjects || 0} href="/projects" />
+          <UserCard 
+            type={selectedModality === 'Todos' ? "Proyectos asignados" : `Proyectos asignados (${selectedModality})`} 
+            value={stats?.stats?.totalProjects || 0} 
+            href="/projects" 
+            onSelectModality={setSelectedModality}
+            selectedModality={selectedModality}
+          />
           <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
           <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" />
           <UserCard type="Estudiantes asignados" value={stats?.stats?.estudiantesAsignados || 0} href="/list/students" />

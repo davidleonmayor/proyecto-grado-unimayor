@@ -2192,9 +2192,21 @@ export class ProjectController {
                 id_facultad: userFacultyId
             } : {};
 
+            // Modality filter logic
+            const modalityName = req.query.modality as string | undefined;
+            const modalityFilter: any = {};
+            if (modalityName && modalityName.trim() !== "" && modalityName !== "Todos") {
+                modalityFilter.opcion_grado = {
+                    nombre_opcion_grado: modalityName
+                };
+            }
+
             // Get total projects
             const totalProjects = await prisma.trabajo_grado.count({
-                where: projectFacultyFilter
+                where: {
+                    ...projectFacultyFilter,
+                    ...modalityFilter
+                }
             });
 
             // Get active projects (not finished/rejected)
@@ -2216,6 +2228,7 @@ export class ProjectController {
             const proyectosEnCurso = await prisma.trabajo_grado.count({
                 where: {
                     ...projectFacultyFilter,
+                    ...modalityFilter,
                     NOT: {
                         id_estado_actual: { in: estadosTerminadosIds }
                     }
@@ -2226,6 +2239,7 @@ export class ProjectController {
             const proyectosFinalizados = await prisma.trabajo_grado.count({
                 where: {
                     ...projectFacultyFilter,
+                    ...modalityFilter,
                     id_estado_actual: { in: estadosTerminadosIds }
                 }
             });
@@ -2258,7 +2272,8 @@ export class ProjectController {
                 where: {
                     id_tipo_rol: studentRole.id_rol,
                     estado: "Activo",
-                    persona: personFacultyFilter
+                    persona: personFacultyFilter,
+                    trabajo_grado: modalityFilter
                 },
                 select: {
                     id_persona: true
@@ -2287,7 +2302,8 @@ export class ProjectController {
                     estado: "Activo",
                     persona: personFacultyFilter,
                     trabajo_grado: {
-                        id_estado_actual: { in: entregadoIds }
+                        id_estado_actual: { in: entregadoIds },
+                        ...modalityFilter
                     }
                 },
                 select: {
@@ -2328,7 +2344,10 @@ export class ProjectController {
                     fecha_registro: {
                         gte: cuatroSemanasAtras
                     },
-                    trabajo_grado: projectFacultyFilter,
+                    trabajo_grado: {
+                        ...projectFacultyFilter,
+                        ...modalityFilter
+                    },
                     OR: [
                         { id_estado_nuevo: { in: aprobadosIds } },
                         { id_estado_nuevo: { in: rechazadosIds } }
@@ -2388,7 +2407,10 @@ export class ProjectController {
                     fecha_registro: {
                         gte: doceMesesAtras
                     },
-                    trabajo_grado: projectFacultyFilter,
+                    trabajo_grado: {
+                        ...projectFacultyFilter,
+                        ...modalityFilter
+                    },
                     OR: [
                         { id_estado_nuevo: { in: aprobadosIds } },
                         { id_estado_nuevo: { in: rechazadosIds } }
@@ -2497,9 +2519,17 @@ export class ProjectController {
             }
 
             // Filter only non-student roles (Director, Jurado, etc.)
-            const teacherActors = user.actores.filter(actor =>
+            let teacherActors = user.actores.filter(actor =>
                 actor.tipo_rol.nombre_rol !== "Estudiante"
             );
+
+            // Modality filter logic
+            const modalityName = req.query.modality as string | undefined;
+            if (modalityName && modalityName.trim() !== "" && modalityName !== "Todos") {
+                teacherActors = teacherActors.filter(actor =>
+                    actor.trabajo_grado?.opcion_grado?.nombre_opcion_grado === modalityName
+                );
+            }
 
             // If the user doesn't have ANY non-student roles, explicitly forbid them
             if (teacherActors.length === 0) {
@@ -2573,7 +2603,12 @@ export class ProjectController {
                         id_persona: estudianteId,
                         estado: "Activo",
                         trabajo_grado: {
-                            id_estado_actual: { in: entregadoIds }
+                            id_estado_actual: { in: entregadoIds },
+                            ...(modalityName && modalityName.trim() !== "" && modalityName !== "Todos" && {
+                                opcion_grado: {
+                                    nombre_opcion_grado: modalityName
+                                }
+                            })
                         }
                     }
                 });
