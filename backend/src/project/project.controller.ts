@@ -2180,6 +2180,11 @@ export class ProjectController {
             const isAdmin = userRoles.some(role => ["admin", "Administrador", "Admin"].includes(role));
             const isCoordinatorOrDean = userRoles.some(role => ["Coordinador de Carrera", "Coordinador", "Decano"].includes(role));
             
+            // Check if user has privileged role to access this dashboard
+            if (!isAdmin && !isCoordinatorOrDean) {
+                return res.status(403).json({ error: "No tiene permisos para acceder a las estadísticas globales" });
+            }
+            
             // Faculty filter logic
             const userFacultyId = user?.id_facultad;
             const projectFacultyFilter = !isAdmin && isCoordinatorOrDean && userFacultyId ? {

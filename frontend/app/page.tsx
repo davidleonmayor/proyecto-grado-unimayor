@@ -42,23 +42,29 @@ export default function Home() {
             project.role === 'Decano'
           );
           
+          const isCoordinator = projects.some((project: any) =>
+            project.role === 'Coordinador de Carrera'
+          );
+          
           if (isDean) {
             router.push('/dean');
+          } else if (isCoordinator) {
+            router.push('/admin');
           } else {
-            // For other privileged roles, check if they have admin access
-            try {
-              await dashboardService.getDashboardStats();
-              router.push('/admin');
-            } catch {
-              // If not admin privileges, use teacher dashboard
-              router.push('/teacher');
-            }
+            // For other privileged roles (Director, Jurado), use teacher dashboard
+            router.push('/teacher');
           }
         } else if (isStudentOnly) {
           router.push('/student');
         } else {
-          // Default to student dashboard if no clear role
-          router.push('/student');
+          // If no clear role from projects, try to see if it's a teacher with no projects yet
+          try {
+            await dashboardService.getTeacherDashboardStats();
+            router.push('/teacher');
+          } catch {
+            // Default to student dashboard
+            router.push('/student');
+          }
         }
       } catch (error) {
         console.error('Error determining route:', error);
