@@ -41,7 +41,7 @@ async function main() {
             nombres: "Admin",
             apellidos: "Coordinador",
             correo: "admin@unimayor.edu.co",
-            password: "admin",
+            password: "admin1234",
             rol: roles.coordinador,
             doc: "12345678-ADM",
             facultyId: faculty.id_facultad
@@ -50,7 +50,7 @@ async function main() {
             nombres: "Estudiante",
             apellidos: "Prueba",
             correo: "estudiante@unimayor.edu.co",
-            password: "estudiante",
+            password: "estudiante1234",
             rol: roles.estudiante,
             doc: "12345678-EST",
             facultyId: faculty.id_facultad
@@ -59,7 +59,7 @@ async function main() {
             nombres: "Docente",
             apellidos: "Prueba",
             correo: "docente@unimayor.edu.co",
-            password: "docente",
+            password: "docente1234",
             rol: roles.docente,
             doc: "12345678-DOC",
             facultyId: faculty.id_facultad
