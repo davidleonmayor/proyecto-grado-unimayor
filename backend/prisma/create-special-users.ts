@@ -4,23 +4,23 @@ import * as bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log("🔄 Refinando escenario QA (1 Proyecto único + Historial extendido)...");
+    console.log("🔄 Refinando escenario QA (Manejando dependencias de base de datos)...");
 
-    // 1. Obtener datos base
-    const faculty = await prisma.facultad.findFirst({ where: { nombre_facultad: "Ingeniería" } })
+    // 1. Datos base
+    const faculty = await prisma.facultad.findFirst({ where: { nombre_facultad: "Ingeniería" } }) 
         || await prisma.facultad.create({ data: { nombre_facultad: "Ingeniería", codigo_facultad: "ING" } });
 
     const programa = await prisma.programa_academico.findFirst({ where: { id_facultad: faculty.id_facultad } })
-        || await prisma.programa_academico.create({
-            data: {
-                nombre_programa: "Ingeniería Informática",
-                id_facultad: faculty.id_facultad,
+        || await prisma.programa_academico.create({ 
+            data: { 
+                nombre_programa: "Ingeniería Informática", 
+                id_facultad: faculty.id_facultad, 
                 id_nivel_formacion: (await prisma.nivel_formacion.findFirst())!.id_nivel,
-                estado: "activo"
-            }
+                estado: "activo" 
+            } 
         });
 
-    const tipoDoc = await prisma.tipo_documento.findFirst({ where: { documento: "CC" } })
+    const tipoDoc = await prisma.tipo_documento.findFirst({ where: { documento: "CC" } }) 
         || await prisma.tipo_documento.create({ data: { documento: "CC" } });
 
     const roles = {
@@ -29,9 +29,10 @@ async function main() {
         coordinador: await prisma.tipo_rol.findFirst({ where: { nombre_rol: "Coordinador de Carrera" } }),
     };
 
-    const passHash = await bcrypt.hash("admin", 10);
-    const estHash = await bcrypt.hash("estudiante", 10);
-    const docHash = await bcrypt.hash("docente", 10);
+    // Usaremos contraseñas de 8 caracteres para evitar el error 400 de validación
+    const passHash = await bcrypt.hash("admin1234", 10);
+    const estHash = await bcrypt.hash("estudiante1234", 10);
+    const docHash = await bcrypt.hash("docente1234", 10);
 
     // 2. Usuarios QA
     const userData = [
@@ -53,8 +54,23 @@ async function main() {
             }
         });
 
-        // LIMPIEZA: Eliminar asignaciones previas para asegurar que solo tengan 1 proyecto
-        await prisma.actores.deleteMany({ where: { id_persona: users[u.tipo].id_persona } });
+        // --- LIMPIEZA SEGURA DE DEPENDENCIAS ---
+        // 1. Encontrar los IDs de los actores actuales de esta persona
+        const actorIds = (await prisma.actores.findMany({
+            where: { id_persona: users[u.tipo].id_persona },
+            select: { id_actor: true }
+        })).map(a => a.id_actor);
+
+        if (actorIds.length > 0) {
+            // 2. Eliminar primero los seguimientos que dependen de esos actores
+            await prisma.seguimiento_tg.deleteMany({
+                where: { id_actor: { in: actorIds } }
+            });
+            // 3. Ahora sí podemos eliminar los actores
+            await prisma.actores.deleteMany({
+                where: { id_actor: { in: actorIds } }
+            });
+        }
     }
 
     // 3. Proyecto "Proyecto de Grado" (Único)
@@ -62,7 +78,7 @@ async function main() {
         || await prisma.opcion_grado.create({ data: { nombre_opcion_grado: "Proyecto de Grado", estado: "activo", tipo_modalidad: "Proyecto" } });
 
     const estados = await prisma.estado_tg.findMany({ orderBy: { orden: "asc" } });
-
+    
     const proyecto = await prisma.trabajo_grado.create({
         data: {
             titulo_trabajo: "Sistema de Optimización QA - Ingeniería Unimayor",
@@ -87,7 +103,7 @@ async function main() {
 
     // 5. Historial de Iteraciones (4 Seguimientos)
     const accion = await prisma.accion_seg.findFirst() || await prisma.accion_seg.create({ data: { tipo_accion: "Revisión", descripcion: "Revisión técnica" } });
-
+    
     const seguimientos = [
         { resumen: "Registro inicial del proyecto y aprobación de tema.", estado: estados[0].id_estado_tg, diasAtras: 25 },
         { resumen: "Entrega de primer borrador de objetivos y planteamiento.", estado: estados[1].id_estado_tg, diasAtras: 15 },
@@ -108,7 +124,7 @@ async function main() {
         });
     }
 
-    console.log("✅ Escenario QA Refinado: 1 Proyecto de Grado con historial extendido.");
+    console.log("✅ Escenario QA Refinado y Limpio: 1 Proyecto de Grado con historial.");
 }
 
 main().catch(console.error).finally(() => prisma.$disconnect());
