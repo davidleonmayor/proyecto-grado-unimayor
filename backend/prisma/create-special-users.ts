@@ -91,6 +91,9 @@ async function main() {
     });
 
     // 4. Asignaciones
+    await prisma.actores.create({
+        data: { id_persona: users.admin.id_persona, id_tipo_rol: roles.coordinador!.id_rol, id_trabajo_grado: proyecto.id_trabajo_grado, estado: "activo" }
+    });
     const actorDocente = await prisma.actores.create({
         data: { id_persona: users.docente.id_persona, id_tipo_rol: roles.docente!.id_rol, id_trabajo_grado: proyecto.id_trabajo_grado, estado: "activo" }
     });
