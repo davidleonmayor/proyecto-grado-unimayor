@@ -53,6 +53,7 @@ function TeacherPageContent() {
             href="/projects" 
             onSelectModality={setSelectedModality}
             selectedModality={selectedModality}
+            menuAlign="left"
           />
           <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
           <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" />

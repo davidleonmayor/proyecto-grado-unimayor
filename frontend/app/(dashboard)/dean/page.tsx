@@ -66,6 +66,7 @@ function DeanPageContent() {
                 bgColor="bg-[#0ea5e9]" 
                 onSelectModality={setSelectedModality}
                 selectedModality={selectedModality}
+                menuAlign="left"
               />
               <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
               <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" bgColor="bg-[#0ea5e9]" />
@@ -80,6 +81,7 @@ function DeanPageContent() {
                 bgColor="bg-[#0ea5e9]" 
                 onSelectModality={setSelectedModality}
                 selectedModality={selectedModality}
+                menuAlign="left"
               />
               <UserCard type="Proyectos en curso" value={stats?.stats?.proyectosEnCurso || 0} href="/projects" />
               <UserCard type="Proyectos finalizados" value={stats?.stats?.proyectosFinalizados || 0} href="/projects" bgColor="bg-[#0ea5e9]" />

@@ -11,7 +11,8 @@ export default function UserCard({
   href, 
   bgColor,
   onSelectModality,
-  selectedModality
+  selectedModality,
+  menuAlign = "right"
 }: { 
   type: string; 
   value?: number; 
@@ -19,6 +20,7 @@ export default function UserCard({
   bgColor?: string;
   onSelectModality?: (modality: string) => void;
   selectedModality?: string;
+  menuAlign?: "left" | "right";
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -55,7 +57,7 @@ export default function UserCard({
               <Image src={moreImage} alt="more image" width={20} height={20} className={bgColor ? "brightness-0 invert" : "opacity-80"} />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-xl py-2 z-20 border border-gray-100 overflow-hidden text-gray-800">
+              <div className={`absolute ${menuAlign === "left" ? "left-0" : "right-0"} top-full mt-1 ${onSelectModality ? "w-56" : "w-36"} bg-white rounded-lg shadow-xl py-2 z-20 border border-gray-100 overflow-hidden text-gray-800`}>
                 {href && (
                   <>
                     <Link
