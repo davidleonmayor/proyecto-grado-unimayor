@@ -42,7 +42,7 @@ export default function UserCard({
   const hasMenu = href || onSelectModality;
 
   return (
-    <div className={`rounded-2xl ${bgColor || "odd:bg-[#0ea5e9] even:bg-[#fcdf5d] text-gray-800"} p-4 flex-1 min-w-[240px] ${bgColor ? "text-white" : ""}`}>
+    <div className={`rounded-2xl ${bgColor || "odd:bg-[#0ea5e9] even:bg-[#fcdf5d] text-gray-800"} p-4 flex-1 ${bgColor ? "text-white" : ""}`}>
       <div className="flex justify-between items-center relative">
         <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${bgColor ? "bg-white/20 text-white" : "bg-white odd:text-[#0ea5e9] even:text-green-600"}`}>2024/25</span>
 

@@ -46,7 +46,7 @@ function TeacherPageContent() {
       {/* LEFT */}
       <div className="w-full lg:w-2/3 flex flex-col gap-8">
         {/* USER CARDS */}
-        <div className="flex gap-4 justify-between flex-wrap">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <UserCard 
             type={selectedModality === 'Todos' ? "Proyectos asignados" : `Proyectos asignados (${selectedModality})`} 
             value={stats?.stats?.totalProjects || 0} 
