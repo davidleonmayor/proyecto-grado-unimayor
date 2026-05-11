@@ -103,6 +103,26 @@ async function main() {
         console.log('✅ No se encontró la opción de grado "Proyecto Integrador"');
     }
 
+    // 4. Asegurar que exista la opción de grado: "Proyecto de Grado"
+    console.log("🎓 Asegurando opción de grado 'Proyecto de Grado'...");
+    const opcionProyectoGrado = await prisma.opcion_grado.findFirst({
+        where: { nombre_opcion_grado: "Proyecto de Grado" },
+    });
+
+    if (!opcionProyectoGrado) {
+        await prisma.opcion_grado.create({
+            data: {
+                nombre_opcion_grado: "Proyecto de Grado",
+                descripcion: "Proyecto de desarrollo tecnológico o de grado",
+                estado: "activo",
+                tipo_modalidad: "Proyecto",
+            },
+        });
+        console.log('✅ Opción de grado "Proyecto de Grado" creada exitosamente');
+    } else {
+        console.log('✅ Opción de grado "Proyecto de Grado" ya existía');
+    }
+
     console.log("✅ Corrección de datos completada");
 }
 

@@ -372,6 +372,14 @@ async function main() {
         }),
         prisma.opcion_grado.create({
             data: {
+                nombre_opcion_grado: "Proyecto de Grado",
+                descripcion: "Proyecto de desarrollo tecnológico o de grado",
+                estado: "activo",
+                tipo_modalidad: "Proyecto",
+            },
+        }),
+        prisma.opcion_grado.create({
+            data: {
                 nombre_opcion_grado: "Monografía",
                 descripcion: "Trabajo monográfico",
                 estado: "activo",
