@@ -83,6 +83,26 @@ async function main() {
         console.log('✅ No se encontró el programa "Ingeniería de Sistemas"');
     }
 
+    // 3. Corregir opción de grado: "Proyecto Integrador" -> "Proyecto de Investigación"
+    console.log("🎓 Corrigiendo opción de grado de Proyecto Integrador a Proyecto de Investigación...");
+    const opcionIntegrador = await prisma.opcion_grado.findFirst({
+        where: { nombre_opcion_grado: "Proyecto Integrador" },
+    });
+
+    if (opcionIntegrador) {
+        await prisma.opcion_grado.update({
+            where: { id_opcion_grado: opcionIntegrador.id_opcion_grado },
+            data: {
+                nombre_opcion_grado: "Proyecto de Investigación",
+                descripcion: "Proyecto de investigación aplicada",
+                tipo_modalidad: "Investigación",
+            },
+        });
+        console.log('✅ Opción de grado "Proyecto Integrador" corregida a "Proyecto de Investigación"');
+    } else {
+        console.log('✅ No se encontró la opción de grado "Proyecto Integrador"');
+    }
+
     console.log("✅ Corrección de datos completada");
 }
 

@@ -364,10 +364,10 @@ async function main() {
         }),
         prisma.opcion_grado.create({
             data: {
-                nombre_opcion_grado: "Proyecto Integrador",
-                descripcion: "Proyecto de aplicación práctica",
+                nombre_opcion_grado: "Proyecto de Investigación",
+                descripcion: "Proyecto de investigación aplicada",
                 estado: "activo",
-                tipo_modalidad: "Proyecto",
+                tipo_modalidad: "Investigación",
             },
         }),
         prisma.opcion_grado.create({
