@@ -291,3 +291,8 @@
   background: #94a3b8;
 }
 
+/* Handsontable: mark the first row of each project with a green top border */
+.handsontable td.ht-row-first-student {
+  border-top: 3px solid rgba(16, 124, 65, 0.4) !important;
+}
+
