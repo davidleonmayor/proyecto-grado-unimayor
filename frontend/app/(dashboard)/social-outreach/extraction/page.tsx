@@ -236,6 +236,7 @@ function SocialOutreachExtraction() {
             updateLineaAccion={outreach.updateLineaAccion}
             updateEstudiante={outreach.updateEstudiante}
             addEstudianteBaseData={outreach.addEstudianteBaseData}
+            addManualProject={outreach.addManualProject}
             removeAllFiles={outreach.removeAllFiles}
             exportToXLSX={outreach.exportToXLSX}
             saveToDatabase={handleSaveToDatabase}

@@ -54,6 +54,7 @@ type UseSocialOutreachResult = {
     baseData: { nombre: string; codigo: string; cedula: string }
   ) => void
   removeEstudiante: (dataId: string, estudianteIndex: number) => void
+  addManualProject: () => string
   exportToXLSX: () => void
   buildXlsxFileForDb: () => File | null
 }
@@ -500,6 +501,50 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     )
   }
 
+  const addManualProject = (): string => {
+    const id = crypto.randomUUID()
+    const nuevo: ExtractedData = {
+      id,
+      fileName: "",
+      titulo: "",
+      descripcion: "",
+      estudiantes: [{ nombre: "", codigo: "", cedula: "" }],
+      lineasAccion: {
+        educacion: false,
+        convivenciaCultura: false,
+        medioAmbiente: false,
+        emprendimiento: false,
+        servicioSocial: false,
+      },
+      modalidad: {
+        proyectoInvestigacion: false,
+        trabajoGrado: false,
+        practicaProfesional: false,
+        clinicaAula: false,
+        proyectoSocial: false,
+        otro: false,
+      },
+      convenio: "",
+      profesor: "",
+      tipoContratacion: "",
+      emailProfesor: "",
+      descripcionPoblacion: "",
+      rangoEdades: "",
+      beneficiariosDirectos: "",
+      lugarOrganizacion: "",
+      fechaInicio: "",
+      valor: "",
+      observaciones: "",
+    }
+    setExtractedData((prev) => [...prev, nuevo])
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
+    return id
+  }
+
   const removeEstudiante = (dataId: string, estudianteIndex: number) => {
     setExtractedData((prev) =>
       prev.map((item) =>
@@ -904,6 +949,7 @@ export const useSocialOutreach = (): UseSocialOutreachResult => {
     addEstudiante,
     addEstudianteBaseData,
     removeEstudiante,
+    addManualProject,
     exportToXLSX,
     buildXlsxFileForDb,
     updateModalidad,

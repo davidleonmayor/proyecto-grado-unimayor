@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Download, Save, Trash2 } from "lucide-react";
+import { Download, Plus, Save, Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Card,
@@ -102,6 +102,7 @@ type XlsxPreviewProps = {
     dataId: string,
     baseData: { nombre: string; codigo: string; cedula: string },
   ) => void;
+  addManualProject: () => string;
   removeAllFiles: () => void;
   exportToXLSX: () => void;
   saveToDatabase: () => Promise<void>;
@@ -224,6 +225,7 @@ export const XlsxPreview = ({
   updateConvenio,
   updateEstudiante,
   addEstudianteBaseData,
+  addManualProject,
   removeAllFiles,
   exportToXLSX,
   saveToDatabase,
@@ -342,16 +344,17 @@ export const XlsxPreview = ({
       const lastValidRow = [...data]
         .reverse()
         .find((r) => r.projectId !== "");
-      if (!lastValidRow?.projectId) return;
+      const targetId =
+        lastValidRow?.projectId ?? addManualProject();
       for (let i = 0; i < count; i++) {
-        addEstudianteBaseData(lastValidRow.projectId, {
+        addEstudianteBaseData(targetId, {
           nombre: "",
           codigo: "",
           cedula: "",
         });
       }
     },
-    [data, addEstudianteBaseData],
+    [data, addEstudianteBaseData, addManualProject],
   );
 
   const rowClassName = useCallback(
@@ -426,6 +429,18 @@ export const XlsxPreview = ({
             <p className="mt-1 text-xs text-muted-foreground/70">
               Carga archivos PDF para ver los datos extraídos
             </p>
+            <p className="mt-3 text-xs text-muted-foreground/70">
+              o empieza a llenar manualmente
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => addManualProject()}
+              className="mt-3"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Crear fila manual
+            </Button>
           </div>
         ) : (
           <>
