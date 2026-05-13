@@ -162,5 +162,13 @@ export class ProyeccionSocialRoutes {
       this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
       this.controller.deleteAnexo,
     );
+
+    this.router.delete(
+      "/:id",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
+      this.controller.delete,
+    );
   }
 }

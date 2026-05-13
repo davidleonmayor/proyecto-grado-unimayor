@@ -409,6 +409,18 @@ export class ProyeccionSocialController {
     }
   };
 
+  delete = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      await this.service.delete(id);
+      return res.status(200).json({ message: "Proyecto de proyección social eliminado exitosamente" });
+    } catch (error: any) {
+      logger.error("Error deleting social projection project:", error);
+      const status = error.message === "Proyecto no encontrado." ? 404 : 500;
+      return res.status(status).json({ error: error.message || "Error interno del servidor" });
+    }
+  };
+
   getDashboardStats = async (_req: Request, res: Response) => {
     try {
       const data = await this.service.getSocialDashboardStats();

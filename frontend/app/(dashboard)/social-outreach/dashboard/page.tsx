@@ -83,7 +83,7 @@ function SocialOutreachDashboard() {
               href="/social-outreach/social-projects"
               title="Finalizados"
               label1="Finalizado"
-              label2="Sin entregar"
+              label2="En proceso"
             />
           </div>
           {/* IMPACT BAR CHART */}

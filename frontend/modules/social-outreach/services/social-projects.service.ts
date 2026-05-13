@@ -50,6 +50,13 @@ export class SocialProjectsService extends BaseApiClient {
     });
   }
 
+  async deleteProject(id: string): Promise<any> {
+    return this.request<any>(`/api/proyeccion-social/${id}`, {
+      method: "DELETE",
+      requiresAuth: true,
+    });
+  }
+
   async bulkUploadProjects(file: File): Promise<any> {
     const formData = new FormData();
     formData.append("file", file);

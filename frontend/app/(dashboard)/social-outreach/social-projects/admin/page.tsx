@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import Swal from 'sweetalert2';
 
 import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
 import { socialProjectsService } from '@/modules/social-outreach/services/social-projects.service';
+import { useSocialProjectsFilter } from '@/shared/hooks/useSocialProjectsFilter';
 
 interface SocialProject {
     id_proyecto_social: string;
@@ -16,9 +19,21 @@ interface SocialProject {
 }
 
 function AdminProjectsPageContent() {
+    const router = useRouter();
     const [projects, setProjects] = useState<SocialProject[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const {
+        search,
+        setSearch,
+        statusFilter,
+        setStatusFilter,
+        filteredProjects,
+        isAnyFilterActive,
+        clearFilters,
+    } = useSocialProjectsFilter(projects);
 
     const loadProjects = async () => {
         try {
@@ -41,6 +56,37 @@ function AdminProjectsPageContent() {
     useEffect(() => {
         loadProjects();
     }, []);
+
+    const handleRowClick = (id: string) => {
+        router.push(`/social-outreach/social-projects/admin/edit/${id}`);
+    };
+
+    const handleDelete = async (e: React.MouseEvent, project: SocialProject) => {
+        e.stopPropagation();
+        const result = await Swal.fire({
+            title: '¿Estás seguro?',
+            html: `Se eliminará el proyecto de proyección social:<br/><strong>${project.nombre}</strong>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                setDeletingId(project.id_proyecto_social);
+                await socialProjectsService.deleteProject(project.id_proyecto_social);
+                await Swal.fire('Eliminado', 'Proyecto de proyección social eliminado exitosamente', 'success');
+                loadProjects();
+            } catch (error) {
+                Swal.fire('Error', 'No se pudo eliminar el proyecto de proyección social', 'error');
+            } finally {
+                setDeletingId(null);
+            }
+        }
+    };
 
     if (isLoading) {
         return (
@@ -75,9 +121,70 @@ function AdminProjectsPageContent() {
                 </Link>
             </div>
 
+            {/* Filter and Search Bar Panel */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-[0_2px_15px_rgba(0,0,0,0.015)] p-4 md:p-5 mb-6 flex flex-col gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Text Search Input */}
+                    <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Buscar proyecto..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-secondary-400 rounded-lg text-xs outline-none transition-all placeholder:text-gray-400"
+                        />
+                    </div>
+
+                    {/* Status Dropdown */}
+                    <div className="relative">
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-100 bg-gray-50/50 hover:bg-gray-50 hover:border-gray-200 focus:bg-white focus:border-secondary-400 rounded-lg text-xs outline-none transition-all text-gray-600 appearance-none cursor-pointer"
+                        >
+                            <option value="all">Todos los Estados</option>
+                            <option value="Finalizado">Finalizado</option>
+                            <option value="En Curso">En Curso</option>
+                        </select>
+                        <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+
+                {/* Clear Filter Toolbar details */}
+                <div className="flex items-center justify-between text-xs text-gray-400 font-light border-t border-gray-50 pt-3 mt-1">
+                    <span>
+                        Mostrando <strong className="font-semibold text-gray-600">{filteredProjects.length}</strong> de <strong className="font-semibold text-gray-600">{projects.length}</strong> proyectos registrados.
+                    </span>
+                    {isAnyFilterActive && (
+                        <button
+                            onClick={clearFilters}
+                            className="text-secondary-500 hover:text-secondary-600 font-semibold flex items-center gap-1 transition-colors"
+                        >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            Limpiar Filtros
+                        </button>
+                    )}
+                </div>
+            </div>
+
             {projects.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
                     No hay proyectos de proyección social registrados.
+                </div>
+            ) : filteredProjects.length === 0 ? (
+                <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
+                    No se encontraron proyectos que coincidan con los filtros aplicados.
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-[0_2px_12px_rgb(0,0,0,0.03)] border border-gray-100 overflow-hidden">
@@ -97,14 +204,15 @@ function AdminProjectsPageContent() {
                                     <th className="px-6 py-5 text-left font-medium text-gray-500 uppercase tracking-widest text-[10px]">
                                         Impacto
                                     </th>
-                                    <th className="px-6 py-5 text-right font-medium text-gray-500 uppercase tracking-widest text-[10px]">
-                                        Acciones
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {projects.map((project) => (
-                                    <tr key={project.id_proyecto_social} className="hover:bg-slate-50/50 transition-colors group">
+                                {filteredProjects.map((project) => (
+                                    <tr
+                                        key={project.id_proyecto_social}
+                                        onClick={() => handleRowClick(project.id_proyecto_social)}
+                                        className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                                    >
                                         <td className="px-6 py-5 align-top">
                                             <div className="font-medium text-gray-900 line-clamp-2 leading-relaxed mb-1 pr-4">
                                                 {project.nombre}
@@ -128,20 +236,22 @@ function AdminProjectsPageContent() {
                                                 year: 'numeric'
                                             })}
                                         </td>
-                                        <td className="px-6 py-5 align-top text-gray-700 font-medium whitespace-nowrap">
-                                            {project.personas_impactadas?.toLocaleString() || 0} personas
-                                        </td>
-                                        <td className="px-6 py-5 whitespace-nowrap text-right align-top">
-                                            <div className="flex justify-end items-center gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Link
-                                                    href={`/social-outreach/social-projects/admin/edit/${project.id_proyecto_social}`}
-                                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                    title="Editar proyecto de proyección social"
+                                        <td className="px-6 py-5 align-top whitespace-nowrap">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-gray-700 font-medium">
+                                                    {project.personas_impactadas?.toLocaleString() || 0} personas
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleDelete(e, project)}
+                                                    disabled={deletingId === project.id_proyecto_social}
+                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    title="Eliminar proyecto de proyección social"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
-                                                </Link>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

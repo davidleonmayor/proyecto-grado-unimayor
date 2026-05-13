@@ -41,7 +41,7 @@ export default function CountCharts({
   href,
   title = "Estudiantes",
   label1 = "Entregado",
-  label2 = "Sin entregar"
+  label2 = "En proceso"
 }: CountChartsProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);

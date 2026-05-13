@@ -359,7 +359,7 @@ export class ProyeccionSocialService {
             descripcion: input.descripcion,
             id_persona_registra: input.id_persona_registra,
             personas_impactadas: input.personas_impactadas ?? 0,
-            estado: input.estado ?? "Sin entregar",
+            estado: input.estado ?? "En proceso",
           },
         });
 
@@ -478,6 +478,28 @@ export class ProyeccionSocialService {
     } catch (error) {
       logger.error("[ProyeccionSocialService] Error deleting anexo:", error);
       throw new Error("Error al eliminar el anexo.");
+    }
+  }
+
+  async delete(id: string) {
+    try {
+      return await prisma.$transaction(async (tx) => {
+        await tx.anexo_proyecto_social.deleteMany({
+          where: { id_proyecto_social: id },
+        });
+        await tx.integrante_proyecto_social.deleteMany({
+          where: { id_proyecto_social: id },
+        });
+        return await tx.proyecto_proyeccion_social.delete({
+          where: { id_proyecto_social: id },
+        });
+      });
+    } catch (error: any) {
+      logger.error("[ProyeccionSocialService] Error deleting project:", error);
+      if (error.code === "P2025") {
+        throw new Error("Proyecto no encontrado.");
+      }
+      throw new Error("Error al eliminar el proyecto de proyección social.");
     }
   }
 

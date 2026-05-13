@@ -68,7 +68,7 @@ function EditSocialProjectPageContent() {
     const [nombre, setNombre] = useState('');
     const [descripcion, setDescripcion] = useState('');
     const [personasImpactadas, setPersonasImpactadas] = useState<number>(0);
-    const [estado, setEstado] = useState<string>('Sin entregar');
+    const [estado, setEstado] = useState<string>('En proceso');
 
     // Search filters
     const [studentSearch, setStudentSearch] = useState('');
@@ -126,7 +126,7 @@ function EditSocialProjectPageContent() {
             setNombre(project.nombre);
             setDescripcion(project.descripcion || '');
             setPersonasImpactadas(project.personas_impactadas || 0);
-            setEstado((project as any).estado || 'Sin entregar');
+            setEstado((project as any).estado || 'En proceso');
         } catch (error: any) {
             Swal.fire('Error', error.message || 'No se pudo cargar el proyecto', 'error');
             router.push('/social-outreach/social-projects');
@@ -322,7 +322,7 @@ function EditSocialProjectPageContent() {
                         onChange={(e) => setEstado(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     >
-                        <option value="Sin entregar">Sin entregar</option>
+                        <option value="En proceso">En proceso</option>
                         <option value="Finalizado">Finalizado</option>
                     </select>
                 </div>
