@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 
 import Swal from "sweetalert2";
 import { socialProjectsService } from "@/modules/social-outreach/services/social-projects.service";
 import { useUserRole } from "@/shared/hooks/useUserRole";
 import Link from "next/link";
+import { FilePreviewModal } from "@/shared/components/ui/FilePreviewModal";
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -20,6 +21,12 @@ export default function ProjectDetailPage() {
   const isPrivileged = hasProjectRole || role === "admin" || role === "dean";
 
   const [activeTab, setActiveTab] = useState<"history" | "review">("history");
+  const [previewAnexo, setPreviewAnexo] = useState<{ id: string; nombre: string } | null>(null);
+
+  const fetchPreviewBlob = useCallback(async () => {
+    if (!previewAnexo) throw new Error("No hay archivo seleccionado");
+    return socialProjectsService.getAnexoBlob(projectId, previewAnexo.id);
+  }, [previewAnexo, projectId]);
 
   const loadData = async () => {
     try {
@@ -190,12 +197,17 @@ export default function ProjectDetailPage() {
                 {anexos.map((anexo) => (
                   <tr key={anexo.id_anexo} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewAnexo({ id: anexo.id_anexo, nombre: anexo.nombre_archivo })}
+                        className="flex items-center gap-2 text-left hover:text-blue-600 transition-colors group"
+                        title="Previsualizar archivo"
+                      >
+                        <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-500 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        {anexo.nombre_archivo}
-                      </div>
+                        <span className="group-hover:underline">{anexo.nombre_archivo}</span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(anexo.fecha_subida).toLocaleString("es-CO")}
@@ -245,6 +257,14 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+
+      {previewAnexo && (
+        <FilePreviewModal
+          filename={previewAnexo.nombre}
+          fetcher={fetchPreviewBlob}
+          onClose={() => setPreviewAnexo(null)}
+        />
+      )}
     </div>
   );
 }

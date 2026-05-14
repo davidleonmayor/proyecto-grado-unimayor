@@ -22,6 +22,7 @@
     "handsontable": "^17.0.1",
     "jspdf": "^3.0.3",
     "lucide-react": "^0.563.0",
+    "mammoth": "^1.12.0",
     "moment": "2.30.1",
     "next": "15.5.2",
     "pdfjs-dist": "^4.10.38",

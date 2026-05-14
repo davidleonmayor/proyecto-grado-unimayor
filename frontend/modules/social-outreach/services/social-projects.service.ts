@@ -107,6 +107,15 @@ export class SocialProjectsService extends BaseApiClient {
       filename,
     );
   }
+
+  async getAnexoBlob(
+    id: string,
+    anexoId: string,
+  ): Promise<{ blob: Blob; type: string; filename: string }> {
+    return super.getFileBlob(
+      `/api/proyeccion-social/${id}/anexos/${anexoId}/download`,
+    );
+  }
 }
 
 export const socialProjectsService = new SocialProjectsService();
