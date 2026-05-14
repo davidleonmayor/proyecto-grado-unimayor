@@ -16,96 +16,29 @@ interface Person {
   document?: string;
 }
 
-function CurrentUser({ currentUser }: { currentUser: Person }) {
-  return (
-    <div className="mb-3 border border-blue-200 bg-blue-50 rounded-lg p-3 flex items-center gap-3">
-      <input
-        type="checkbox"
-        checked
-        disabled
-        className="h-4 w-4 text-blue-600 border-blue-300 rounded cursor-not-allowed"
-      />
-      <div>
-        <div className="text-sm font-semibold text-blue-800">
-          {currentUser.name} (Tú)
-        </div>
-        <div className="text-xs text-blue-700">
-          {currentUser.document && `Cédula: ${currentUser.document} • `}
-          Código: {currentUser.id} • {currentUser.email}
-        </div>
-        <p className="text-xs text-blue-700 mt-1">
-          Seleccionado automáticamente como participante. No se puede deseleccionar.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-interface IAdvisorList {
-  advisors: Person[];
-  selectedAdvisors: string[];
-  toggleAdvisor: (id: string) => void;
-  currentUser: Person | null;
-}
-
-function AdvisorsList({
-  advisors,
-  selectedAdvisors,
-  toggleAdvisor,
-  currentUser,
-}: IAdvisorList) {
-  return (
-    <div className="space-y-2">
-      {advisors
-        .filter((advisor) => advisor.id !== currentUser?.id)
-        .map((advisor) => (
-          <label
-            key={advisor.id}
-            className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-              selectedAdvisors.includes(advisor.id)
-                ? "bg-blue-100 border-2 border-blue-500"
-                : "bg-white border border-gray-200 hover:bg-gray-100"
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={selectedAdvisors.includes(advisor.id)}
-              onChange={() => toggleAdvisor(advisor.id)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
-            <div className="ml-3 flex-1">
-              <div className="text-sm font-medium text-gray-900">
-                {advisor.name}
-              </div>
-              <div className="text-xs text-gray-500">
-                {advisor.document && `Cédula: ${advisor.document}`}
-                {advisor.document && " • "}
-                Código: {advisor.id} • {advisor.email}
-              </div>
-            </div>
-          </label>
-        ))}
-    </div>
-  );
-}
-
 function NewProjectPageContent() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [currentUser, setCurrentUser] = useState<Person | null>(null);
-  const [students, setStudents] = useState<Person[]>([]);
-  const [advisors, setAdvisors] = useState<Person[]>([]);
-  const [allStudents, setAllStudents] = useState<Person[]>([]);
-  const [allAdvisors, setAllAdvisors] = useState<Person[]>([]);
 
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [selectedAdvisors, setSelectedAdvisors] = useState<string[]>([]);
+  // Two-column lists
+  const [assignedStudents, setAssignedStudents] = useState<Person[]>([]);
+  const [availableStudents, setAvailableStudents] = useState<Person[]>([]);
+  const [filteredAvailableStudents, setFilteredAvailableStudents] = useState<
+    Person[]
+  >([]);
+
+  const [assignedAdvisors, setAssignedAdvisors] = useState<Person[]>([]);
+  const [availableAdvisors, setAvailableAdvisors] = useState<Person[]>([]);
+  const [filteredAvailableAdvisors, setFilteredAvailableAdvisors] = useState<
+    Person[]
+  >([]);
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [personasImpactadas, setPersonasImpactadas] = useState<number>(0);
+  const [personasImpactadas] = useState<number>(0);
 
-  // Search filters
   const [studentSearch, setStudentSearch] = useState("");
   const [advisorSearch, setAdvisorSearch] = useState("");
 
@@ -115,15 +48,14 @@ function NewProjectPageContent() {
 
   const loadInitialData = async () => {
     try {
-      const [advisorsData, userData] = await Promise.all([
+      const [studentsData, advisorsData, userData] = await Promise.all([
+        projectsService.getAvailableStudents(),
         projectsService.getAvailableAdvisors(),
         authService.getCurrentUser(),
       ]);
 
-      setAllAdvisors(advisorsData);
-      setAdvisors(advisorsData);
-      setAllStudents(await projectsService.getAvailableStudents());
-      setStudents(await projectsService.getAvailableStudents());
+      let initialAssignedAdvisors: Person[] = [];
+      let initialAvailableAdvisors = advisorsData as Person[];
 
       if (userData) {
         const mappedUser: Person = {
@@ -133,8 +65,22 @@ function NewProjectPageContent() {
           document: userData.num_doc_identidad,
         };
         setCurrentUser(mappedUser);
-        setSelectedAdvisors([mappedUser.id]);
+
+        const fromList = advisorsData.find(
+          (a: Person) => a.id === mappedUser.id,
+        );
+        initialAssignedAdvisors = [fromList ?? mappedUser];
+        initialAvailableAdvisors = advisorsData.filter(
+          (a: Person) => a.id !== mappedUser.id,
+        );
       }
+
+      setAvailableStudents(studentsData);
+      setFilteredAvailableStudents(studentsData);
+
+      setAssignedAdvisors(initialAssignedAdvisors);
+      setAvailableAdvisors(initialAvailableAdvisors);
+      setFilteredAvailableAdvisors(initialAvailableAdvisors);
     } catch (error) {
       Swal.fire("Error", "No se pudo cargar los datos iniciales", "error");
     } finally {
@@ -142,83 +88,96 @@ function NewProjectPageContent() {
     }
   };
 
-  // Filter students by search term (document, id, name, or email)
   const filterStudents = useCallback(
-    (studentsList: Person[], searchTerm: string) => {
+    (searchTerm: string) => {
       if (!searchTerm.trim()) {
-        setStudents(studentsList);
+        setFilteredAvailableStudents(availableStudents);
         return;
       }
-
       const search = searchTerm.toLowerCase().trim();
-      const filtered = studentsList.filter((student) => {
+      const filtered = availableStudents.filter((student) => {
         const documentMatch = student.document?.toLowerCase().includes(search);
         const idMatch = student.id.toLowerCase().includes(search);
         const nameMatch = student.name.toLowerCase().includes(search);
         const emailMatch = student.email.toLowerCase().includes(search);
-
         return documentMatch || idMatch || nameMatch || emailMatch;
       });
-
-      setStudents(filtered);
+      setFilteredAvailableStudents(filtered);
     },
-    [],
+    [availableStudents],
   );
 
-  // Filter advisors by search term (document, id, name, or email)
   const filterAdvisors = useCallback(
-    (advisorsList: Person[], searchTerm: string) => {
+    (searchTerm: string) => {
       if (!searchTerm.trim()) {
-        setAdvisors(advisorsList);
+        setFilteredAvailableAdvisors(availableAdvisors);
         return;
       }
-
       const search = searchTerm.toLowerCase().trim();
-      const filtered = advisorsList.filter((advisor) => {
+      const filtered = availableAdvisors.filter((advisor) => {
         const documentMatch = advisor.document?.toLowerCase().includes(search);
         const idMatch = advisor.id.toLowerCase().includes(search);
         const nameMatch = advisor.name.toLowerCase().includes(search);
         const emailMatch = advisor.email.toLowerCase().includes(search);
-
         return documentMatch || idMatch || nameMatch || emailMatch;
       });
-
-      setAdvisors(filtered);
+      setFilteredAvailableAdvisors(filtered);
     },
-    [],
+    [availableAdvisors],
   );
 
-  // Handle student search
   useEffect(() => {
-    if (allStudents.length > 0) {
-      filterStudents(allStudents, studentSearch);
-    }
-  }, [studentSearch, allStudents, filterStudents]);
+    filterStudents(studentSearch);
+  }, [studentSearch, filterStudents]);
 
-  // Handle advisor search
   useEffect(() => {
-    if (allAdvisors.length > 0) {
-      filterAdvisors(allAdvisors, advisorSearch);
-    }
-  }, [advisorSearch, allAdvisors, filterAdvisors]);
+    filterAdvisors(advisorSearch);
+  }, [advisorSearch, filterAdvisors]);
 
-  const toggleStudent = (studentId: string) => {
-    if (selectedStudents.includes(studentId)) {
-      setSelectedStudents(selectedStudents.filter((id) => id !== studentId));
-    } else {
-      setSelectedStudents([...selectedStudents, studentId]);
-    }
+  const addStudent = (student: Person) => {
+    setAssignedStudents([...assignedStudents, student]);
+    const newAvailable = availableStudents.filter((s) => s.id !== student.id);
+    setAvailableStudents(newAvailable);
+    setFilteredAvailableStudents(
+      studentSearch.trim()
+        ? newAvailable.filter((s) => matchesSearch(s, studentSearch))
+        : newAvailable,
+    );
   };
 
-  const toggleAdvisor = (advisorId: string) => {
-    // Creator is always selected and cannot be removed
-    if (currentUser && advisorId === currentUser.id) return;
+  const removeStudent = (student: Person) => {
+    setAssignedStudents(assignedStudents.filter((s) => s.id !== student.id));
+    const newAvailable = [...availableStudents, student];
+    setAvailableStudents(newAvailable);
+    setFilteredAvailableStudents(
+      studentSearch.trim()
+        ? newAvailable.filter((s) => matchesSearch(s, studentSearch))
+        : newAvailable,
+    );
+  };
 
-    if (selectedAdvisors.includes(advisorId)) {
-      setSelectedAdvisors(selectedAdvisors.filter((id) => id !== advisorId));
-    } else {
-      setSelectedAdvisors([...selectedAdvisors, advisorId]);
-    }
+  const addAdvisor = (advisor: Person) => {
+    setAssignedAdvisors([...assignedAdvisors, advisor]);
+    const newAvailable = availableAdvisors.filter((a) => a.id !== advisor.id);
+    setAvailableAdvisors(newAvailable);
+    setFilteredAvailableAdvisors(
+      advisorSearch.trim()
+        ? newAvailable.filter((a) => matchesSearch(a, advisorSearch))
+        : newAvailable,
+    );
+  };
+
+  const removeAdvisor = (advisor: Person) => {
+    // Creator (currentUser) cannot be removed
+    if (currentUser && advisor.id === currentUser.id) return;
+    setAssignedAdvisors(assignedAdvisors.filter((a) => a.id !== advisor.id));
+    const newAvailable = [...availableAdvisors, advisor];
+    setAvailableAdvisors(newAvailable);
+    setFilteredAvailableAdvisors(
+      advisorSearch.trim()
+        ? newAvailable.filter((a) => matchesSearch(a, advisorSearch))
+        : newAvailable,
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,26 +188,31 @@ function NewProjectPageContent() {
       return;
     }
 
-    if (selectedStudents.length < 1) {
+    if (assignedStudents.length < 1) {
       Swal.fire("Error", "Debe seleccionar al menos 1 estudiante", "error");
       return;
     }
 
-    if (selectedAdvisors.length < 1) {
+    if (assignedAdvisors.length < 1) {
       Swal.fire("Error", "Debe seleccionar al menos 1 docente", "error");
       return;
     }
 
+    setIsSaving(true);
     try {
       await socialProjectsService.createProject({
         nombre,
         descripcion: descripcion || null,
         personas_impactadas: personasImpactadas,
-        estudiantes: selectedStudents,
-        docentes: selectedAdvisors,
+        estudiantes: assignedStudents.map((s) => s.id),
+        docentes: assignedAdvisors.map((a) => a.id),
       });
 
-      await Swal.fire("¡Éxito!", "Proyecto de proyección social creado exitosamente", "success");
+      await Swal.fire(
+        "¡Éxito!",
+        "Proyecto de proyección social creado exitosamente",
+        "success",
+      );
       router.push("/social-outreach/social-projects/admin");
     } catch (error: any) {
       Swal.fire(
@@ -256,6 +220,8 @@ function NewProjectPageContent() {
         error.message || "No se pudo crear el proyecto de proyección social",
         "error",
       );
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -311,22 +277,17 @@ function NewProjectPageContent() {
             Cantidad de personas impactadas *
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Ingresa el número estimado o real de personas beneficiadas por este proyecto de proyección social.
+            Este valor inicia en 0 y se actualizará cuando el proyecto avance.
           </p>
           <input
             type="number"
             min={0}
-            required
             value={personasImpactadas}
-            onChange={(e) => setPersonasImpactadas(Math.max(0, parseInt(e.target.value) || 0))}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Ej: 150"
+            readOnly
+            disabled
+            aria-readonly="true"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
           />
-          {personasImpactadas > 0 && (
-            <p className="text-xs text-sky-600 mt-1 font-medium">
-              {personasImpactadas.toLocaleString()} personas impactadas
-            </p>
-          )}
         </div>
 
         {/* Estudiantes */}
@@ -334,64 +295,124 @@ function NewProjectPageContent() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Estudiantes * (Selecciona 1 o más)
           </label>
-          <div className="mb-3">
-            <input
-              type="text"
-              value={studentSearch}
-              onChange={(e) => setStudentSearch(e.target.value)}
-              placeholder="Buscar por cédula, código o nombre..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-            />
-          </div>
-          <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-            {students.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">
-                {studentSearch
-                  ? `No se encontraron estudiantes que coincidan con "${studentSearch}"`
-                  : "No hay estudiantes disponibles"}
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {students.map((student) => (
-                  <label
-                    key={student.id}
-                    className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedStudents.includes(student.id)
-                        ? "bg-primary-100 border-2 border-primary-500"
-                        : "bg-white border border-gray-200 hover:bg-gray-100"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedStudents.includes(student.id)}
-                      onChange={() => toggleStudent(student.id)}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                    />
-                    <div className="ml-3 flex-1">
-                      <div className="text-sm font-medium text-gray-900">
-                        {student.name}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {student.document && `Cédula: ${student.document}`}
-                        {student.document && " • "}
-                        Código: {student.id} • {student.email}
-                      </div>
-                    </div>
-                  </label>
-                ))}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Assigned Students */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Asignados ({assignedStudents.length})
+                </span>
               </div>
-            )}
-          </div>
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-gray-500">
-              Seleccionados: {selectedStudents.length}
-            </p>
-            {studentSearch && (
-              <p className="text-xs text-gray-500">
-                {students.length} resultado{students.length !== 1 ? "s" : ""}{" "}
-                encontrado{students.length !== 1 ? "s" : ""}
-              </p>
-            )}
+              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                {assignedStudents.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    No hay estudiantes asignados
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {assignedStudents.map((student) => (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                      >
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">
+                            {student.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {student.email}
+                            {student.document ? ` - ${student.document}` : ""}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeStudent(student)}
+                          className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                          aria-label="Quitar estudiante"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Available Students */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Disponibles
+                </span>
+              </div>
+              <div className="mb-2">
+                <input
+                  type="text"
+                  value={studentSearch}
+                  onChange={(e) => setStudentSearch(e.target.value)}
+                  placeholder="Buscar por cédula, código o nombre..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                {filteredAvailableStudents.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    No se encontraron estudiantes
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredAvailableStudents.map((student) => (
+                      <div
+                        key={student.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                      >
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">
+                            {student.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {student.id} • {student.email}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addStudent(student)}
+                          className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                          aria-label="Agregar estudiante"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -400,44 +421,138 @@ function NewProjectPageContent() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Docentes * (Selecciona 1 o más)
           </label>
-          {currentUser && <CurrentUser {...{ currentUser }} />}
-          <div className="mb-3">
-            <input
-              type="text"
-              value={advisorSearch}
-              onChange={(e) => setAdvisorSearch(e.target.value)}
-              placeholder="Buscar por cédula, código o nombre..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-            />
-          </div>
-          <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-            {advisors.filter((a) => a.id !== currentUser?.id).length === 0 ? (
-              <p className="text-gray-500 text-sm text-center py-4">
-                {advisorSearch
-                  ? `No se encontraron docentes que coincidan con "${advisorSearch}"`
-                  : "No hay docentes disponibles"}
-              </p>
-            ) : (
-              <AdvisorsList
-                {...{
-                  advisors,
-                  selectedAdvisors,
-                  toggleAdvisor,
-                  currentUser,
-                }}
-              />
-            )}
-          </div>
-          <div className="flex justify-between items-center mt-1">
-            <p className="text-xs text-gray-500">
-              Seleccionados: {selectedAdvisors.length}
-            </p>
-            {advisorSearch && (
-              <p className="text-xs text-gray-500">
-                {advisors.length} resultado{advisors.length !== 1 ? "s" : ""}{" "}
-                encontrado{advisors.length !== 1 ? "s" : ""}
-              </p>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Assigned Advisors */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Asignados ({assignedAdvisors.length})
+                </span>
+              </div>
+              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                {assignedAdvisors.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    No hay docentes asignados
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {assignedAdvisors.map((advisor) => {
+                      const isCurrent =
+                        currentUser && advisor.id === currentUser.id;
+                      return (
+                        <div
+                          key={advisor.id}
+                          className={`flex items-center justify-between p-3 rounded-lg border ${
+                            isCurrent
+                              ? "bg-blue-50 border-blue-200"
+                              : "bg-white border-gray-200 hover:bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900">
+                              {advisor.name}{" "}
+                              {isCurrent && (
+                                <span className="text-xs text-blue-700">
+                                  (Tú)
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {advisor.id} • {advisor.email}
+                            </div>
+                          </div>
+                          {!isCurrent && (
+                            <button
+                              type="button"
+                              onClick={() => removeAdvisor(advisor)}
+                              className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                              aria-label="Quitar docente"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Available Advisors */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  Disponibles
+                </span>
+              </div>
+              <div className="mb-2">
+                <input
+                  type="text"
+                  value={advisorSearch}
+                  onChange={(e) => setAdvisorSearch(e.target.value)}
+                  placeholder="Buscar por cédula, código o nombre..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                />
+              </div>
+              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
+                {filteredAvailableAdvisors.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    No se encontraron docentes
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredAvailableAdvisors.map((advisor) => (
+                      <div
+                        key={advisor.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+                      >
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">
+                            {advisor.name}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {advisor.id} • {advisor.email}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => addAdvisor(advisor)}
+                          className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
+                          aria-label="Agregar docente"
+                        >
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -447,14 +562,16 @@ function NewProjectPageContent() {
             type="button"
             onClick={() => router.back()}
             className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            disabled={isSaving}
           >
             Cancelar
           </button>
           <button
             type="submit"
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+            disabled={isSaving}
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-primary-400"
           >
-            Crear Proyecto
+            {isSaving ? "Creando..." : "Crear Proyecto"}
           </button>
         </div>
       </form>
@@ -462,9 +579,22 @@ function NewProjectPageContent() {
   );
 }
 
+function matchesSearch(person: Person, search: string): boolean {
+  const s = search.toLowerCase().trim();
+  return (
+    Boolean(person.document?.toLowerCase().includes(s)) ||
+    person.id.toLowerCase().includes(s) ||
+    person.name.toLowerCase().includes(s) ||
+    person.email.toLowerCase().includes(s)
+  );
+}
+
 export default function NewProjectPage() {
   return (
-    <RoleProtectedRoute allowedRoles={["admin", "dean"]} redirectTo="/social-outreach/social-projects/admin">
+    <RoleProtectedRoute
+      allowedRoles={["admin", "dean"]}
+      redirectTo="/social-outreach/social-projects/admin"
+    >
       <NewProjectPageContent />
     </RoleProtectedRoute>
   );
