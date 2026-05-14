@@ -149,7 +149,7 @@ function AdminProjectsPageContent() {
                         >
                             <option value="all">Todos los Estados</option>
                             <option value="Finalizado">Finalizado</option>
-                            <option value="En Curso">En Curso</option>
+                            <option value="En proceso">En proceso</option>
                         </select>
                         <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

@@ -13,10 +13,10 @@ function CreateNewAdmin() {
     <div className="flex l-0 gap-3">
       <Link
         href="/social-outreach/social-projects/admin/new"
-        className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors font-medium flex items-center gap-2"
+        className="bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-lg transition-colors font-medium flex items-center gap-2 text-sm shadow-sm"
       >
         <svg
-          className="w-5 h-5"
+          className="w-4 h-4 opacity-70"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -28,15 +28,15 @@ function CreateNewAdmin() {
             d="M12 4v16m8-8H4"
           />
         </svg>
-        Nuevo Proyecto
+        Nueva Proyección
       </Link>
 
       <Link
         href="/social-outreach/social-projects/admin"
-        className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-all font-medium flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105"
+        className="bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 px-4 py-2 rounded-lg transition-all font-medium flex items-center gap-2 text-sm shadow-sm"
       >
         <svg
-          className="w-5 h-5"
+          className="w-4 h-4 opacity-70"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -54,7 +54,7 @@ function CreateNewAdmin() {
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-        Administrar Proyectos
+        Administrar Proyecciones
       </Link>
     </div>
   );
@@ -248,7 +248,7 @@ export default function ProjectsPage() {
             >
               <option value="all">Todos los Estados</option>
               <option value="Finalizado">Finalizado</option>
-              <option value="En Curso">En Curso</option>
+              <option value="En proceso">En proceso</option>
             </select>
             <span className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
