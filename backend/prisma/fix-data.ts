@@ -54,33 +54,81 @@ async function main() {
         }
     }
 
-    // 2. Eliminar programa "Ingeniería de Sistemas" si existe
+    // 2. Eliminar programas académicos duplicados o mal formateados (en minúsculas)
     console.log("📚 Corrigiendo programas académicos...");
+    
+    const correctProgramsMap: { [key: string]: string } = {
+        'ingenieriadesistemas': 'Ingeniería Informática', // Redirigir a Ingeniería Informática si no hay de Sistemas
+        'tecnologiaeninformatica': 'Ingeniería Informática',
+        'ingenieriadesoftware': 'Tecnología en Desarrollo de Software'
+    };
+
+    const lowercasePrograms = Object.keys(correctProgramsMap);
+
+    for (const name of lowercasePrograms) {
+        const program = await prisma.programa_academico.findFirst({
+            where: { nombre_programa: name }
+        });
+
+        if (program) {
+            const correctName = correctProgramsMap[name];
+            const correctProgram = await prisma.programa_academico.findFirst({
+                where: { nombre_programa: correctName }
+            });
+
+            if (correctProgram) {
+                console.log(`🔄 Migrando referencias de "${name}" a "${correctName}"...`);
+                
+                // Actualizar proyectos
+                await prisma.trabajo_grado.updateMany({
+                    where: { id_programa_academico: program.id_programa },
+                    data: { id_programa_academico: correctProgram.id_programa }
+                });
+
+                // Actualizar personas
+                await prisma.persona.updateMany({
+                    where: { id_programa_academico: program.id_programa },
+                    data: { id_programa_academico: correctProgram.id_programa }
+                });
+
+                // Eliminar el programa mal formateado
+                await prisma.programa_academico.delete({
+                    where: { id_programa: program.id_programa }
+                });
+                
+                console.log(`✅ Programa "${name}" eliminado y referencias migradas a "${correctName}"`);
+            } else {
+                console.log(`⚠️ No se encontró el programa correcto "${correctName}" para migrar "${name}".`);
+            }
+        }
+    }
+
+    // Caso especial: "Ingeniería de Sistemas" con camel case o espacios
     const programaAntiguo = await prisma.programa_academico.findFirst({
         where: { nombre_programa: "Ingeniería de Sistemas" },
     });
 
     if (programaAntiguo) {
-        // Verificar si hay proyectos asociados
-        const proyectosAsociados = await prisma.trabajo_grado.count({
-            where: { id_programa_academico: programaAntiguo.id_programa },
+        const correctProgram = await prisma.programa_academico.findFirst({
+            where: { nombre_programa: "Ingeniería Informática" }
         });
 
-        if (proyectosAsociados > 0) {
-            console.log(
-                `⚠️  El programa "Ingeniería de Sistemas" tiene ${proyectosAsociados} proyecto(s) asociado(s). No se puede eliminar automáticamente.`,
-            );
-            console.log(
-                "   Por favor, actualiza manualmente estos proyectos antes de eliminar el programa.",
-            );
-        } else {
+        if (correctProgram) {
+            await prisma.trabajo_grado.updateMany({
+                where: { id_programa_academico: programaAntiguo.id_programa },
+                data: { id_programa_academico: correctProgram.id_programa }
+            });
+            
+            await prisma.persona.updateMany({
+                where: { id_programa_academico: programaAntiguo.id_programa },
+                data: { id_programa_academico: correctProgram.id_programa }
+            });
+
             await prisma.programa_academico.delete({
                 where: { id_programa: programaAntiguo.id_programa },
             });
-            console.log('✅ Programa "Ingeniería de Sistemas" eliminado');
+            console.log('✅ Programa "Ingeniería de Sistemas" eliminado y migrado a "Ingeniería Informática"');
         }
-    } else {
-        console.log('✅ No se encontró el programa "Ingeniería de Sistemas"');
     }
 
     // 3. Corregir opción de grado: "Proyecto Integrador" -> "Proyecto de Investigación"
