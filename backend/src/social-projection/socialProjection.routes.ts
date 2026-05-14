@@ -128,6 +128,7 @@ export class ProyeccionSocialRoutes {
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
+      proyeccionSocialUpload.single("archivo"),
       this.controller.update,
     );
 

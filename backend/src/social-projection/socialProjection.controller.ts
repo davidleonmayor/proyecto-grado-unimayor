@@ -330,8 +330,24 @@ export class ProyeccionSocialController {
     try {
       const { id } = req.params;
       const { nombre, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
+      const file = req.file;
 
-      const updated = await this.service.update(id, { nombre, descripcion, personas_impactadas, estado, estudiantes, docentes });
+      const parsedEstudiantes = typeof estudiantes === "string" ? JSON.parse(estudiantes) : estudiantes;
+      const parsedDocentes = typeof docentes === "string" ? JSON.parse(docentes) : docentes;
+      const parsedImpactadas = typeof personas_impactadas === "string"
+        ? Number(personas_impactadas)
+        : personas_impactadas;
+
+      const updated = await this.service.update(id, {
+        nombre,
+        descripcion,
+        personas_impactadas: parsedImpactadas,
+        estado,
+        estudiantes: parsedEstudiantes,
+        docentes: parsedDocentes,
+        archivo: file?.buffer as any,
+        tipo_mime: file?.mimetype,
+      });
 
       return res.status(200).json({
         message: "Proyecto de proyección social actualizado exitosamente",

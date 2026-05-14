@@ -244,7 +244,16 @@ export class ProyeccionSocialService {
    */
   async update(
     id: string,
-    data: { nombre: string; descripcion?: string | null; personas_impactadas?: number; estado?: string; estudiantes?: string[]; docentes?: string[] },
+    data: {
+      nombre: string;
+      descripcion?: string | null;
+      personas_impactadas?: number;
+      estado?: string;
+      estudiantes?: string[];
+      docentes?: string[];
+      archivo?: Buffer;
+      tipo_mime?: string;
+    },
   ) {
     try {
       return await prisma.$transaction(async (tx) => {
@@ -255,6 +264,8 @@ export class ProyeccionSocialService {
             descripcion: data.descripcion,
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
             ...(data.estado !== undefined && { estado: data.estado }),
+            ...(data.archivo && { archivo: new Uint8Array(data.archivo) }),
+            ...(data.tipo_mime && { tipo_mime: data.tipo_mime }),
           },
         });
 
