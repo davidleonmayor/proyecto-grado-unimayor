@@ -24,11 +24,15 @@ async function main() {
         });
 
         if (estadoCorrecto) {
-            // Si ya existe "En curso", actualizar referencias y eliminar el duplicado
-            await prisma.trabajo_grado.updateMany({
+            // Si ya existe "En curso", actualizar TODAS las referencias y eliminar el duplicado
+            console.log(`🔄 Migrando referencias del estado "${estado.nombre_estado}" (${estado.id_estado_tg}) a "En curso" (${estadoCorrecto.id_estado_tg})...`);
+
+            // Actualizar trabajos de grado que usan este estado como estado actual
+            const updatedTG = await prisma.trabajo_grado.updateMany({
                 where: { id_estado_actual: estado.id_estado_tg },
                 data: { id_estado_actual: estadoCorrecto.id_estado_tg },
             });
+            console.log(`   ↳ trabajo_grado.id_estado_actual: ${updatedTG.count} registros actualizados`);
 
             await prisma.seguimiento_tg.updateMany({
                 where: { id_estado_anterior: estado.id_estado_tg },
@@ -40,10 +44,19 @@ async function main() {
                 data: { id_estado_nuevo: estadoCorrecto.id_estado_tg },
             });
 
-            await prisma.estado_tg.delete({
-                where: { id_estado_tg: estado.id_estado_tg },
+            // Verificar que no queden referencias antes de borrar
+            const remaining = await prisma.trabajo_grado.count({
+                where: { id_estado_actual: estado.id_estado_tg },
             });
-            console.log(`✅ Estado "${estado.nombre_estado}" corregido y referencias actualizadas`);
+
+            if (remaining > 0) {
+                console.log(`⚠️  Aún quedan ${remaining} proyectos apuntando al estado "${estado.nombre_estado}". Saltando eliminación.`);
+            } else {
+                await prisma.estado_tg.delete({
+                    where: { id_estado_tg: estado.id_estado_tg },
+                });
+                console.log(`✅ Estado "${estado.nombre_estado}" eliminado correctamente`);
+            }
         } else {
             // Si no existe "En curso", renombrar este estado
             await prisma.estado_tg.update({
