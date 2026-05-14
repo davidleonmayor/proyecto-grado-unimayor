@@ -12,36 +12,64 @@ import { useEffect, useState } from "react";
 import { projectsService } from '@/modules/projects/services/projects.service';
 import { useUserRole } from '@/shared/hooks/useUserRole';
 
-const schema = z.object({
-    titulo: z
-        .string()
-        .min(1, { message: "El título es obligatorio" })
-        .max(200, { message: "El título no debe exceder los 200 caracteres" }),
-    descripcion: z
-        .string()
-        .max(1000, { message: "La descripción no debe exceder los 1000 caracteres" })
-        .optional(),
-    fecha_inicio: z
-        .string()
-        .min(1, { message: "La fecha de inicio es obligatoria" }),
-    fecha_fin: z
-        .string()
-        .min(1, { message: "La fecha de fin es obligatoria" }),
-    hora_inicio: z
-        .string()
-        .optional(),
-    hora_fin: z
-        .string()
-        .optional(),
-    prioridad: z
-        .enum(["alta", "media", "baja"], {
+const CUID_REGEX = /^c[a-z0-9]{24}$/;
+
+const schema = z
+    .object({
+        titulo: z
+            .string()
+            .min(1, { message: "El título es obligatorio" })
+            .max(200, { message: "El título no debe exceder los 200 caracteres" }),
+        descripcion: z
+            .string()
+            .max(1000, { message: "La descripción no debe exceder los 1000 caracteres" })
+            .optional(),
+        fecha_inicio: z
+            .string()
+            .min(1, { message: "La fecha de inicio es obligatoria" })
+            .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Formato de fecha inválido (AAAA-MM-DD)" }),
+        fecha_fin: z
+            .string()
+            .min(1, { message: "La fecha de fin es obligatoria" })
+            .regex(/^\d{4}-\d{2}-\d{2}$/, { message: "Formato de fecha inválido (AAAA-MM-DD)" }),
+        hora_inicio: z.string().optional(),
+        hora_fin: z.string().optional(),
+        prioridad: z.enum(["alta", "media", "baja"], {
             message: "Prioridad inválida",
         }),
-    todo_el_dia: z
-        .boolean()
-        .default(false),
-    id_trabajo_grado: z.string().optional(),
-});
+        todo_el_dia: z.boolean().default(false),
+        id_trabajo_grado: z
+            .string()
+            .optional()
+            .refine((val) => !val || val === "" || CUID_REGEX.test(val), {
+                message: "El proyecto seleccionado no es válido",
+            }),
+    })
+    .refine(
+        (data) => {
+            if (!data.fecha_inicio || !data.fecha_fin) return true;
+            return (
+                new Date(data.fecha_fin).getTime() >=
+                new Date(data.fecha_inicio).getTime()
+            );
+        },
+        {
+            message: "La fecha de fin debe ser mayor o igual a la fecha de inicio",
+            path: ["fecha_fin"],
+        },
+    )
+    .refine(
+        (data) => {
+            if (data.todo_el_dia) return true;
+            if (!data.hora_inicio || !data.hora_fin) return true;
+            if (data.fecha_inicio !== data.fecha_fin) return true;
+            return data.hora_fin >= data.hora_inicio;
+        },
+        {
+            message: "La hora de fin debe ser mayor o igual a la hora de inicio",
+            path: ["hora_fin"],
+        },
+    );
 
 const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) => {
     const router = useRouter();
@@ -113,33 +141,86 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
 
     const todoElDia = watch('todo_el_dia');
 
+    const buildPayload = (formData: any) => ({
+        titulo: formData.titulo.trim(),
+        descripcion: formData.descripcion?.trim() || null,
+        fecha_inicio: formData.fecha_inicio,
+        fecha_fin: formData.fecha_fin,
+        hora_inicio: formData.todo_el_dia ? null : (formData.hora_inicio || null),
+        hora_fin: formData.todo_el_dia ? null : (formData.hora_fin || null),
+        prioridad: formData.prioridad,
+        todo_el_dia: formData.todo_el_dia,
+        id_trabajo_grado: formData.id_trabajo_grado?.trim() || null,
+    });
+
+    // Field label mapping for friendlier backend error messages
+    const fieldLabels: Record<string, string> = {
+        titulo: "Título",
+        descripcion: "Descripción",
+        fecha_inicio: "Fecha de inicio",
+        fecha_fin: "Fecha de fin",
+        hora_inicio: "Hora de inicio",
+        hora_fin: "Hora de fin",
+        prioridad: "Prioridad",
+        todo_el_dia: "Todo el día",
+        id_trabajo_grado: "Proyecto",
+    };
+
+    const formatBackendErrors = (errorData: any): string | null => {
+        if (errorData && Array.isArray(errorData.errors)) {
+            const lines = errorData.errors.map((err: any) => {
+                const label = fieldLabels[err.path] ?? err.path ?? "Campo";
+                const msg = (err.msg ?? "Valor inválido").replace(
+                    new RegExp(`'?${err.path}'?`, "g"),
+                    `'${label}'`,
+                );
+                return `• ${label}: ${msg}`;
+            });
+            return lines.join("\n");
+        }
+        return null;
+    };
+
+    // Update-specific submit: parses express-validator's { errors: [...] } shape
+    const submitUpdate = async (payload: any) => {
+        const apiUrl =
+            process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+        const token =
+            typeof window !== "undefined"
+                ? localStorage.getItem("auth_token")
+                : null;
+        const response = await fetch(`${apiUrl}/api/events/${data.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            const formatted = formatBackendErrors(errorData);
+            if (formatted) throw new Error(formatted);
+            throw new Error(
+                errorData.error ||
+                    errorData.message ||
+                    "No se pudo actualizar el evento",
+            );
+        }
+
+        return response.json().catch(() => ({}));
+    };
+
     const onSubmit = handleSubmit(async (formData) => {
         try {
+            const payload = buildPayload(formData);
+
             if (type === "create") {
-                await eventsService.createEvent({
-                    titulo: formData.titulo,
-                    descripcion: formData.descripcion || null,
-                    fecha_inicio: formData.fecha_inicio,
-                    fecha_fin: formData.fecha_fin,
-                    hora_inicio: formData.todo_el_dia ? null : (formData.hora_inicio || null),
-                    hora_fin: formData.todo_el_dia ? null : (formData.hora_fin || null),
-                    prioridad: formData.prioridad,
-                    todo_el_dia: formData.todo_el_dia,
-                    id_trabajo_grado: formData.id_trabajo_grado || null,
-                });
+                await eventsService.createEvent(payload);
                 Swal.fire('Éxito', 'Evento creado correctamente', 'success');
             } else {
-                await eventsService.updateEvent(data.id, {
-                    titulo: formData.titulo,
-                    descripcion: formData.descripcion || null,
-                    fecha_inicio: formData.fecha_inicio,
-                    fecha_fin: formData.fecha_fin,
-                    hora_inicio: formData.todo_el_dia ? null : (formData.hora_inicio || null),
-                    hora_fin: formData.todo_el_dia ? null : (formData.hora_fin || null),
-                    prioridad: formData.prioridad,
-                    todo_el_dia: formData.todo_el_dia,
-                    id_trabajo_grado: formData.id_trabajo_grado || null,
-                });
+                await submitUpdate(payload);
                 Swal.fire('Éxito', 'Evento actualizado correctamente', 'success');
             }
 
@@ -149,7 +230,12 @@ const EventForm = ({ type, data }: { type: "create" | "update"; data?: any }) =>
                 window.location.reload();
             }
         } catch (error: any) {
-            Swal.fire('Error', error.message || 'Error al guardar el evento', 'error');
+            await Swal.fire({
+                icon: "error",
+                title: "No se pudo guardar el evento",
+                html: `<pre style="text-align:left;white-space:pre-wrap;font-family:inherit;font-size:13px;margin:0">${(error.message || "Error al guardar el evento").replace(/</g, "&lt;")}</pre>`,
+                confirmButtonColor: "#d33",
+            });
         }
     });
 

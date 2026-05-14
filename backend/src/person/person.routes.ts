@@ -64,5 +64,23 @@ export class PersonRoutes {
       this.authMiddleware.isAuthenticatedUser,
       this.controller.getPersonById,
     );
+
+    // PUT /:id — Update person (admin only)
+    this.router.put(
+      "/:id",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.isPrivilegedUser,
+      this.controller.updatePerson,
+    );
+
+    // DELETE /:id — Delete person (admin only)
+    this.router.delete(
+      "/:id",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.isPrivilegedUser,
+      this.controller.deletePerson,
+    );
   }
 }

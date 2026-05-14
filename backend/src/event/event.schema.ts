@@ -232,24 +232,38 @@ export const UpdateEventSchema: Schema = {
   fecha_inicio: {
     in: ["body"],
     optional: { options: { nullable: true } },
-    isISO8601: { errorMessage: "..." },
-    toDate: true, // <-- ¡MAGIA! Convierte el string a objeto Date automáticamente
+    isISO8601: {
+      errorMessage:
+        "El campo 'fecha_inicio' debe ser una fecha válida (ISO 8601)",
+    },
+    toDate: true,
   },
   fecha_fin: {
     in: ["body"],
     optional: { options: { nullable: true } },
-    isISO8601: { errorMessage: "..." },
-    toDate: true, // <-- Transforma automáticamente
+    isISO8601: {
+      errorMessage: "El campo 'fecha_fin' debe ser una fecha válida (ISO 8601)",
+    },
+    toDate: true,
     custom: {
       options: (value: unknown, { req }) => {
         if (value === null || value === undefined) return true;
-        if (typeof value !== "string") return false;
+
+        // `toDate: true` ya convirtió el valor a Date; aceptar tanto Date como string por seguridad
+        const endDate =
+          value instanceof Date ? value : new Date(value as string);
+        if (isNaN(endDate.getTime())) return false;
 
         const startValue = req.body?.fecha_inicio;
-        if (startValue && typeof startValue === "string") {
-          return new Date(value).getTime() >= new Date(startValue).getTime();
-        }
-        return true;
+        if (startValue === null || startValue === undefined) return true;
+
+        const startDate =
+          startValue instanceof Date
+            ? startValue
+            : new Date(startValue as string);
+        if (isNaN(startDate.getTime())) return true;
+
+        return endDate.getTime() >= startDate.getTime();
       },
       errorMessage:
         "El campo 'fecha_fin' debe ser mayor o igual a 'fecha_inicio'",
@@ -346,11 +360,13 @@ export const UpdateEventSchema: Schema = {
     customSanitizer: {
       options: (value) =>
         typeof value === "string" && value.trim() === "" ? null : value,
-    }, // <-- Si viene vacío, lo vuelve null antes de llegar al controlador
+    },
     custom: {
       options: (value: unknown) => {
         if (value === null || value === undefined) return true;
-        // ... (tu lógica de validación regex para CUID) ...
+        if (typeof value !== "string") return false;
+        const trimmed = value.trim();
+        return trimmed === "" || /^c[a-z0-9]{24}$/.test(trimmed);
       },
       errorMessage:
         "El campo 'id_trabajo_grado' debe ser vacío o un CUID válido",
