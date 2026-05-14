@@ -143,3 +143,91 @@ export const GetPersonByIdSchema: Schema = {
     ...cuidRule,
   },
 };
+
+export const CreateTeacherSchema: Schema = {
+  authorization: authorizationHeaderRule,
+  username: {
+    in: ["body"],
+    exists: { errorMessage: "El nombre de usuario es obligatorio" },
+    isString: { errorMessage: "El nombre de usuario debe ser texto" },
+    isLength: { options: { min: 3, max: 20 }, errorMessage: "El nombre de usuario debe tener entre 3 y 20 caracteres" },
+    trim: true,
+  },
+  email: {
+    in: ["body"],
+    exists: { errorMessage: "El correo electrónico es obligatorio" },
+    isEmail: { errorMessage: "Correo electrónico inválido" },
+    trim: true,
+    toLowerCase: true,
+  },
+  document: {
+    in: ["body"],
+    exists: { errorMessage: "El documento es obligatorio" },
+    isString: { errorMessage: "El documento debe ser texto" },
+    isLength: { options: { min: 5, max: 20 }, errorMessage: "El documento debe tener entre 5 y 20 caracteres" },
+    trim: true,
+  },
+  password: {
+    in: ["body"],
+    exists: { errorMessage: "La contraseña es obligatoria" },
+    isString: { errorMessage: "La contraseña debe ser texto" },
+    isLength: { options: { min: 8, max: 60 }, errorMessage: "La contraseña debe tener entre 8 y 60 caracteres" },
+    matches: {
+      options: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/,
+      errorMessage: "La contraseña debe contener al menos una mayúscula, una minúscula, un número y un carácter especial",
+    },
+  },
+  firstName: {
+    in: ["body"],
+    exists: { errorMessage: "El nombre es obligatorio" },
+    isString: { errorMessage: "El nombre debe ser texto" },
+    trim: true,
+  },
+  lastName: {
+    in: ["body"],
+    exists: { errorMessage: "El apellido es obligatorio" },
+    isString: { errorMessage: "El apellido debe ser texto" },
+    trim: true,
+  },
+};
+
+export const CreateStudentSchema: Schema = {
+  ...CreateTeacherSchema,
+  programId: {
+    in: ["body"],
+    exists: { errorMessage: "El programa académico es obligatorio" },
+    ...cuidRule,
+  },
+  codigoInstitucional: {
+    in: ["body"],
+    exists: { errorMessage: "El código institucional es obligatorio" },
+    isString: { errorMessage: "El código institucional debe ser texto" },
+    trim: true,
+  },
+};
+
+export const UpdatePersonSchema: Schema = {
+  authorization: authorizationHeaderRule,
+  id: {
+    in: ["params"],
+    ...cuidRule,
+  },
+  email: {
+    in: ["body"],
+    optional: true,
+    isEmail: { errorMessage: "Correo electrónico inválido" },
+    trim: true,
+    toLowerCase: true,
+  },
+  password: {
+    in: ["body"],
+    optional: true,
+    custom: {
+      options: (value) => {
+        if (!value) return true;
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(value);
+      },
+      errorMessage: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+    },
+  },
+};

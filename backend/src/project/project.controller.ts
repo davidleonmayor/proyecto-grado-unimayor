@@ -663,9 +663,10 @@ export class ProjectController {
                 studentsWithActiveProjects.map(a => a.id_persona)
             );
 
-            // Build query for students - only confirmed users
+            // Build query for students
             let studentsWhere: any = {
-                confirmed: true
+                // Remove confirmed: true to allow newly created students to appear
+                // confirmed: true 
             };
 
             // If programId is provided, filter by program
@@ -738,36 +739,86 @@ export class ProjectController {
         }
     }
 
-    // Get available advisors (professors/directors)
+    // Get available advisors (professors/directors/admins)
     async getAvailableAdvisors(req: Request, res: Response) {
         try {
-            // Get Director role
-            const directorRole = await prisma.tipo_rol.findFirst({
-                where: { nombre_rol: "Director" }
+            const userId = req.user?.id_persona;
+
+            // Get privileged roles (Director, Jurado, etc.) to determine faculty if needed
+            const privilegedRoles = await prisma.tipo_rol.findMany({
+                where: {
+                    nombre_rol: { in: ["Director", "Jurado", "Coordinador de Carrera", "Decano"] }
+                }
             });
 
-            if (!directorRole) {
-                return res.json([]);
+            const privilegedRoleIds = privilegedRoles.map(r => r.id_rol);
+
+            // Determine user's faculty if they are a professor/director/coordinator
+            let userFacultyIds: Set<string> = new Set();
+            if (userId) {
+                const userPersona = await prisma.persona.findUnique({
+                    where: { id_persona: userId },
+                    select: { id_facultad: true }
+                });
+
+                if (userPersona?.id_facultad) {
+                    userFacultyIds.add(userPersona.id_facultad);
+                } else {
+                    const userActors = await prisma.actores.findMany({
+                        where: {
+                            id_persona: userId,
+                            id_tipo_rol: { in: privilegedRoleIds }
+                        },
+                        include: {
+                            trabajo_grado: {
+                                include: {
+                                    programa_academico: {
+                                        select: {
+                                            id_facultad: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+                    userActors.forEach(actor => {
+                        if (actor.trabajo_grado?.programa_academico?.id_facultad) {
+                            userFacultyIds.add(actor.trabajo_grado.programa_academico.id_facultad);
+                        }
+                    });
+                }
             }
 
-            // Get all people who have been directors at some point
-            const directorActors = await prisma.actores.findMany({
-                where: {
-                    id_tipo_rol: directorRole.id_rol,
-                    persona: { confirmed: true }
-                },
-                include: { persona: true },
-                distinct: ['id_persona']
+            // Build query for advisors: People who are NOT students (id_programa_academico is null)
+            const advisorsWhere: any = {
+                id_programa_academico: null
+            };
+
+            // If user has faculty restriction, only show advisors from their faculties
+            if (userFacultyIds.size > 0) {
+                advisorsWhere.id_facultad = { in: Array.from(userFacultyIds) };
+            }
+
+            const allAdvisors = await prisma.persona.findMany({
+                where: advisorsWhere,
+                select: {
+                    id_persona: true,
+                    nombres: true,
+                    apellidos: true,
+                    correo_electronico: true,
+                    num_doc_identidad: true
+                }
             });
 
-            const advisors = directorActors.map(a => ({
-                id: a.persona.id_persona,
-                name: `${a.persona.nombres} ${a.persona.apellidos}`,
-                email: a.persona.correo_electronico,
-                document: a.persona.num_doc_identidad
+            const formattedAdvisors = allAdvisors.map(a => ({
+                id: a.id_persona,
+                name: `${a.nombres} ${a.apellidos}`,
+                email: a.correo_electronico,
+                document: a.num_doc_identidad
             }));
 
-            return res.json(advisors);
+            return res.json(formattedAdvisors);
         } catch (error) {
             logger.error("Error getting advisors:", error);
             return res.status(500).json({ error: "Error al obtener asesores" });

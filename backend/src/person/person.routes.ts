@@ -7,6 +7,9 @@ import {
   GetPersonByIdSchema,
   GetStudentsSchema,
   GetTeachersSchema,
+  CreateTeacherSchema,
+  CreateStudentSchema,
+  UpdatePersonSchema,
 } from "./person.schema";
 
 export class PersonRoutes {
@@ -43,6 +46,7 @@ export class PersonRoutes {
     // POST /teachers — Create teacher (admin only)
     this.router.post(
       "/teachers",
+      validateSchema(CreateTeacherSchema),
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.isPrivilegedUser,
@@ -52,6 +56,7 @@ export class PersonRoutes {
     // POST /students — Create student (admin only)
     this.router.post(
       "/students",
+      validateSchema(CreateStudentSchema),
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.isPrivilegedUser,
@@ -68,6 +73,7 @@ export class PersonRoutes {
     // PUT /:id — Update person (admin only)
     this.router.put(
       "/:id",
+      validateSchema(UpdatePersonSchema),
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.isPrivilegedUser,

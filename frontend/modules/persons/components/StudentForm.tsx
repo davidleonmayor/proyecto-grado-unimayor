@@ -19,7 +19,16 @@ const StudentForm = ({ type, data, onSuccess }: { type: "create" | "update"; dat
     email: z.string().email({ message: "Correo electrónico inválido" }),
     document: z.string().min(5, { message: "El documento debe tener al menos 5 caracteres" }).max(20),
     codigoInstitucional: z.string().min(3, { message: "El código institucional es obligatorio" }).max(20),
-    password: type === "create" ? z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }).max(100) : z.string().optional().or(z.literal('')),
+    password: type === "create" 
+      ? z.string().min(8, { message: "La contraseña debe tener al menos 8 caracteres" })
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, {
+          message: "La contraseña debe tener al menos una mayúscula, una minúscula, un número y un carácter especial"
+        })
+        .max(100) 
+      : z.string().optional().or(z.literal(''))
+        .refine(val => !val || /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(val), {
+          message: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
+        }),
     role: z.enum(["Estudiante"], { message: "Rol inválido" }).optional(),
     firstName: z.string().min(1, { message: "El nombre es obligatorio" }).max(50),
     lastName: z.string().min(1, { message: "El apellido es obligatorio" }).max(50),

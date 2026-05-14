@@ -60,8 +60,7 @@ export class PersonController {
 
             // Build where clause - only show confirmed users
             let where: any = {
-                id_programa_academico: null,
-                confirmed: true
+                id_programa_academico: null
             };
 
             // If user is coordinator, filter by their faculty
@@ -265,8 +264,7 @@ export class PersonController {
             // Build where clause - only show confirmed users
             // Los estudiantes siempre tienen un id_programa_academico asignado
             let where: any = {
-                id_programa_academico: { not: null },
-                confirmed: true
+                id_programa_academico: { not: null }
             };
 
             // Search filter
