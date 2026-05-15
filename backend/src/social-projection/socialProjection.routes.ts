@@ -1,16 +1,12 @@
 import { Router } from "express";
 import {
   ProyeccionSocialController,
-  proyeccionSocialUpload,
   anexoUpload,
 } from "./socialProjection.controller";
 import { AuthMiddleware } from "../common/middleware/AuthMiddleware";
 import { RoleMiddleware } from "../common/middleware/RoleMiddleware";
 import { validateSchema } from "../common/middleware/validateSchema";
 import {
-  CreateSocialProjectionSchema,
-  DownloadByIdSocialProjectionSchema,
-  DownloadByNameSocialProjectionSchema,
   SearchSocialProjectionSchema,
   CreateManualSocialProjectionSchema,
   UploadAnexoSchema,
@@ -40,15 +36,9 @@ export class ProyeccionSocialRoutes {
   }
 
   public initRoutes() {
-    // Get all projects (Coordinators/Deans — role check done in frontend)
-    this.router.get(
-      "/",
-      this.authMiddleware.isAuthenticatedUser,
-      this.authMiddleware.isConfirmed,
-      this.controller.getAll,
-    );
-
-    // GET /dashboard - Social projection dashboard stats
+    // ========================================================================
+    // Dashboard — KPIs agregados de proyección social (totales, por estado, etc.)
+    // ========================================================================
     this.router.get(
       "/dashboard",
       this.authMiddleware.isAuthenticatedUser,
@@ -56,15 +46,24 @@ export class ProyeccionSocialRoutes {
       this.controller.getDashboardStats,
     );
 
-    // Get user's projects
+    // ========================================================================
+    // CRUD del proyecto de proyección social
+    // Las rutas con path fijo (/, /me, /search, /manual) deben declararse
+    // ANTES que las paramétricas (/:id) para que Express no las capture.
+    // ========================================================================
+    this.router.get(
+      "/",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.controller.getAll,
+    );
+
     this.router.get(
       "/me",
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
       this.controller.getByUser,
     );
-
-    // CREA AQUI EL POST PARA CREAR UNA NUEVA PROYECCION SOCIAL.
 
     this.router.get(
       "/search",
@@ -74,7 +73,6 @@ export class ProyeccionSocialRoutes {
       this.controller.searchByName,
     );
 
-    // POST /manual - Create new social projection project manually
     this.router.post(
       "/manual",
       this.authMiddleware.isAuthenticatedUser,
@@ -85,35 +83,6 @@ export class ProyeccionSocialRoutes {
       ),
       validateSchema(CreateManualSocialProjectionSchema),
       this.controller.createManual,
-    );
-
-    // POST / - Create new Proyeccion social DE ARCHIVO EXCEL
-    // Order: authMiddleware → roleMiddleware → multer → validateSchema → controller
-    this.router.post(
-      "/",
-      this.authMiddleware.isAuthenticatedUser,
-      this.authMiddleware.isConfirmed,
-      this.roleMiddleware.hasAnyRole(
-        ALLOWED_ROLES,
-        "Solo Profesores/Directores o Coordinadores pueden registrar este documento",
-      ),
-      proyeccionSocialUpload.single("archivo"),
-      // validateSchema(CreateSocialProjectionSchema),
-      this.controller.create,
-    );
-
-    this.router.get(
-      "/by-name/:nombre/download",
-      this.authMiddleware.isAuthenticatedUser,
-      validateSchema(DownloadByNameSocialProjectionSchema),
-      this.controller.downloadByName,
-    );
-
-    this.router.get(
-      "/:id/download",
-      this.authMiddleware.isAuthenticatedUser,
-      validateSchema(DownloadByIdSocialProjectionSchema),
-      this.controller.downloadById,
     );
 
     this.router.get(
@@ -128,10 +97,20 @@ export class ProyeccionSocialRoutes {
       this.authMiddleware.isAuthenticatedUser,
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
-      proyeccionSocialUpload.single("archivo"),
       this.controller.update,
     );
 
+    this.router.delete(
+      "/:id",
+      this.authMiddleware.isAuthenticatedUser,
+      this.authMiddleware.isConfirmed,
+      this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
+      this.controller.delete,
+    );
+
+    // ========================================================================
+    // Anexos — sub-recurso 1:N de cada proyecto (PDF, Word, Excel)
+    // ========================================================================
     this.router.post(
       "/:id/anexos",
       this.authMiddleware.isAuthenticatedUser,
@@ -162,14 +141,6 @@ export class ProyeccionSocialRoutes {
       this.authMiddleware.isConfirmed,
       this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
       this.controller.deleteAnexo,
-    );
-
-    this.router.delete(
-      "/:id",
-      this.authMiddleware.isAuthenticatedUser,
-      this.authMiddleware.isConfirmed,
-      this.roleMiddleware.hasAnyRole(ALLOWED_ROLES),
-      this.controller.delete,
     );
   }
 }

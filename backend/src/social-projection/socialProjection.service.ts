@@ -1,14 +1,5 @@
 import { prisma, logger } from "../config";
 
-export interface CreateProyeccionSocialInput {
-  nombre: string;
-  descripcion: string | null;
-  tipo_mime: string;
-  archivo: Buffer;
-  id_persona_registra: string;
-  personas_impactadas?: number;
-}
-
 export interface CreateManualProyeccionSocialInput {
   nombre: string;
   descripcion: string | null;
@@ -23,18 +14,10 @@ interface SearchResult {
   id_proyecto_social: string;
   nombre: string;
   descripcion: string | null;
-  tipo_mime: string | null;
   fecha_registro: Date;
   id_persona_registra: string | null;
   personas_impactadas: number;
   estado: string;
-}
-
-interface DownloadResult {
-  archivo: Uint8Array;
-  tipo_mime: string;
-  nombre: string;
-  fecha_registro: Date;
 }
 
 export class ProyeccionSocialService {
@@ -45,7 +28,6 @@ export class ProyeccionSocialService {
           id_proyecto_social: true,
           nombre: true,
           descripcion: true,
-          tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
@@ -83,7 +65,6 @@ export class ProyeccionSocialService {
           id_proyecto_social: true,
           nombre: true,
           descripcion: true,
-          tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
@@ -97,47 +78,6 @@ export class ProyeccionSocialService {
         error,
       );
       throw new Error("Error al obtener los proyectos de proyección social del usuario.");
-    }
-  }
-
-  /**
-   * Crea un nuevo proyecto de proyección social.
-   */
-  async create(input: CreateProyeccionSocialInput): Promise<{
-    id_proyecto_social: string;
-    nombre: string;
-    fecha_registro: Date;
-  }> {
-    try {
-      const created = await prisma.proyecto_proyeccion_social.create({
-        data: {
-          nombre: input.nombre,
-          descripcion: input.descripcion,
-          tipo_mime: input.tipo_mime,
-          archivo: new Uint8Array(input.archivo),
-          id_persona_registra: input.id_persona_registra,
-          personas_impactadas: input.personas_impactadas ?? 0,
-        },
-        select: {
-          id_proyecto_social: true,
-          nombre: true,
-          fecha_registro: true,
-        },
-      });
-
-      logger.info(
-        `[ProyeccionSocialService] Created project: ${created.id_proyecto_social}`,
-      );
-
-      return created;
-    } catch (error: any) {
-      logger.error("[ProyeccionSocialService] Error creating project:", error);
-
-      if (error.code === "P2002") {
-        throw new Error("Ya existe un proyecto con ese nombre.");
-      }
-
-      throw new Error("Error al crear el proyecto de proyección social.");
     }
   }
 
@@ -156,7 +96,6 @@ export class ProyeccionSocialService {
           id_proyecto_social: true,
           nombre: true,
           descripcion: true,
-          tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
@@ -175,33 +114,9 @@ export class ProyeccionSocialService {
   }
 
   /**
-   * Busca un proyecto por nombre (para descarga).
-   */
-  async findByName(nombre: string): Promise<DownloadResult | null> {
-    try {
-      return await prisma.proyecto_proyeccion_social.findFirst({
-        where: { nombre },
-        orderBy: { fecha_registro: "desc" },
-        select: {
-          archivo: true,
-          tipo_mime: true,
-          nombre: true,
-          fecha_registro: true,
-        },
-      });
-    } catch (error) {
-      logger.error(
-        "[ProyeccionSocialService] Error finding project by name:",
-        error,
-      );
-      throw new Error("Error al buscar el proyecto.");
-    }
-  }
-
-  /**
    * Busca un proyecto por ID para detalles de edición.
    */
-  async getById(id: string): Promise<SearchResult | null> {
+  async getById(id: string) {
     try {
       return await prisma.proyecto_proyeccion_social.findUnique({
         where: { id_proyecto_social: id },
@@ -209,7 +124,6 @@ export class ProyeccionSocialService {
           id_proyecto_social: true,
           nombre: true,
           descripcion: true,
-          tipo_mime: true,
           fecha_registro: true,
           id_persona_registra: true,
           personas_impactadas: true,
@@ -251,8 +165,6 @@ export class ProyeccionSocialService {
       estado?: string;
       estudiantes?: string[];
       docentes?: string[];
-      archivo?: Buffer;
-      tipo_mime?: string;
     },
   ) {
     try {
@@ -264,8 +176,6 @@ export class ProyeccionSocialService {
             descripcion: data.descripcion,
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
             ...(data.estado !== undefined && { estado: data.estado }),
-            ...(data.archivo && { archivo: new Uint8Array(data.archivo) }),
-            ...(data.tipo_mime && { tipo_mime: data.tipo_mime }),
           },
         });
 
@@ -303,29 +213,6 @@ export class ProyeccionSocialService {
     } catch (error: any) {
       logger.error("[ProyeccionSocialService] Error updating project:", error);
       throw new Error("Error al actualizar el proyecto de proyección social.");
-    }
-  }
-
-  /**
-   * Busca un proyecto por ID (para descarga).
-   */
-  async findById(id: string): Promise<DownloadResult | null> {
-    try {
-      return await prisma.proyecto_proyeccion_social.findUnique({
-        where: { id_proyecto_social: id },
-        select: {
-          archivo: true,
-          tipo_mime: true,
-          nombre: true,
-          fecha_registro: true,
-        },
-      });
-    } catch (error) {
-      logger.error(
-        "[ProyeccionSocialService] Error finding project by id:",
-        error,
-      );
-      throw new Error("Error al buscar el proyecto.");
     }
   }
 

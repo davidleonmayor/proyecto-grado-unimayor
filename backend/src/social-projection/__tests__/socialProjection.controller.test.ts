@@ -3,10 +3,7 @@ import { ProyeccionSocialController } from "../socialProjection.controller";
 
 // Mock the ProyeccionSocialService
 const mockService = {
-  create: jest.fn(),
   searchByName: jest.fn(),
-  findByName: jest.fn(),
-  findById: jest.fn(),
 };
 
 jest.mock("../socialProjection.service", () => ({
@@ -24,131 +21,6 @@ describe("ProyeccionSocialController", () => {
     jest.clearAllMocks();
   });
 
-  describe("create", () => {
-    it("should upload a social projection excel successfully", async () => {
-      const req = createRequest({
-        method: "POST",
-        url: "/api/social-projection",
-        user: { id_persona: "prof-123" },
-        body: { nombre: "Proyecto Social 2026", descripcion: "Desc" },
-        file: {
-          mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          buffer: Buffer.from("fake-excel-data"),
-        },
-      });
-      const res = createResponse();
-
-      mockService.create.mockResolvedValue({
-        id_proyecto_social: "soc-1",
-        nombre: "Proyecto Social 2026",
-        fecha_registro: new Date(),
-      });
-
-      await controller.create(req as any, res as any);
-
-      expect(res.statusCode).toBe(201);
-      const data = res._getJSONData();
-      expect(data).toHaveProperty(
-        "message",
-        "Proyecto de proyección social registrado exitosamente",
-      );
-      expect(data.data).toHaveProperty("id_proyecto_social", "soc-1");
-    });
-
-    it("should return 400 if file is missing", async () => {
-      const req = createRequest({
-        method: "POST",
-        url: "/api/social-projection",
-        user: { id_persona: "prof-123" },
-        body: { nombre: "Proyecto Social 2026" },
-        // file is missing
-      });
-      const res = createResponse();
-
-      await controller.create(req as any, res as any);
-
-      expect(res.statusCode).toBe(400);
-      expect(res._getJSONData()).toHaveProperty(
-        "error",
-        "El archivo Excel es obligatorio",
-      );
-    });
-  });
-
-  describe("downloadByName", () => {
-    it("should return the file as a download stream", async () => {
-      const req = createRequest({
-        method: "GET",
-        url: "/api/social-projection/download/Mi_Proyecto",
-        params: { nombre: "Mi_Proyecto" },
-      });
-      const res = createResponse();
-      const date = new Date("2026-04-27T00:00:00.000Z");
-
-      mockService.findByName.mockResolvedValue({
-        archivo: Buffer.from("fake-file"),
-        tipo_mime: "application/vnd.ms-excel",
-        nombre: "Mi Proyecto",
-        fecha_registro: date,
-      });
-
-      await controller.downloadByName(req as any, res as any);
-
-      expect(res.statusCode).toBe(200);
-      expect(res.getHeader("Content-Type")).toBe("application/vnd.ms-excel");
-      expect(res.getHeader("Content-Disposition")).toContain(
-        'filename="Mi_Proyecto_2026-04-27.xls"',
-      );
-      expect(res._getData()).toEqual(Buffer.from("fake-file"));
-    });
-
-    it("should return 404 if file by name does not exist", async () => {
-      const req = createRequest({
-        method: "GET",
-        url: "/api/social-projection/download/Mi_Proyecto",
-        params: { nombre: "Mi_Proyecto" },
-      });
-      const res = createResponse();
-
-      mockService.findByName.mockResolvedValue(null);
-
-      await controller.downloadByName(req as any, res as any);
-
-      expect(res.statusCode).toBe(404);
-      expect(res._getJSONData()).toHaveProperty(
-        "error",
-        "No se encontró archivo para el nombre indicado",
-      );
-    });
-  });
-
-  describe("downloadById", () => {
-    it("should return the file as a download stream by id", async () => {
-      const req = createRequest({
-        method: "GET",
-        url: "/api/social-projection/download/id/soc-1",
-        params: { id: "soc-1" },
-      });
-      const res = createResponse();
-      const date = new Date("2026-04-27T00:00:00.000Z");
-
-      mockService.findById.mockResolvedValue({
-        archivo: Buffer.from("fake-file"),
-        tipo_mime: "application/vnd.ms-excel",
-        nombre: "Mi Proyecto",
-        fecha_registro: date,
-      });
-
-      await controller.downloadById(req as any, res as any);
-
-      expect(res.statusCode).toBe(200);
-      expect(res.getHeader("Content-Type")).toBe("application/vnd.ms-excel");
-      expect(res.getHeader("Content-Disposition")).toContain(
-        'filename="Mi_Proyecto_2026-04-27.xls"',
-      );
-    });
-  });
-
   describe("searchByName", () => {
     it("should return a list of projects matching the name", async () => {
       const req = createRequest({
@@ -163,7 +35,6 @@ describe("ProyeccionSocialController", () => {
           id_proyecto_social: "soc-1",
           nombre: "Proyecto Test",
           descripcion: "Desc",
-          tipo_mime: "application/vnd.ms-excel",
           fecha_registro: new Date(),
           id_persona_registra: "prof-123",
         },

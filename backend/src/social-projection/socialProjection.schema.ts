@@ -1,5 +1,4 @@
 import type { ParamSchema, Schema } from "express-validator";
-import type { Request } from "express";
 
 const authorizationHeaderRule: ParamSchema = {
   in: "headers",
@@ -56,93 +55,6 @@ export const SearchSocialProjectionSchema: Schema = {
       errorMessage: "El parámetro 'limit' debe ser un entero entre 1 y 100",
     },
     toInt: true,
-  },
-};
-
-export const CreateSocialProjectionSchema: Schema = {
-  authorization: authorizationHeaderRule,
-  nombre: {
-    in: ["body"],
-    exists: {
-      errorMessage: "El campo 'nombre' es obligatorio",
-    },
-    isString: {
-      errorMessage: "El campo 'nombre' debe ser texto",
-    },
-    trim: true,
-    notEmpty: {
-      errorMessage: "El campo 'nombre' no puede estar vacío",
-    },
-    isLength: {
-      options: { min: 1, max: 200 },
-      errorMessage: "El campo 'nombre' debe tener entre 1 y 200 caracteres",
-    },
-    matches: {
-      options: socialProjectionNameRegex,
-      errorMessage:
-        "El campo 'nombre' solo puede contener letras, números, espacios, guiones y puntos",
-    },
-  },
-  descripcion: {
-    in: ["body"],
-    optional: {
-      options: { nullable: true },
-    },
-    isString: {
-      errorMessage: "El campo 'descripcion' debe ser texto",
-    },
-    isLength: {
-      options: { min: 1, max: 2000 },
-      errorMessage:
-        "El campo 'descripcion' debe tener entre 1 y 2000 caracteres",
-    },
-    trim: true,
-  },
-  personas_impactadas: {
-    in: ["body"],
-    optional: { options: { nullable: true } },
-    isInt: {
-      options: { min: 0 },
-      errorMessage: "El campo 'personas_impactadas' debe ser un entero no negativo",
-    },
-    toInt: true,
-  },
-  // archivo: {
-  //   in: ["body"],
-  //   custom: {
-  //     options: (_value, { req }) => {
-  //       if (!req.file) {
-  //         throw new Error("El archivo Excel es obligatorio");
-  //       }
-  //       return true;
-  //     },
-  //   },
-  // },
-};
-
-export const DownloadByNameSocialProjectionSchema: Schema = {
-  authorization: authorizationHeaderRule,
-  nombre: {
-    in: ["params"],
-    ...socialProjectionNameRule,
-  },
-};
-
-export const DownloadByIdSocialProjectionSchema: Schema = {
-  authorization: authorizationHeaderRule,
-  id: {
-    in: ["params"],
-    exists: {
-      errorMessage: "El parámetro 'id' es obligatorio",
-    },
-    isString: {
-      errorMessage: "El parámetro 'id' debe ser texto",
-    },
-    matches: {
-      options: /^c[a-z0-9]{24}$/,
-      errorMessage: "El parámetro 'id' debe ser un CUID válido",
-    },
-    trim: true,
   },
 };
 
