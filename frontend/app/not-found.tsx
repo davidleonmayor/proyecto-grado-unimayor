@@ -33,18 +33,6 @@ const NAV_LINKS: NavLink[] = [
     category: "social",
     description: "Listado de proyectos sociales registrados",
   },
-  {
-    href: "/social-outreach/extraction",
-    label: "Extracción de Datos",
-    category: "social",
-    description: "Carga masiva de proyectos de proyección social",
-  },
-  {
-    href: "/social-outreach/filter",
-    label: "Filtrar Proyecciones",
-    category: "social",
-    description: "Filtros y búsquedas avanzadas de proyectos sociales",
-  },
 ];
 
 export default function NotFound() {
