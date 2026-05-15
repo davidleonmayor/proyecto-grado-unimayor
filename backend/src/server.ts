@@ -86,7 +86,32 @@ export default class Server {
   }
 
   private routes() {
-    // Health check
+    /**
+     * @openapi
+     * /:
+     *   get:
+     *     summary: Health check
+     *     description: Verifica que la API está corriendo.
+     *     tags: [Health]
+     *     security: []
+     *     responses:
+     *       200:
+     *         description: API operativa
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                   example: true
+     *                 message:
+     *                   type: string
+     *                   example: API funcionando correctamente
+     *                 environment:
+     *                   type: string
+     *                   example: development
+     */
     this.app.get("/", (req, res) => {
       logger.info("Health check accessed");
       res.json({
