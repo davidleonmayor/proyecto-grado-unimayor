@@ -16,33 +16,33 @@ model tipo_documento {
 }
 
 model persona {
-  apellidos             String              @db.VarChar(100)
-  bloqueado_hasta       DateTime?           @db.DateTime(0)
-  confirmed             Boolean             @default(false)
-  correo_electronico    String              @unique @db.VarChar(100)
-  fecha_registro        DateTime            @default(now()) @db.DateTime(0)
-  id_persona            String              @id @default(cuid())
-  id_tipo_doc_identidad String
-  intentos_fallidos     Int                 @default(0)
-  nombres               String              @db.VarChar(100)
-  num_doc_identidad     String              @unique @db.VarChar(50)
-  numero_celular        String              @db.VarChar(20)
-  codigo_institucional  String?             @unique @db.VarChar(50)
-  password              String?             @db.VarChar(60)
-  token                 String?             @unique @db.VarChar(6)
-  ultimo_acceso         DateTime?           @db.DateTime(0)
-  id_facultad           String?
-  id_programa_academico String?
-  actores               actores[]
-  mensajes_enviados     mensaje[]           @relation("MensajesEnviados")
-  mensajes_recibidos    mensaje_entrega[]   @relation("MensajesRecibidos")
-  anuncios_creados      anuncio[]           @relation("AnunciosCreados")
-  anuncios_leidos       anuncio_leido[]
-  facultad              facultad?           @relation(fields: [id_facultad], references: [id_facultad])
-  programa_academico    programa_academico? @relation(fields: [id_programa_academico], references: [id_programa])
-  tipo_documento        tipo_documento      @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
+  apellidos                   String                       @db.VarChar(100)
+  bloqueado_hasta             DateTime?                    @db.DateTime(0)
+  confirmed                   Boolean                      @default(false)
+  correo_electronico          String                       @unique @db.VarChar(100)
+  fecha_registro              DateTime                     @default(now()) @db.DateTime(0)
+  id_persona                  String                       @id @default(cuid())
+  id_tipo_doc_identidad       String
+  intentos_fallidos           Int                          @default(0)
+  nombres                     String                       @db.VarChar(100)
+  num_doc_identidad           String                       @unique @db.VarChar(50)
+  numero_celular              String                       @db.VarChar(20)
+  codigo_institucional        String?                      @unique @db.VarChar(50)
+  password                    String?                      @db.VarChar(60)
+  token                       String?                      @unique @db.VarChar(6)
+  ultimo_acceso               DateTime?                    @db.DateTime(0)
+  id_facultad                 String?
+  id_programa_academico       String?
+  actores                     actores[]
+  mensajes_enviados           mensaje[]                    @relation("MensajesEnviados")
+  mensajes_recibidos          mensaje_entrega[]            @relation("MensajesRecibidos")
+  anuncios_creados            anuncio[]                    @relation("AnunciosCreados")
+  anuncios_leidos             anuncio_leido[]
+  facultad                    facultad?                    @relation(fields: [id_facultad], references: [id_facultad])
+  programa_academico          programa_academico?          @relation(fields: [id_programa_academico], references: [id_programa])
+  tipo_documento              tipo_documento               @relation(fields: [id_tipo_doc_identidad], references: [id_tipo_documento])
   proyectos_proyeccion_social proyecto_proyeccion_social[]
-  integrante_proyecto_social             integrante_proyecto_social[]
+  integrante_proyecto_social  integrante_proyecto_social[]
 
   @@index([id_tipo_doc_identidad])
   @@index([correo_electronico])
@@ -84,15 +84,16 @@ model nivel_formacion {
 }
 
 model programa_academico {
-  estado             String          @db.VarChar(20)
-  id_facultad        String
-  id_nivel_formacion String
-  id_programa        String          @id @default(cuid())
-  nombre_programa    String          @db.VarChar(200)
-  persona            persona[]
-  facultad           facultad        @relation(fields: [id_facultad], references: [id_facultad])
-  nivel_formacion    nivel_formacion @relation(fields: [id_nivel_formacion], references: [id_nivel])
-  trabajo_grado      trabajo_grado[]
+  estado                      String                       @db.VarChar(20)
+  id_facultad                 String
+  id_nivel_formacion          String
+  id_programa                 String                       @id @default(cuid())
+  nombre_programa             String                       @db.VarChar(200)
+  persona                     persona[]
+  facultad                    facultad                     @relation(fields: [id_facultad], references: [id_facultad])
+  nivel_formacion             nivel_formacion              @relation(fields: [id_nivel_formacion], references: [id_nivel])
+  trabajo_grado               trabajo_grado[]
+  proyectos_proyeccion_social proyecto_proyeccion_social[]
 
   @@index([id_nivel_formacion])
   @@index([id_facultad])
@@ -315,52 +316,120 @@ model mensaje_entrega {
 }
 
 model proyecto_proyeccion_social {
-  id_proyecto_social   String    @id @default(cuid())
-  nombre               String    @db.VarChar(200)
-  descripcion          String?   @db.Text
-  fecha_registro       DateTime  @default(now()) @db.DateTime(0)
-  tipo_mime            String?   @db.VarChar(100)
-  archivo              Bytes?    @db.LongBlob
-  id_persona_registra  String?
-  personas_impactadas  Int       @default(0)
-  estado               String    @default("Sin entregar") @db.VarChar(50)
+  id_proyecto_social  String   @id @default(cuid())
+  nombre              String   @db.VarChar(200)
+  descripcion         String?  @db.Text
+  fecha_registro      DateTime @default(now()) @db.DateTime(0)
+  tipo_mime           String?  @db.VarChar(100)
+  archivo             Bytes?   @db.LongBlob
+  id_persona_registra String?
+  personas_impactadas Int      @default(0)
+  estado              String   @default("Sin entregar") @db.VarChar(50)
 
-  persona_registra     persona?  @relation(fields: [id_persona_registra], references: [id_persona])
+  id_programa                 String?
+  linea_accion                String?  @db.VarChar(200)
+  semestre                    String?  @db.VarChar(50)
+  ciudad_ejecucion            String?  @db.VarChar(100)
+  departamento_ejecucion      String?  @db.VarChar(100)
+  duracion_meses              Int?
+  palabras_clave              String?  @db.VarChar(500)
+  identificacion_problematica String?  @db.Text
+  propuesta_solucion          String?  @db.Text
+  caracterizacion_poblacion   String?  @db.Text
+  objetivo_general            String?  @db.Text
+  objetivos_especificos       String?  @db.Text
+  resultados_esperados        String?  @db.Text
+  metodologia                 String?  @db.Text
+  bibliografia                String?  @db.Text
+  total_presupuesto           Decimal? @db.Decimal(15, 2)
+
+  persona_registra     persona?                     @relation(fields: [id_persona_registra], references: [id_persona])
+  programa_academico   programa_academico?          @relation(fields: [id_programa], references: [id_programa])
   integrantes          integrante_proyecto_social[]
   anexos               anexo_proyecto_social[]
+  planes_accion        plan_accion_proyecto[]
+  presupuesto_equipo   presupuesto_equipo_humano[]
+  presupuesto_recursos presupuesto_recursos[]
 
   @@index([id_persona_registra])
   @@index([fecha_registro])
+  @@index([id_programa])
   @@map("PROYECTO_PROYECCION_SOCIAL")
 }
 
 model anexo_proyecto_social {
-  id_anexo           String    @id @default(cuid())
+  id_anexo           String   @id @default(cuid())
   id_proyecto_social String
-  nombre_archivo     String    @db.VarChar(255)
-  tipo_mime          String    @db.VarChar(100)
-  archivo            Bytes     @db.LongBlob
-  fecha_subida       DateTime  @default(now()) @db.DateTime(0)
+  nombre_archivo     String   @db.VarChar(255)
+  tipo_mime          String   @db.VarChar(100)
+  archivo            Bytes    @db.LongBlob
+  fecha_subida       DateTime @default(now()) @db.DateTime(0)
 
-  proyecto           proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social], onDelete: Cascade)
+  proyecto proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social], onDelete: Cascade)
 
   @@index([id_proyecto_social])
   @@map("ANEXO_PROYECTO_SOCIAL")
 }
 
-
 model integrante_proyecto_social {
-  id_integrante      String    @id @default(cuid())
+  id_integrante      String @id @default(cuid())
   id_proyecto_social String
   id_persona         String
-  rol                String    @db.VarChar(50) // "Estudiante", "Docente"
+  rol                String @db.VarChar(50) // "Estudiante", "Docente"
 
-  proyecto           proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social])
-  persona            persona                    @relation(fields: [id_persona], references: [id_persona])
+  proyecto proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social])
+  persona  persona                    @relation(fields: [id_persona], references: [id_persona])
 
   @@index([id_proyecto_social])
   @@index([id_persona])
   @@map("INTEGRANTE_PROYECTO_SOCIAL")
+}
+
+model plan_accion_proyecto {
+  id_plan             String  @id @default(cuid())
+  id_proyecto_social  String
+  objetivo_especifico String? @db.Text
+  actividades         String? @db.Text
+  duracion            String? @db.VarChar(100)
+  responsables        String? @db.VarChar(500)
+  meta                String? @db.Text
+  indicador           String? @db.Text
+
+  proyecto proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social], onDelete: Cascade)
+
+  @@index([id_proyecto_social])
+  @@map("PLAN_ACCION_PROYECTO")
+}
+
+model presupuesto_equipo_humano {
+  id_equipo_humano   String   @id @default(cuid())
+  id_proyecto_social String
+  nombre             String?  @db.VarChar(200)
+  cargo              String?  @db.VarChar(150)
+  funcion            String?  @db.Text
+  tipo_vinculacion   String?  @db.VarChar(100)
+  salario            Decimal? @db.Decimal(15, 2)
+  total              Decimal? @db.Decimal(15, 2)
+
+  proyecto proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social], onDelete: Cascade)
+
+  @@index([id_proyecto_social])
+  @@map("PRESUPUESTO_EQUIPO_HUMANO")
+}
+
+model presupuesto_recursos {
+  id_recurso         String   @id @default(cuid())
+  id_proyecto_social String
+  tipo_recurso       String?  @db.VarChar(100)
+  descripcion_equipo String?  @db.Text
+  valor_unitario     Decimal? @db.Decimal(15, 2)
+  cantidad           Int?
+  valor_total        Decimal? @db.Decimal(15, 2)
+
+  proyecto proyecto_proyeccion_social @relation(fields: [id_proyecto_social], references: [id_proyecto_social], onDelete: Cascade)
+
+  @@index([id_proyecto_social])
+  @@map("PRESUPUESTO_RECURSOS")
 }
 
 model SuscripcionWebhook {
@@ -375,7 +444,6 @@ model SuscripcionWebhook {
   @@index([activo])
   @@map("SUSCRIPCION_WEBHOOK")
 }
-
 
 model anuncio {
   id_anuncio     String          @id @default(cuid())
