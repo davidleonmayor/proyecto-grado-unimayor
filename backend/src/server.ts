@@ -2,8 +2,9 @@ import path from "path";
 import fs from "fs";
 import express, { Application } from "express";
 import cors from "cors";
+import swaggerUi from "swagger-ui-express";
 
-import { logger, corsConfig, envs } from "./config";
+import { logger, corsConfig, envs, swaggerSpec } from "./config";
 import morganMiddleware from "./common/middleware/morgan";
 import { disconnectPrisma } from "./config/prisma";
 import { requestTimeout } from "./common/middleware/timeout";
@@ -121,6 +122,12 @@ export default class Server {
     this.app.use("/api/messaging", messagingRoutes.router);
     this.app.use("/api/proyeccion-social", proyeccionSocialRoutes.router);
     this.app.use("/api/announcement", announcementRoutes.router);
+
+    // Swagger docs
+    this.app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+    this.app.get("/api/docs.json", (_req, res) => {
+      res.json(swaggerSpec);
+    });
 
     // 404 handler (ANTES del error handler)
     this.app.use(notFound);

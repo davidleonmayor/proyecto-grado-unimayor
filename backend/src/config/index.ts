@@ -5,4 +5,4 @@ export * from "./logger";
 export * from "./prisma";
 export * from "./nodemailer";
 export { brevoClient } from "./brevo";
-// export * from "./swagger";
+export * from "./swagger";
