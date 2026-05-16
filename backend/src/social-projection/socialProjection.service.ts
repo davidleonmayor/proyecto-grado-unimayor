@@ -15,6 +15,7 @@ export interface CreateManualProyeccionSocialInput {
   proponentes?: string[];
   planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
   presupuesto_equipo?: { nombre?: string; cargo?: string; funcion?: string; tipo_vinculacion?: string; salario?: number; total?: number }[];
+  presupuesto_recursos?: { tipo_recurso?: string; valor_unitario?: number; cantidad?: number; valor_total?: number }[];
   resumen?: string | null;
   palabras_clave?: string | null;
   identificacion_problematica?: string | null;
@@ -151,6 +152,7 @@ export class ProyeccionSocialService {
           },
           planes_accion: true,
           presupuesto_equipo: true,
+          presupuesto_recursos: true,
         },
       });
     } catch (error) {
@@ -191,6 +193,7 @@ export class ProyeccionSocialService {
       proponentes?: string[];
       planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
       presupuesto_equipo?: { nombre?: string; cargo?: string; funcion?: string; tipo_vinculacion?: string; salario?: number; total?: number }[];
+      presupuesto_recursos?: { tipo_recurso?: string; valor_unitario?: number; cantidad?: number; valor_total?: number }[];
     },
   ) {
     try {
@@ -314,6 +317,25 @@ export class ProyeccionSocialService {
                 tipo_vinculacion: item.tipo_vinculacion || null,
                 salario: item.salario || null,
                 total: item.total || null,
+              })),
+            });
+          }
+        }
+
+        // Replace presupuesto recursos if provided
+        if (data.presupuesto_recursos !== undefined) {
+          await tx.presupuesto_recursos.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.presupuesto_recursos.length > 0) {
+            await tx.presupuesto_recursos.createMany({
+              data: data.presupuesto_recursos.map((item) => ({
+                id_proyecto_social: id,
+                tipo_recurso: item.tipo_recurso || null,
+                valor_unitario: item.valor_unitario || null,
+                cantidad: item.cantidad || null,
+                valor_total: item.valor_total || null,
               })),
             });
           }
@@ -461,6 +483,23 @@ export class ProyeccionSocialService {
                   tipo_vinculacion: item.tipo_vinculacion || null,
                   salario: item.salario || null,
                   total: item.total || null,
+                },
+              })
+            )
+          );
+        }
+
+        // Create presupuesto recursos
+        if (input.presupuesto_recursos && input.presupuesto_recursos.length > 0) {
+          await Promise.all(
+            input.presupuesto_recursos.map((item) =>
+              tx.presupuesto_recursos.create({
+                data: {
+                  id_proyecto_social: proyecto.id_proyecto_social,
+                  tipo_recurso: item.tipo_recurso || null,
+                  valor_unitario: item.valor_unitario || null,
+                  cantidad: item.cantidad || null,
+                  valor_total: item.valor_total || null,
                 },
               })
             )

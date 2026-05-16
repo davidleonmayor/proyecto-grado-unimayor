@@ -17,6 +17,7 @@ import {
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
 import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
 import type { PresupuestoEquipoItem } from "@/modules/social-outreach/components/PresupuestoEquipoSection";
+import type { PresupuestoRecursoItem } from "@/modules/social-outreach/components/PresupuestoRecursosSection";
 
 function matchesSearch(person: Person, search: string): boolean {
   const s = search.toLowerCase().trim();
@@ -68,6 +69,9 @@ export function useNewProject() {
 
   // --- Presupuesto equipo humano ---
   const [presupuestoEquipo, setPresupuestoEquipo] = useState<PresupuestoEquipoItem[]>([]);
+
+  // --- Presupuesto recursos ---
+  const [presupuestoRecursos, setPresupuestoRecursos] = useState<PresupuestoRecursoItem[]>([]);
 
   // --- Catálogos ---
   const [facultades, setFacultades] = useState<Facultad[]>([]);
@@ -309,6 +313,14 @@ export function useNewProject() {
               salario: item.salario || undefined,
             }))
           : undefined,
+        presupuesto_recursos: presupuestoRecursos.length > 0
+          ? presupuestoRecursos.map((item) => ({
+              tipo_recurso: item.tipo_recurso || undefined,
+              valor_unitario: item.valor_unitario || undefined,
+              cantidad: item.cantidad || undefined,
+              valor_total: item.valor_total || undefined,
+            }))
+          : undefined,
       });
 
       await Swal.fire("¡Éxito!", "Proyecto de proyección social creado exitosamente", "success");
@@ -371,6 +383,7 @@ export function useNewProject() {
     // Plan de acción
     planesAccion, setPlanesAccion,
     presupuestoEquipo, setPresupuestoEquipo,
+    presupuestoRecursos, setPresupuestoRecursos,
     // Actions
     handleSubmit,
     router,

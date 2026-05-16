@@ -305,6 +305,28 @@ export const CreateManualSocialProjectionSchema: Schema = {
       },
     },
   },
+  presupuesto_recursos: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'presupuesto_recursos' debe ser un arreglo" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        for (const item of value) {
+          if (typeof item !== "object" || item === null) {
+            throw new Error("Cada item de presupuesto recursos debe ser un objeto");
+          }
+          const { tipo_recurso, valor_unitario, cantidad, valor_total } = item as any;
+          if (tipo_recurso && typeof tipo_recurso !== "string") throw new Error("tipo_recurso debe ser texto");
+          if (tipo_recurso && tipo_recurso.length > 100) throw new Error("tipo_recurso no puede exceder 100 caracteres");
+          if (valor_unitario !== undefined && valor_unitario !== null && isNaN(Number(valor_unitario))) throw new Error("valor_unitario debe ser un número");
+          if (cantidad !== undefined && cantidad !== null && !Number.isInteger(Number(cantidad))) throw new Error("cantidad debe ser un entero");
+          if (valor_total !== undefined && valor_total !== null && isNaN(Number(valor_total))) throw new Error("valor_total debe ser un número");
+        }
+        return true;
+      },
+    },
+  },
 };
 
 export const UploadAnexoSchema: Schema = {

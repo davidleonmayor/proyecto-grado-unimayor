@@ -8,6 +8,7 @@ import CheckboxGroup from "@/modules/social-outreach/components/CheckboxGroup";
 import TextAreaField from "@/modules/social-outreach/components/TextAreaField";
 import PlanAccionSection from "@/modules/social-outreach/components/PlanAccionSection";
 import PresupuestoEquipoSection from "@/modules/social-outreach/components/PresupuestoEquipoSection";
+import PresupuestoRecursosSection from "@/modules/social-outreach/components/PresupuestoRecursosSection";
 
 const NewProjectPageContent = () => {
   const {
@@ -74,6 +75,8 @@ const NewProjectPageContent = () => {
     setPlanesAccion,
     presupuestoEquipo,
     setPresupuestoEquipo,
+    presupuestoRecursos,
+    setPresupuestoRecursos,
     handleSubmit,
     router,
   } = useNewProject();
@@ -471,8 +474,9 @@ const NewProjectPageContent = () => {
           onToggle={() => toggleSection("presupuesto")}
         />
         {openSections.presupuesto && (
-          <div className="p-6 border-t border-gray-200">
+          <div className="p-6 border-t border-gray-200 space-y-8">
             <PresupuestoEquipoSection items={presupuestoEquipo} onChange={setPresupuestoEquipo} />
+            <PresupuestoRecursosSection items={presupuestoRecursos} onChange={setPresupuestoRecursos} />
           </div>
         )}
 

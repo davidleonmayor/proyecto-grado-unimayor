@@ -16,6 +16,7 @@ import {
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
 import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
 import type { PresupuestoEquipoItem } from "@/modules/social-outreach/components/PresupuestoEquipoSection";
+import type { PresupuestoRecursoItem } from "@/modules/social-outreach/components/PresupuestoRecursosSection";
 
 function matchesSearch(person: Person, search: string): boolean {
   const s = search.toLowerCase().trim();
@@ -94,6 +95,9 @@ export function useEditProject() {
 
   // --- Presupuesto equipo humano ---
   const [presupuestoEquipo, setPresupuestoEquipo] = useState<PresupuestoEquipoItem[]>([]);
+
+  // --- Presupuesto recursos ---
+  const [presupuestoRecursos, setPresupuestoRecursos] = useState<PresupuestoRecursoItem[]>([]);
 
   // --- Asesor search ---
   const [allDocentes, setAllDocentes] = useState<Person[]>([]);
@@ -178,6 +182,18 @@ export function useEditProject() {
             funcion: item.funcion || "",
             tipo_vinculacion: item.tipo_vinculacion || "",
             salario: item.salario ? Number(item.salario) : "",
+          })),
+        );
+      }
+
+      // Presupuesto recursos
+      if (project.presupuesto_recursos) {
+        setPresupuestoRecursos(
+          project.presupuesto_recursos.map((item: any) => ({
+            tipo_recurso: item.tipo_recurso || "",
+            valor_unitario: item.valor_unitario ? Number(item.valor_unitario) : "",
+            cantidad: item.cantidad ? Number(item.cantidad) : "",
+            valor_total: item.valor_total ? Number(item.valor_total) : "",
           })),
         );
       }
@@ -347,6 +363,14 @@ export function useEditProject() {
               salario: item.salario || undefined,
             }))
           : [],
+        presupuesto_recursos: presupuestoRecursos.length > 0
+          ? presupuestoRecursos.map((item) => ({
+              tipo_recurso: item.tipo_recurso || undefined,
+              valor_unitario: item.valor_unitario || undefined,
+              cantidad: item.cantidad || undefined,
+              valor_total: item.valor_total || undefined,
+            }))
+          : [],
       });
 
       await Swal.fire("¡Actualizado!", "Proyecto actualizado correctamente", "success");
@@ -392,6 +416,7 @@ export function useEditProject() {
     bibliografia, setBibliografia,
     planesAccion, setPlanesAccion,
     presupuestoEquipo, setPresupuestoEquipo,
+    presupuestoRecursos, setPresupuestoRecursos,
     handleSubmit, router,
   };
 }
