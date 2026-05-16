@@ -178,7 +178,6 @@ export function useEditProject() {
             funcion: item.funcion || "",
             tipo_vinculacion: item.tipo_vinculacion || "",
             salario: item.salario ? Number(item.salario) : "",
-            total: item.total ? Number(item.total) : "",
           })),
         );
       }
@@ -346,7 +345,6 @@ export function useEditProject() {
               funcion: item.funcion || undefined,
               tipo_vinculacion: item.tipo_vinculacion || undefined,
               salario: item.salario || undefined,
-              total: item.total || undefined,
             }))
           : [],
       });

@@ -307,7 +307,6 @@ export function useNewProject() {
               funcion: item.funcion || undefined,
               tipo_vinculacion: item.tipo_vinculacion || undefined,
               salario: item.salario || undefined,
-              total: item.total || undefined,
             }))
           : undefined,
       });

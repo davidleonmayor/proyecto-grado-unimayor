@@ -8,7 +8,6 @@ export interface PresupuestoEquipoItem {
   funcion: string;
   tipo_vinculacion: string;
   salario: number | "";
-  total: number | "";
 }
 
 interface PresupuestoEquipoSectionProps {
@@ -22,7 +21,6 @@ const emptyItem: PresupuestoEquipoItem = {
   funcion: "",
   tipo_vinculacion: "",
   salario: "",
-  total: "",
 };
 
 const PresupuestoEquipoSection = ({ items, onChange }: PresupuestoEquipoSectionProps) => {
@@ -147,7 +145,7 @@ const PresupuestoEquipoSection = ({ items, onChange }: PresupuestoEquipoSectionP
                 {/* Salario */}
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Salario mensual ($)
+                    Salario ($)
                   </label>
                   <input
                     type="number"
@@ -159,25 +157,24 @@ const PresupuestoEquipoSection = ({ items, onChange }: PresupuestoEquipoSectionP
                     placeholder="0.00"
                   />
                 </div>
-
-                {/* Total */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">
-                    Total ($)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={item.total}
-                    onChange={(e) => updateItem(index, "total", e.target.value ? Number(e.target.value) : "")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    placeholder="0.00"
-                  />
-                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Total general calculado */}
+      {items.length > 0 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-gray-100 rounded-lg border border-gray-200">
+          <span className="text-sm font-semibold text-gray-700">
+            Total Equipo Humano
+          </span>
+          <span className="text-lg font-bold text-primary-700">
+            ${" "}
+            {items
+              .reduce((sum, item) => sum + (typeof item.salario === "number" ? item.salario : 0), 0)
+              .toLocaleString("es-CO", { minimumFractionDigits: 2 })}
+          </span>
         </div>
       )}
     </div>
