@@ -16,10 +16,10 @@ interface Person {
 
 interface SocialProjectDetail {
     id_proyecto_social: string;
-    nombre: string;
+    titulo: string;
     descripcion?: string | null;
     personas_impactadas?: number;
-    fecha_registro: string;
+    fecha_de_presentacion: string;
     id_persona_registra?: string | null;
     integrantes?: {
         id_persona: string;
@@ -123,7 +123,7 @@ function EditSocialProjectPageContent() {
             setAvailableAdvisors(availableAdvisorsList);
             setFilteredAvailableAdvisors(availableAdvisorsList);
 
-            setNombre(project.nombre);
+            setNombre(project.titulo);
             setDescripcion(project.descripcion || '');
             setPersonasImpactadas(project.personas_impactadas || 0);
             setEstado((project as any).estado || 'En proceso');
@@ -254,7 +254,7 @@ function EditSocialProjectPageContent() {
         setIsSaving(true);
         try {
             await socialProjectsService.updateProject(projectId, {
-                nombre,
+                titulo: nombre,
                 descripcion,
                 personas_impactadas: personasImpactadas,
                 estado,

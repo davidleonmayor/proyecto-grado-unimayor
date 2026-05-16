@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 interface FilterableProject {
-  nombre: string;
+  titulo: string;
   estado?: string;
 }
 
@@ -24,7 +24,7 @@ export function useSocialProjectsFilter<T extends FilterableProject>(
     return projects.filter((project) => {
       const matchesSearch =
         normalizedSearch === "" ||
-        normalize(project.nombre).startsWith(normalizedSearch);
+        normalize(project.titulo).startsWith(normalizedSearch);
 
       const matchesStatus =
         statusFilter === "all" || project.estado === statusFilter;

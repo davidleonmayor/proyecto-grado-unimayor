@@ -11,10 +11,10 @@ import { useSocialProjectsFilter } from '@/shared/hooks/useSocialProjectsFilter'
 
 interface SocialProject {
     id_proyecto_social: string;
-    nombre: string;
+    titulo: string;
     descripcion: string | null;
     personas_impactadas: number;
-    fecha_registro: string;
+    fecha_de_presentacion: string;
     estado: string;
 }
 
@@ -65,7 +65,7 @@ function AdminProjectsPageContent() {
         e.stopPropagation();
         const result = await Swal.fire({
             title: '¿Estás seguro?',
-            html: `Se eliminará el proyecto de proyección social:<br/><strong>${project.nombre}</strong>`,
+            html: `Se eliminará el proyecto de proyección social:<br/><strong>${project.titulo}</strong>`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#d33',
@@ -215,7 +215,7 @@ function AdminProjectsPageContent() {
                                     >
                                         <td className="px-6 py-5 align-top">
                                             <div className="font-medium text-gray-900 line-clamp-2 leading-relaxed mb-1 pr-4">
-                                                {project.nombre}
+                                                {project.titulo}
                                             </div>
                                             {project.descripcion && (
                                                 <div className="text-[13px] text-gray-400 line-clamp-2 font-light leading-snug">{project.descripcion}</div>
@@ -230,7 +230,7 @@ function AdminProjectsPageContent() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-5 align-top whitespace-nowrap text-gray-600 font-light">
-                                            {new Date(project.fecha_registro).toLocaleDateString('es-CO', {
+                                            {new Date(project.fecha_de_presentacion).toLocaleDateString('es-CO', {
                                                 day: 'numeric',
                                                 month: 'short',
                                                 year: 'numeric'

@@ -76,9 +76,9 @@ export default function ProjectDetailPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col gap-4">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-xl font-semibold text-gray-800">{project.nombre}</h2>
+                <h2 className="text-xl font-semibold text-gray-800">{project.titulo}</h2>
                 <p className="text-sm text-gray-500 mt-1">
-                  Registrado el {new Date(project.fecha_registro).toLocaleDateString("es-CO", {
+                  Registrado el {new Date(project.fecha_de_presentacion).toLocaleDateString("es-CO", {
                     year: "numeric", month: "long", day: "numeric"
                   })}
                 </p>
