@@ -1,554 +1,399 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState, useCallback } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import Swal from 'sweetalert2';
-import RoleProtectedRoute from '@/shared/components/layout/RoleProtectedRoute';
-import { projectsService } from '@/modules/projects/services/projects.service';
-import { socialProjectsService } from '@/modules/social-outreach/services/social-projects.service';
+import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
+import { useEditProject } from "@/modules/social-outreach/hooks/useEditProject";
+import SectionHeader from "@/modules/social-outreach/components/SectionHeader";
+import PersonSelector from "@/modules/social-outreach/components/PersonSelector";
+import CheckboxGroup from "@/modules/social-outreach/components/CheckboxGroup";
+import TextAreaField from "@/modules/social-outreach/components/TextAreaField";
 
-interface Person {
-    id: string;
-    name: string;
-    email: string;
-    document?: string;
-}
+const EditSocialProjectPageContent = () => {
+  const {
+    isLoading, isSaving,
+    openSections, toggleSection,
+    titulo, setTitulo,
+    descripcion, setDescripcion,
+    estado, setEstado,
+    personasImpactadas, setPersonasImpactadas,
+    lineasAccionIds, setLineasAccionIds,
+    idFacultad, setIdFacultad,
+    idPrograma, setIdPrograma,
+    semestre, setSemestre,
+    idAsesor, setIdAsesor,
+    asesorSearch, setAsesorSearch,
+    filteredDocentes,
+    facultades, programas, lineasAccion,
+    assignedStudents, filteredAvailableStudents,
+    studentSearch, setStudentSearch,
+    addStudent, removeStudent,
+    assignedAdvisors, filteredAvailableAdvisors,
+    advisorSearch, setAdvisorSearch,
+    addAdvisor, removeAdvisor,
+    proponenteIds, setProponenteIds,
+    proponentesCandidatos,
+    resumen, setResumen,
+    palabrasClave, setPalabrasClave,
+    identificacionProblematica, setIdentificacionProblematica,
+    propuestaSolucion, setPropuestaSolucion,
+    caracterizacionPoblacion, setCaracterizacionPoblacion,
+    objetivos, setObjetivos,
+    resultadosEsperados, setResultadosEsperados,
+    metodologia, setMetodologia,
+    bibliografia, setBibliografia,
+    handleSubmit, router,
+  } = useEditProject();
 
-interface SocialProjectDetail {
-    id_proyecto_social: string;
-    titulo: string;
-    descripcion?: string | null;
-    personas_impactadas?: number;
-    fecha_de_presentacion: string;
-    id_persona_registra?: string | null;
-    integrantes?: {
-        id_persona: string;
-        rol: string;
-        persona: {
-            nombres: string;
-            apellidos: string;
-            correo_electronico: string;
-            num_doc_identidad: string;
-        };
-    }[];
-}
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
+      </div>
+    );
+  }
 
-const mergePeopleLists = (base: Person[], required: Person[]) => {
-    const merged = new Map<string, Person>();
-    base.forEach(person => merged.set(person.id, person));
-    required.forEach(person => {
-        if (!merged.has(person.id)) {
-            merged.set(person.id, person);
-        }
-    });
-    return Array.from(merged.values());
+  return (
+    <div className="max-w-5xl mx-auto p-6">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">
+        Editar Proyecto de Proyección Social
+      </h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+      >
+        {/* ============================================================ */}
+        {/* Sección 1: Información General                                */}
+        {/* ============================================================ */}
+        <SectionHeader
+          title="Información General"
+          isOpen={openSections.general}
+          onToggle={() => toggleSection("general")}
+        />
+        {openSections.general && (
+          <div className="p-6 space-y-6 border-t border-gray-200">
+            {/* Título */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Título *
+              </label>
+              <input
+                type="text"
+                required
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Ej: Brigada de salud rural"
+              />
+            </div>
+
+            {/* Descripción */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Descripción
+              </label>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Descripción breve del proyecto..."
+              />
+            </div>
+
+            {/* Estado */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Estado
+              </label>
+              <select
+                value={estado}
+                onChange={(e) => setEstado(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+              >
+                <option value="En proceso">En proceso</option>
+                <option value="Finalizado">Finalizado</option>
+              </select>
+            </div>
+
+            {/* Líneas de acción */}
+            <CheckboxGroup
+              label="Líneas de acción"
+              description="Selecciona una o más líneas que apliquen al proyecto."
+              items={lineasAccion.map((l) => ({
+                id: l.id_linea_accion,
+                label: l.nombre,
+              }))}
+              selectedIds={lineasAccionIds}
+              onChange={setLineasAccionIds}
+              emptyMessage="No hay líneas de acción configuradas."
+            />
+
+            {/* Facultad */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Facultad
+              </label>
+              <select
+                value={idFacultad}
+                onChange={(e) => setIdFacultad(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+              >
+                <option value="">Selecciona una facultad...</option>
+                {facultades.map((f) => (
+                  <option key={f.id_facultad} value={f.id_facultad}>
+                    {f.nombre_facultad}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Proponentes */}
+            <CheckboxGroup
+              label="Proponentes"
+              description={
+                idFacultad
+                  ? "Selecciona los estudiantes que serán proponentes del proyecto."
+                  : "Selecciona una facultad para ver los estudiantes disponibles como proponentes."
+              }
+              items={proponentesCandidatos.map((p) => ({
+                id: p.id,
+                label: p.name,
+                sublabel: p.email,
+              }))}
+              selectedIds={proponenteIds}
+              onChange={setProponenteIds}
+              emptyMessage={
+                idFacultad
+                  ? "No se encontraron estudiantes en esta facultad."
+                  : "Selecciona una facultad primero."
+              }
+            />
+
+            {/* Programa */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Programa académico
+              </label>
+              <select
+                value={idPrograma}
+                onChange={(e) => setIdPrograma(e.target.value)}
+                disabled={!idFacultad}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {idFacultad ? "Selecciona un programa..." : "Primero selecciona una facultad"}
+                </option>
+                {programas.map((p) => (
+                  <option key={p.id_programa} value={p.id_programa}>
+                    {p.nombre_programa}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Semestre */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Semestre
+              </label>
+              <input
+                type="text"
+                value={semestre}
+                onChange={(e) => setSemestre(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Ej: 2026-1"
+              />
+            </div>
+
+            {/* Docente Asesor */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Docente Asesor
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Busca y selecciona el docente que será asesor del proyecto.
+              </p>
+              {idAsesor && (
+                <div className="flex items-center justify-between p-3 mb-2 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 truncate">
+                      {filteredDocentes.find((d) => d.id === idAsesor)?.name ||
+                        assignedAdvisors.find((a) => a.id === idAsesor)?.name ||
+                        "Asesor seleccionado"}
+                    </div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {filteredDocentes.find((d) => d.id === idAsesor)?.email || ""}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIdAsesor(null)}
+                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                    aria-label="Quitar asesor"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              <input
+                type="text"
+                value={asesorSearch}
+                onChange={(e) => setAsesorSearch(e.target.value)}
+                placeholder="Buscar docente por nombre, email o documento..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              />
+              {asesorSearch.trim() && !idAsesor && (
+                <div className="mt-2 border border-gray-300 rounded-lg max-h-48 overflow-y-auto bg-white">
+                  {filteredDocentes.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-3">No se encontraron docentes</p>
+                  ) : (
+                    filteredDocentes.slice(0, 10).map((docente) => (
+                      <button
+                        key={docente.id}
+                        type="button"
+                        onClick={() => { setIdAsesor(docente.id); setAsesorSearch(""); }}
+                        className="w-full flex items-center px-4 py-2.5 hover:bg-gray-50 text-left border-b border-gray-100 last:border-b-0"
+                      >
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{docente.name}</div>
+                          <div className="text-xs text-gray-500">{docente.email}</div>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Personas Impactadas */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cantidad de personas impactadas
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={personasImpactadas}
+                onChange={(e) => setPersonasImpactadas(Number(e.target.value))}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Estudiantes */}
+            <PersonSelector
+              label="Estudiantes (Selecciona 1 o más)"
+              assigned={assignedStudents}
+              available={filteredAvailableStudents}
+              search={studentSearch}
+              onSearchChange={setStudentSearch}
+              onAdd={addStudent}
+              onRemove={removeStudent}
+            />
+
+            {/* Docentes */}
+            <PersonSelector
+              label="Docentes (Selecciona 1 o más)"
+              assigned={assignedAdvisors}
+              available={filteredAvailableAdvisors}
+              search={advisorSearch}
+              onSearchChange={setAdvisorSearch}
+              onAdd={addAdvisor}
+              onRemove={removeAdvisor}
+            />
+
+            {/* Campos de texto de la Ficha Técnica */}
+            <TextAreaField label="Resumen" value={resumen} onChange={setResumen} maxLength={200} rows={3}
+              placeholder="Describa brevemente el propósito y alcance del proyecto..."
+              description="Síntesis del proyecto en máximo 200 caracteres." />
+
+            <TextAreaField label="Palabras clave" value={palabrasClave} onChange={setPalabrasClave} maxLength={100} rows={2}
+              placeholder="Ej: medio ambiente, reciclaje, educación ambiental"
+              description="Términos clave separados por comas." />
+
+            <TextAreaField label="Identificación de la problemática" value={identificacionProblematica}
+              onChange={setIdentificacionProblematica} maxLength={1000} rows={5}
+              placeholder="Describa la problemática que aborda el proyecto..."
+              description="Contexto y justificación del problema identificado." />
+
+            <TextAreaField label="Propuesta de solución" value={propuestaSolucion} onChange={setPropuestaSolucion}
+              maxLength={700} rows={4} placeholder="Describa la propuesta para atender la problemática..."
+              description="Cómo el proyecto aborda el problema identificado." />
+
+            <TextAreaField label="Caracterización de la población beneficiaria" value={caracterizacionPoblacion}
+              onChange={setCaracterizacionPoblacion} maxLength={900} rows={4}
+              placeholder="Describa la población a la que va dirigido el proyecto..."
+              description="Perfil demográfico y social de los beneficiarios." />
+
+            <TextAreaField label="Objetivos" value={objetivos} onChange={setObjetivos} maxLength={900} rows={5}
+              placeholder="Objetivo general y específicos del proyecto..."
+              description="Incluya el objetivo general y los objetivos específicos." />
+
+            <TextAreaField label="Resultados esperados" value={resultadosEsperados} onChange={setResultadosEsperados}
+              maxLength={700} rows={4} placeholder="Describa los resultados que se esperan alcanzar..."
+              description="Productos, cambios o beneficios esperados." />
+
+            <TextAreaField label="Metodología" value={metodologia} onChange={setMetodologia} maxLength={1000} rows={5}
+              placeholder="Describa el enfoque metodológico y las actividades..."
+              description="Enfoque, técnicas y estrategias de intervención." />
+
+            <TextAreaField label="Bibliografía" value={bibliografia} onChange={setBibliografia} maxLength={600} rows={3}
+              placeholder="Referencias bibliográficas de soporte..."
+              description="Fuentes consultadas en formato libre." />
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* Sección 2: Plan de Acción — placeholder                       */}
+        {/* ============================================================ */}
+        <SectionHeader title="Plan de Acción" isOpen={openSections.plan} onToggle={() => toggleSection("plan")} />
+        {openSections.plan && (
+          <div className="p-6 border-t border-gray-200 text-sm text-gray-500 italic">
+            Próximamente — define objetivos específicos, actividades, duración, responsables, metas e indicadores.
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* Sección 3: Presupuesto — placeholder                          */}
+        {/* ============================================================ */}
+        <SectionHeader title="Presupuesto" isOpen={openSections.presupuesto} onToggle={() => toggleSection("presupuesto")} />
+        {openSections.presupuesto && (
+          <div className="p-6 border-t border-gray-200 text-sm text-gray-500 italic">
+            Próximamente — equipo humano, recursos (materiales, viáticos) y presupuesto total.
+          </div>
+        )}
+
+        {/* Botones */}
+        <div className="flex justify-end gap-4 p-6 border-t border-gray-200 bg-gray-50">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            disabled={isSaving}
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            disabled={isSaving}
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-primary-400"
+          >
+            {isSaving ? "Guardando..." : "Guardar Cambios"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
 };
 
-function EditSocialProjectPageContent() {
-    const router = useRouter();
-    const params = useParams<{ id: string }>();
-    const projectId = useMemo(() => {
-        const value = params?.id;
-        return Array.isArray(value) ? value[0] : value;
-    }, [params]);
-
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    
-    // Available lists (shared with regular projects)
-    const [allStudents, setAllStudents] = useState<Person[]>([]);
-    const [allAdvisors, setAllAdvisors] = useState<Person[]>([]);
-
-    // Separate assigned and available lists
-    const [assignedStudents, setAssignedStudents] = useState<Person[]>([]);
-    const [availableStudents, setAvailableStudents] = useState<Person[]>([]);
-    const [assignedAdvisors, setAssignedAdvisors] = useState<Person[]>([]);
-    const [availableAdvisors, setAvailableAdvisors] = useState<Person[]>([]);
-
-    const [nombre, setNombre] = useState('');
-    const [descripcion, setDescripcion] = useState('');
-    const [personasImpactadas, setPersonasImpactadas] = useState<number>(0);
-    const [estado, setEstado] = useState<string>('En proceso');
-
-    // Search filters
-    const [studentSearch, setStudentSearch] = useState('');
-    const [advisorSearch, setAdvisorSearch] = useState('');
-    const [filteredAvailableStudents, setFilteredAvailableStudents] = useState<Person[]>([]);
-    const [filteredAvailableAdvisors, setFilteredAvailableAdvisors] = useState<Person[]>([]);
-
-    useEffect(() => {
-        if (!projectId) return;
-        loadInitialData(projectId);
-    }, [projectId]);
-
-    const loadInitialData = async (id: string) => {
-        setIsLoading(true);
-        try {
-            const [studentsData, advisorsData, project]: [Person[], Person[], SocialProjectDetail] = await Promise.all([
-                projectsService.getAvailableStudents(),
-                projectsService.getAvailableAdvisors(),
-                socialProjectsService.getProjectById(id)
-            ]);
-
-            // Extract assigned students and advisors from project.integrantes
-            const projectStudents = project.integrantes
-                ?.filter(i => i.rol === 'Estudiante')
-                .map(i => ({
-                    id: i.id_persona,
-                    name: `${i.persona.nombres} ${i.persona.apellidos}`,
-                    email: i.persona.correo_electronico,
-                    document: i.persona.num_doc_identidad,
-                })) || [];
-
-            const projectAdvisors = project.integrantes
-                ?.filter(i => i.rol === 'Docente')
-                .map(i => ({
-                    id: i.id_persona,
-                    name: `${i.persona.nombres} ${i.persona.apellidos}`,
-                    email: i.persona.correo_electronico,
-                    document: i.persona.num_doc_identidad,
-                })) || [];
-
-            setAllStudents(studentsData);
-            setAllAdvisors(advisorsData);
-
-            // Separate assigned and available
-            setAssignedStudents(projectStudents);
-            const availableStudentsList = studentsData.filter(s => !projectStudents.some(ps => ps.id === s.id));
-            setAvailableStudents(availableStudentsList);
-            setFilteredAvailableStudents(availableStudentsList);
-
-            setAssignedAdvisors(projectAdvisors);
-            const availableAdvisorsList = advisorsData.filter(a => !projectAdvisors.some(pa => pa.id === a.id));
-            setAvailableAdvisors(availableAdvisorsList);
-            setFilteredAvailableAdvisors(availableAdvisorsList);
-
-            setNombre(project.titulo);
-            setDescripcion(project.descripcion || '');
-            setPersonasImpactadas(project.personas_impactadas || 0);
-            setEstado((project as any).estado || 'En proceso');
-        } catch (error: any) {
-            Swal.fire('Error', error.message || 'No se pudo cargar el proyecto', 'error');
-            router.push('/social-outreach/social-projects');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // Filter students by search term
-    const filterStudents = useCallback((searchTerm: string) => {
-        if (!searchTerm.trim()) {
-            setFilteredAvailableStudents(availableStudents);
-            return;
-        }
-
-        const search = searchTerm.toLowerCase().trim();
-        const filtered = availableStudents.filter(student => {
-            const documentMatch = student.document?.toLowerCase().includes(search);
-            const idMatch = student.id.toLowerCase().includes(search);
-            const nameMatch = student.name.toLowerCase().includes(search);
-            const emailMatch = student.email.toLowerCase().includes(search);
-
-            return documentMatch || idMatch || nameMatch || emailMatch;
-        });
-
-        setFilteredAvailableStudents(filtered);
-    }, [availableStudents]);
-
-    // Filter advisors by search term
-    const filterAdvisors = useCallback((searchTerm: string) => {
-        if (!searchTerm.trim()) {
-            setFilteredAvailableAdvisors(availableAdvisors);
-            return;
-        }
-
-        const search = searchTerm.toLowerCase().trim();
-        const filtered = availableAdvisors.filter(advisor => {
-            const documentMatch = advisor.document?.toLowerCase().includes(search);
-            const idMatch = advisor.id.toLowerCase().includes(search);
-            const nameMatch = advisor.name.toLowerCase().includes(search);
-            const emailMatch = advisor.email.toLowerCase().includes(search);
-
-            return documentMatch || idMatch || nameMatch || emailMatch;
-        });
-
-        setFilteredAvailableAdvisors(filtered);
-    }, [availableAdvisors]);
-
-    // Handle student search
-    useEffect(() => {
-        filterStudents(studentSearch);
-    }, [studentSearch, filterStudents]);
-
-    // Handle advisor search
-    useEffect(() => {
-        filterAdvisors(advisorSearch);
-    }, [advisorSearch, filterAdvisors]);
-
-    // Update filtered lists when available lists change
-    useEffect(() => {
-        if (!studentSearch.trim()) {
-            setFilteredAvailableStudents(availableStudents);
-        } else {
-            filterStudents(studentSearch);
-        }
-    }, [availableStudents, studentSearch, filterStudents]);
-
-    useEffect(() => {
-        if (!advisorSearch.trim()) {
-            setFilteredAvailableAdvisors(availableAdvisors);
-        } else {
-            filterAdvisors(advisorSearch);
-        }
-    }, [availableAdvisors, advisorSearch, filterAdvisors]);
-
-    // Move student from available to assigned
-    const addStudent = (student: Person) => {
-        setAssignedStudents([...assignedStudents, student]);
-        const newAvailable = availableStudents.filter(s => s.id !== student.id);
-        setAvailableStudents(newAvailable);
-        if (!studentSearch.trim()) {
-            setFilteredAvailableStudents(newAvailable);
-        } else {
-            filterStudents(studentSearch);
-        }
-    };
-
-    const removeStudent = (student: Person) => {
-        setAssignedStudents(assignedStudents.filter(s => s.id !== student.id));
-        const newAvailable = [...availableStudents, student];
-        setAvailableStudents(newAvailable);
-        if (!studentSearch.trim()) {
-            setFilteredAvailableStudents(newAvailable);
-        } else {
-            filterStudents(studentSearch);
-        }
-    };
-
-    const addAdvisor = (advisor: Person) => {
-        setAssignedAdvisors([...assignedAdvisors, advisor]);
-        const newAvailable = availableAdvisors.filter(a => a.id !== advisor.id);
-        setAvailableAdvisors(newAvailable);
-        if (!advisorSearch.trim()) {
-            setFilteredAvailableAdvisors(newAvailable);
-        } else {
-            filterAdvisors(advisorSearch);
-        }
-    };
-
-    const removeAdvisor = (advisor: Person) => {
-        setAssignedAdvisors(assignedAdvisors.filter(a => a.id !== advisor.id));
-        const newAvailable = [...availableAdvisors, advisor];
-        setAvailableAdvisors(newAvailable);
-        if (!advisorSearch.trim()) {
-            setFilteredAvailableAdvisors(newAvailable);
-        } else {
-            filterAdvisors(advisorSearch);
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!projectId) return;
-
-        setIsSaving(true);
-        try {
-            await socialProjectsService.updateProject(projectId, {
-                titulo: nombre,
-                descripcion,
-                personas_impactadas: personasImpactadas,
-                estado,
-                // Update students and advisors
-                estudiantes: assignedStudents.map(s => s.id),
-                docentes: assignedAdvisors.map(a => a.id)
-            });
-
-            await Swal.fire('¡Actualizado!', 'Proyecto de proyección social actualizado correctamente', 'success');
-            router.push('/social-outreach/social-projects');
-        } catch (error: any) {
-            Swal.fire('Error', error.message || 'No se pudo actualizar el proyecto', 'error');
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold text-gray-800 mb-6">Editar Proyecto de Proyección Social</h1>
-
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Nombre del Proyecto *
-                    </label>
-                    <input
-                        type="text"
-                        required
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Ej: Programa de alfabetización digital"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Descripción
-                    </label>
-                    <textarea
-                        value={descripcion}
-                        onChange={(e) => setDescripcion(e.target.value)}
-                        rows={6}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Descripción detallada del proyecto..."
-                    />
-                </div>
-
-                {/* Estado */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Estado del Proyecto
-                    </label>
-                    <select
-                        value={estado}
-                        onChange={(e) => setEstado(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                        <option value="En proceso">En proceso</option>
-                        <option value="Finalizado">Finalizado</option>
-                    </select>
-                </div>
-
-                {/* Personas Impactadas */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cantidad de personas impactadas *
-                    </label>
-                    <p className="text-xs text-gray-500 mb-2">
-                        Ingresa el número estimado o real de personas beneficiadas por este proyecto de proyección social.
-                    </p>
-                    <input
-                        type="number"
-                        min={0}
-                        required
-                        value={personasImpactadas}
-                        onChange={(e) => setPersonasImpactadas(Math.max(0, parseInt(e.target.value) || 0))}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Ej: 150"
-                    />
-                    {personasImpactadas > 0 && (
-                        <p className="text-xs text-sky-600 mt-1 font-medium">
-                            {personasImpactadas.toLocaleString()} personas impactadas
-                        </p>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Estudiantes (Selecciona 1 o más)
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Assigned Students */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedStudents.length})</span>
-                            </div>
-                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                                {assignedStudents.length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4">No hay estudiantes asignados</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {assignedStudents.map(student => (
-                                            <div
-                                                key={student.id}
-                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
-                                            >
-                                                <div className="flex-1">
-                                                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                                    <div className="text-xs text-gray-500">{student.email}{student.document ? ` - ${student.document}` : ''}</div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeStudent(student)}
-                                                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Available Students */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">Disponibles</span>
-                            </div>
-                            <div className="mb-2">
-                                <input
-                                    type="text"
-                                    value={studentSearch}
-                                    onChange={(e) => setStudentSearch(e.target.value)}
-                                    placeholder="Buscar por cédula, código o nombre..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                                />
-                            </div>
-                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                                {filteredAvailableStudents.length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4">No se encontraron estudiantes</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {filteredAvailableStudents.map(student => (
-                                            <div
-                                                key={student.id}
-                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
-                                            >
-                                                <div className="flex-1">
-                                                    <div className="text-sm font-medium text-gray-900">{student.name}</div>
-                                                    <div className="text-xs text-gray-500">{student.id} • {student.email}</div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addStudent(student)}
-                                                    className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Docentes / Asesores (Selecciona 1 o más)
-                    </label>
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Assigned Advisors */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">Asignados ({assignedAdvisors.length})</span>
-                            </div>
-                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                                {assignedAdvisors.length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4">No hay docentes asignados</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {assignedAdvisors.map(advisor => (
-                                            <div
-                                                key={advisor.id}
-                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
-                                            >
-                                                <div className="flex-1">
-                                                    <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
-                                                    <div className="text-xs text-gray-500">{advisor.id} • {advisor.email}</div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeAdvisor(advisor)}
-                                                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Available Advisors */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-gray-700">Disponibles</span>
-                            </div>
-                            <div className="mb-2">
-                                <input
-                                    type="text"
-                                    value={advisorSearch}
-                                    onChange={(e) => setAdvisorSearch(e.target.value)}
-                                    placeholder="Buscar por cédula, código o nombre..."
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
-                                />
-                            </div>
-                            <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                                {filteredAvailableAdvisors.length === 0 ? (
-                                    <p className="text-gray-500 text-sm text-center py-4">No se encontraron docentes</p>
-                                ) : (
-                                    <div className="space-y-2">
-                                        {filteredAvailableAdvisors.map(advisor => (
-                                            <div
-                                                key={advisor.id}
-                                                className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
-                                            >
-                                                <div className="flex-1">
-                                                    <div className="text-sm font-medium text-gray-900">{advisor.name}</div>
-                                                    <div className="text-xs text-gray-500">{advisor.id} • {advisor.email}</div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addAdvisor(advisor)}
-                                                    className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
-                                                >
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex justify-end gap-4 pt-4 border-t">
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-                        disabled={isSaving}
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSaving}
-                        className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:bg-primary-400"
-                    >
-                        {isSaving ? 'Guardando...' : 'Guardar Cambios'}
-                    </button>
-                </div>
-            </form>
-        </div>
-    );
-}
-
 export default function EditSocialProjectPage() {
-    return (
-        <RoleProtectedRoute allowedRoles={['admin', 'dean']} redirectTo="/social-outreach/social-projects">
-            <EditSocialProjectPageContent />
-        </RoleProtectedRoute>
-    );
+  return (
+    <RoleProtectedRoute
+      allowedRoles={["admin", "dean"]}
+      redirectTo="/social-outreach/social-projects/admin"
+    >
+      <EditSocialProjectPageContent />
+    </RoleProtectedRoute>
+  );
 }

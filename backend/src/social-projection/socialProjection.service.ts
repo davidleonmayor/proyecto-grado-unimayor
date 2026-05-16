@@ -164,12 +164,27 @@ export class ProyeccionSocialService {
   async update(
     id: string,
     data: {
-      titulo: string;
+      titulo?: string;
       descripcion?: string | null;
       personas_impactadas?: number;
       estado?: string;
       estudiantes?: string[];
       docentes?: string[];
+      lineas_accion?: string[];
+      semestre?: string | null;
+      id_programa?: string | null;
+      id_asesor?: string | null;
+      id_facultad?: string | null;
+      resumen?: string | null;
+      palabras_clave?: string | null;
+      identificacion_problematica?: string | null;
+      propuesta_solucion?: string | null;
+      caracterizacion_poblacion?: string | null;
+      objetivos?: string | null;
+      resultados_esperados?: string | null;
+      metodologia?: string | null;
+      bibliografia?: string | null;
+      proponentes?: string[];
     },
   ) {
     try {
@@ -177,20 +192,32 @@ export class ProyeccionSocialService {
         const updated = await tx.proyecto_proyeccion_social.update({
           where: { id_proyecto_social: id },
           data: {
-            titulo: data.titulo,
-            descripcion: data.descripcion,
+            ...(data.titulo !== undefined && { titulo: data.titulo }),
+            ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
             ...(data.estado !== undefined && { estado: data.estado }),
+            ...(data.semestre !== undefined && { semestre: data.semestre }),
+            ...(data.id_programa !== undefined && { id_programa: data.id_programa }),
+            ...(data.id_asesor !== undefined && { id_asesor: data.id_asesor }),
+            ...(data.id_facultad !== undefined && { id_facultad: data.id_facultad }),
+            ...(data.resumen !== undefined && { resumen: data.resumen }),
+            ...(data.palabras_clave !== undefined && { palabras_clave: data.palabras_clave }),
+            ...(data.identificacion_problematica !== undefined && { identificacion_problematica: data.identificacion_problematica }),
+            ...(data.propuesta_solucion !== undefined && { propuesta_solucion: data.propuesta_solucion }),
+            ...(data.caracterizacion_poblacion !== undefined && { caracterizacion_poblacion: data.caracterizacion_poblacion }),
+            ...(data.objetivos !== undefined && { objetivos: data.objetivos }),
+            ...(data.resultados_esperados !== undefined && { resultados_esperados: data.resultados_esperados }),
+            ...(data.metodologia !== undefined && { metodologia: data.metodologia }),
+            ...(data.bibliografia !== undefined && { bibliografia: data.bibliografia }),
           },
         });
 
+        // Replace integrantes if both arrays provided
         if (data.estudiantes && data.docentes) {
-          // Delete existing integrantes
           await tx.integrante_proyecto_social.deleteMany({
             where: { id_proyecto_social: id },
           });
 
-          // Insert new students
           if (data.estudiantes.length > 0) {
             await tx.integrante_proyecto_social.createMany({
               data: data.estudiantes.map((estId) => ({
@@ -201,13 +228,44 @@ export class ProyeccionSocialService {
             });
           }
 
-          // Insert new advisors
           if (data.docentes.length > 0) {
             await tx.integrante_proyecto_social.createMany({
               data: data.docentes.map((docId) => ({
                 id_proyecto_social: id,
                 id_persona: docId,
                 rol: "Docente",
+              })),
+            });
+          }
+        }
+
+        // Replace líneas de acción if provided
+        if (data.lineas_accion !== undefined) {
+          await tx.linea_accion_proyeccion_social.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.lineas_accion.length > 0) {
+            await tx.linea_accion_proyeccion_social.createMany({
+              data: data.lineas_accion.map((idLinea) => ({
+                id_proyecto_social: id,
+                id_linea_accion: idLinea,
+              })),
+            });
+          }
+        }
+
+        // Replace proponentes if provided
+        if (data.proponentes !== undefined) {
+          await tx.proponente_proyeccion_social.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.proponentes.length > 0) {
+            await tx.proponente_proyeccion_social.createMany({
+              data: data.proponentes.map((personaId) => ({
+                id_proyecto_social: id,
+                id_persona: personaId,
               })),
             });
           }

@@ -197,7 +197,29 @@ export class ProyeccionSocialController {
   update = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { titulo, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
+      const {
+        titulo,
+        descripcion,
+        personas_impactadas,
+        estado,
+        estudiantes,
+        docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+        id_asesor,
+        id_facultad,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
+        proponentes,
+      } = req.body;
 
       const updated = await this.service.update(id, {
         titulo,
@@ -206,6 +228,21 @@ export class ProyeccionSocialController {
         estado,
         estudiantes,
         docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+        id_asesor,
+        id_facultad,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
+        proponentes,
       });
 
       return res.status(200).json({
