@@ -17,6 +17,7 @@ import { PersonRoutes } from "./person/person.routes";
 import { MessagingRoutes } from "./messaging/messaging.routes";
 import { ProyeccionSocialRoutes } from "./social-projection/socialProjection.routes";
 import { AnnouncementRoutes } from "./announcement/announcement.routes";
+import { CatalogRoutes } from "./catalog/catalog.routes";
 
 export default class Server {
   private app: Application;
@@ -139,6 +140,7 @@ export default class Server {
     const messagingRoutes = new MessagingRoutes();
     const proyeccionSocialRoutes = new ProyeccionSocialRoutes();
     const announcementRoutes = new AnnouncementRoutes();
+    const catalogRoutes = new CatalogRoutes();
 
     this.app.use("/api/auth", authRoutes.router);
     this.app.use("/api/projects", projectRoutes.router);
@@ -147,6 +149,7 @@ export default class Server {
     this.app.use("/api/messaging", messagingRoutes.router);
     this.app.use("/api/proyeccion-social", proyeccionSocialRoutes.router);
     this.app.use("/api/announcement", announcementRoutes.router);
+    this.app.use("/api/catalog", catalogRoutes.router);
 
     // Swagger docs
     this.app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

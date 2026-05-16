@@ -15,9 +15,9 @@ const responseSchemas = {
     type: "object",
     properties: {
       id_proyecto_social: { type: "string", example: "ckxyz..." },
-      nombre: { type: "string", example: "Brigada de salud rural" },
+      titulo: { type: "string", example: "Brigada de salud rural" },
       descripcion: { type: "string", nullable: true },
-      fecha_registro: { type: "string", format: "date-time" },
+      fecha_de_presentacion: { type: "string", format: "date-time" },
       id_persona_registra: { type: "string", nullable: true },
       personas_impactadas: { type: "integer", example: 120 },
       estado: { type: "string", example: "En proceso" },

@@ -84,16 +84,29 @@ export class ProyeccionSocialController {
   createManual = async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id_persona;
-      const { nombre, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
+      const {
+        titulo,
+        descripcion,
+        personas_impactadas,
+        estado,
+        estudiantes,
+        docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+      } = req.body;
 
       const created = await this.service.createManual({
-        nombre,
+        titulo,
         descripcion,
         personas_impactadas,
         estado,
         id_persona_registra: userId,
         estudiantes,
         docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
       });
 
       return res.status(201).json({
@@ -162,10 +175,10 @@ export class ProyeccionSocialController {
   update = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { nombre, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
+      const { titulo, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
 
       const updated = await this.service.update(id, {
-        nombre,
+        titulo,
         descripcion,
         personas_impactadas,
         estado,

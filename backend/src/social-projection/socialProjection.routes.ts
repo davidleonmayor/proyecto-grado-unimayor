@@ -235,7 +235,7 @@ export class ProyeccionSocialRoutes {
      *           schema:
      *             type: object
      *             properties:
-     *               nombre: { type: string, maxLength: 200 }
+     *               titulo: { type: string, maxLength: 200 }
      *               descripcion: { type: string, nullable: true, maxLength: 2000 }
      *               personas_impactadas: { type: integer, minimum: 0 }
      *               estado: { type: string }

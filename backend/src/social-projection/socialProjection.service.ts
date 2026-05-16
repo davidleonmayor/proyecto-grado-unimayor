@@ -1,20 +1,23 @@
 import { prisma, logger } from "../config";
 
 export interface CreateManualProyeccionSocialInput {
-  nombre: string;
+  titulo: string;
   descripcion: string | null;
   id_persona_registra: string;
   estudiantes: string[];
   docentes: string[];
   personas_impactadas?: number;
   estado?: string;
+  lineas_accion?: string[] | null;
+  semestre?: string | null;
+  id_programa?: string | null;
 }
 
 interface SearchResult {
   id_proyecto_social: string;
-  nombre: string;
+  titulo: string;
   descripcion: string | null;
-  fecha_registro: Date;
+  fecha_de_presentacion: Date;
   id_persona_registra: string | null;
   personas_impactadas: number;
   estado: string;
@@ -26,14 +29,14 @@ export class ProyeccionSocialService {
       return await prisma.proyecto_proyeccion_social.findMany({
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
         },
-        orderBy: { fecha_registro: "desc" },
+        orderBy: { fecha_de_presentacion: "desc" },
       });
     } catch (error) {
       logger.error(
@@ -63,14 +66,14 @@ export class ProyeccionSocialService {
         },
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
         },
-        orderBy: { fecha_registro: "desc" },
+        orderBy: { fecha_de_presentacion: "desc" },
       });
     } catch (error) {
       logger.error(
@@ -88,20 +91,20 @@ export class ProyeccionSocialService {
     try {
       return await prisma.proyecto_proyeccion_social.findMany({
         where: {
-          nombre: {
+          titulo: {
             contains: nombre,
           },
         },
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
         },
-        orderBy: { fecha_registro: "desc" },
+        orderBy: { fecha_de_presentacion: "desc" },
         take: limit,
       });
     } catch (error) {
@@ -122,9 +125,9 @@ export class ProyeccionSocialService {
         where: { id_proyecto_social: id },
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
@@ -159,7 +162,7 @@ export class ProyeccionSocialService {
   async update(
     id: string,
     data: {
-      nombre: string;
+      titulo: string;
       descripcion?: string | null;
       personas_impactadas?: number;
       estado?: string;
@@ -172,7 +175,7 @@ export class ProyeccionSocialService {
         const updated = await tx.proyecto_proyeccion_social.update({
           where: { id_proyecto_social: id },
           data: {
-            nombre: data.nombre,
+            titulo: data.titulo,
             descripcion: data.descripcion,
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
             ...(data.estado !== undefined && { estado: data.estado }),
@@ -221,9 +224,9 @@ export class ProyeccionSocialService {
    */
   async createManual(input: CreateManualProyeccionSocialInput): Promise<{
     id_proyecto_social: string;
-    nombre: string;
+    titulo: string;
     descripcion: string | null;
-    fecha_registro: Date;
+    fecha_de_presentacion: Date;
     integrantes: {
       id_integrante: string;
       id_persona: string;
@@ -253,11 +256,18 @@ export class ProyeccionSocialService {
         // Crear el proyecto
         const proyecto = await tx.proyecto_proyeccion_social.create({
           data: {
-            nombre: input.nombre,
+            titulo: input.titulo,
             descripcion: input.descripcion,
             id_persona_registra: input.id_persona_registra,
             personas_impactadas: input.personas_impactadas ?? 0,
             estado: input.estado ?? "En proceso",
+            ...(input.semestre !== undefined && { semestre: input.semestre }),
+            ...(input.id_programa !== undefined && { id_programa: input.id_programa }),
+            ...(input.lineas_accion && input.lineas_accion.length > 0 && {
+              lineas_accion: {
+                create: input.lineas_accion.map((id_linea_accion) => ({ id_linea_accion })),
+              },
+            }),
           },
         });
 
@@ -289,9 +299,9 @@ export class ProyeccionSocialService {
 
         return {
           id_proyecto_social: proyecto.id_proyecto_social,
-          nombre: proyecto.nombre,
+          titulo: proyecto.titulo,
           descripcion: proyecto.descripcion,
-          fecha_registro: proyecto.fecha_registro,
+          fecha_de_presentacion: proyecto.fecha_de_presentacion,
           integrantes: [
             ...integranteEstudiantes.map(i => ({ id_integrante: i.id_integrante, id_persona: i.id_persona, rol: i.rol })),
             ...integranteDocentes.map(i => ({ id_integrante: i.id_integrante, id_persona: i.id_persona, rol: i.rol })),
@@ -423,9 +433,9 @@ export class ProyeccionSocialService {
     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
 
     const proyectosRecientes = await prisma.proyecto_proyeccion_social.findMany({
-      where: { fecha_registro: { gte: fourWeeksAgo } },
-      select: { fecha_registro: true, personas_impactadas: true },
-      orderBy: { fecha_registro: 'asc' },
+      where: { fecha_de_presentacion: { gte: fourWeeksAgo } },
+      select: { fecha_de_presentacion: true, personas_impactadas: true },
+      orderBy: { fecha_de_presentacion: 'asc' },
     });
 
     // Group by week (Semana 1..4 from oldest to newest)
@@ -437,7 +447,7 @@ export class ProyeccionSocialService {
     ];
 
     proyectosRecientes.forEach(p => {
-      const diffDays = Math.floor((now.getTime() - new Date(p.fecha_registro).getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor((now.getTime() - new Date(p.fecha_de_presentacion).getTime()) / (1000 * 60 * 60 * 24));
       // diffDays: 0-6 → semana 4 (más reciente), 7-13 → semana 3, 14-20 → semana 2, 21-27 → semana 1
       let weekIdx = 3 - Math.floor(diffDays / 7);
       if (weekIdx < 0) weekIdx = 0;
@@ -475,7 +485,7 @@ export class ProyeccionSocialService {
         }
       },
       select: {
-        fecha_registro: true
+        fecha_de_presentacion: true
       }
     });
 
@@ -483,7 +493,7 @@ export class ProyeccionSocialService {
     const monthlyFinalized = meses.map(m => ({ name: m, finalizados: 0 }));
 
     proyectosFinalizados.forEach(p => {
-      const fecha = new Date(p.fecha_registro);
+      const fecha = new Date(p.fecha_de_presentacion);
       const mesIdx = fecha.getMonth(); // 0 - 11
       if (mesIdx >= 0 && mesIdx <= 11) {
         monthlyFinalized[mesIdx].finalizados += 1;

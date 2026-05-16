@@ -60,14 +60,14 @@ export const SearchSocialProjectionSchema: Schema = {
 
 export const CreateManualSocialProjectionSchema: Schema = {
   authorization: authorizationHeaderRule,
-  nombre: {
+  titulo: {
     in: ["body"],
-    exists: { errorMessage: "El campo 'nombre' es obligatorio" },
-    isString: { errorMessage: "El campo 'nombre' debe ser texto" },
+    exists: { errorMessage: "El campo 'titulo' es obligatorio" },
+    isString: { errorMessage: "El campo 'titulo' debe ser texto" },
     trim: true,
-    notEmpty: { errorMessage: "El campo 'nombre' no puede estar vacío" },
-    isLength: { options: { min: 1, max: 200 }, errorMessage: "El campo 'nombre' debe tener entre 1 y 200 caracteres" },
-    matches: { options: socialProjectionNameRegex, errorMessage: "El campo 'nombre' solo puede contener letras, números, espacios, guiones y puntos" },
+    notEmpty: { errorMessage: "El campo 'titulo' no puede estar vacío" },
+    isLength: { options: { min: 1, max: 200 }, errorMessage: "El campo 'titulo' debe tener entre 1 y 200 caracteres" },
+    matches: { options: socialProjectionNameRegex, errorMessage: "El campo 'titulo' solo puede contener letras, números, espacios, guiones y puntos" },
   },
   descripcion: {
     in: ["body"],
@@ -127,6 +127,41 @@ export const CreateManualSocialProjectionSchema: Schema = {
     in: ["body"],
     optional: { options: { nullable: true } },
     isString: { errorMessage: "El campo 'estado' debe ser texto" },
+    trim: true,
+  },
+  // Campos de la Ficha Técnica — sección "Información General"
+  lineas_accion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'lineas_accion' debe ser un arreglo de CUIDs" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true; // optional
+        if (!value.every((id) => typeof id === "string" && /^c[a-z0-9]{24}$/.test(id))) {
+          throw new Error("Uno o más IDs de líneas de acción no son CUIDs válidos");
+        }
+        if (new Set(value).size !== value.length) {
+          throw new Error("Los IDs de líneas de acción no pueden estar duplicados");
+        }
+        return true;
+      },
+    },
+  },
+  semestre: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'semestre' debe ser texto" },
+    isLength: { options: { max: 50 }, errorMessage: "El campo 'semestre' no puede exceder 50 caracteres" },
+    trim: true,
+  },
+  id_programa: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'id_programa' debe ser texto" },
+    matches: {
+      options: /^c[a-z0-9]{24}$/,
+      errorMessage: "El campo 'id_programa' debe ser un CUID válido",
+    },
     trim: true,
   },
 };
