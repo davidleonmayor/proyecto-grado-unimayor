@@ -106,5 +106,40 @@ export class CatalogRoutes {
       this.authMiddleware.isAuthenticatedUser,
       this.controller.getLineasAccion,
     );
+
+    /**
+     * @openapi
+     * /api/catalog/estudiantes:
+     *   get:
+     *     summary: Listar estudiantes filtrados por facultad
+     *     description: Devuelve personas confirmadas. Útil para seleccionar proponentes de proyectos.
+     *     tags: [Catalog]
+     *     parameters:
+     *       - in: query
+     *         name: id_facultad
+     *         required: false
+     *         schema: { type: string }
+     *         description: Filtra estudiantes por facultad. Sin este parámetro devuelve todos.
+     *     responses:
+     *       200:
+     *         description: Lista de estudiantes
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: object
+     *                 properties:
+     *                   id: { type: string }
+     *                   name: { type: string }
+     *                   email: { type: string }
+     *                   document: { type: string }
+     *       401: { description: No autenticado }
+     */
+    this.router.get(
+      "/estudiantes",
+      this.authMiddleware.isAuthenticatedUser,
+      this.controller.getEstudiantes,
+    );
   }
 }

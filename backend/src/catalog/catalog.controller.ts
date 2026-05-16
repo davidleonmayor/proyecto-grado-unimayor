@@ -81,4 +81,51 @@ export class CatalogController {
         .json({ error: error.message || "Error interno del servidor" });
     }
   };
+
+  /**
+   * GET /api/catalog/estudiantes?id_facultad=...
+   * Lista estudiantes (personas confirmadas) filtrados por facultad.
+   * Útil para seleccionar proponentes de un proyecto de proyección social.
+   */
+  getEstudiantes = async (req: Request, res: Response) => {
+    try {
+      const { id_facultad } = req.query;
+
+      const where: any = {
+        confirmed: true,
+        password: { not: null },
+      };
+
+      if (typeof id_facultad === "string" && id_facultad.trim()) {
+        where.id_facultad = id_facultad.trim();
+      }
+
+      const estudiantes = await prisma.persona.findMany({
+        where,
+        select: {
+          id_persona: true,
+          nombres: true,
+          apellidos: true,
+          correo_electronico: true,
+          num_doc_identidad: true,
+        },
+        orderBy: { nombres: "asc" },
+        take: 200,
+      });
+
+      return res.status(200).json(
+        estudiantes.map((e) => ({
+          id: e.id_persona,
+          name: `${e.nombres} ${e.apellidos}`,
+          email: e.correo_electronico,
+          document: e.num_doc_identidad,
+        })),
+      );
+    } catch (error: any) {
+      logger.error("Error fetching estudiantes:", error);
+      return res
+        .status(500)
+        .json({ error: error.message || "Error interno del servidor" });
+    }
+  };
 }

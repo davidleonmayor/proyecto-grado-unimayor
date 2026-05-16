@@ -166,8 +166,9 @@ export default class Server {
 
   start() {
     this.app.listen(this.port, () => {
-      logger.info(`🚀 Servidor ejecutándose en puerto ${this.port}`);
+      logger.info(`🚀 Servidor ejecutándose en http://localhost:${this.port}`);
       logger.info(`🌍 Entorno: ${envs.NODE_ENV || "development"}`);
+      logger.info(`📖 Swagger UI: http://localhost:${this.port}/api/docs`);
       logger.info(
         `📊 Logs guardándose en: ${path.join(process.cwd(), "logs")}`,
       );
