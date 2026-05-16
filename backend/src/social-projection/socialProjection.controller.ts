@@ -94,6 +94,8 @@ export class ProyeccionSocialController {
         lineas_accion,
         semestre,
         id_programa,
+        id_asesor,
+        proponentes,
       } = req.body;
 
       const created = await this.service.createManual({
@@ -107,6 +109,8 @@ export class ProyeccionSocialController {
         lineas_accion,
         semestre,
         id_programa,
+        id_asesor,
+        proponentes,
       });
 
       return res.status(201).json({

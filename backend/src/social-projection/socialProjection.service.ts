@@ -11,6 +11,8 @@ export interface CreateManualProyeccionSocialInput {
   lineas_accion?: string[] | null;
   semestre?: string | null;
   id_programa?: string | null;
+  id_asesor?: string | null;
+  proponentes?: string[];
 }
 
 interface SearchResult {
@@ -234,8 +236,8 @@ export class ProyeccionSocialService {
     }[];
   }> {
     try {
-      // Validar que los IDs de estudiantes y docentes existan en la base de datos
-      const allPersonIds = [...input.estudiantes, ...input.docentes];
+      // Validar que los IDs de estudiantes, docentes y proponentes existan en la base de datos
+      const allPersonIds = [...input.estudiantes, ...input.docentes, ...(input.proponentes ?? [])];
       
       const personasExistentes = await prisma.persona.findMany({
         where: { id_persona: { in: allPersonIds } },
@@ -263,6 +265,7 @@ export class ProyeccionSocialService {
             estado: input.estado ?? "En proceso",
             ...(input.semestre !== undefined && { semestre: input.semestre }),
             ...(input.id_programa !== undefined && { id_programa: input.id_programa }),
+            ...(input.id_asesor !== undefined && { id_asesor: input.id_asesor }),
             ...(input.lineas_accion && input.lineas_accion.length > 0 && {
               lineas_accion: {
                 create: input.lineas_accion.map((id_linea_accion) => ({ id_linea_accion })),
@@ -297,6 +300,20 @@ export class ProyeccionSocialService {
           )
         );
 
+        // Agregar proponentes
+        const proponentesCreados = input.proponentes && input.proponentes.length > 0
+          ? await Promise.all(
+              input.proponentes.map((personaId) =>
+                tx.proponente_proyeccion_social.create({
+                  data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    id_persona: personaId,
+                  },
+                })
+              )
+            )
+          : [];
+
         return {
           id_proyecto_social: proyecto.id_proyecto_social,
           titulo: proyecto.titulo,
@@ -306,6 +323,7 @@ export class ProyeccionSocialService {
             ...integranteEstudiantes.map(i => ({ id_integrante: i.id_integrante, id_persona: i.id_persona, rol: i.rol })),
             ...integranteDocentes.map(i => ({ id_integrante: i.id_integrante, id_persona: i.id_persona, rol: i.rol })),
           ],
+          proponentes: proponentesCreados.map(p => ({ id_proponente: p.id_proponente, id_persona: p.id_persona })),
         };
       });
 

@@ -164,6 +164,33 @@ export const CreateManualSocialProjectionSchema: Schema = {
     },
     trim: true,
   },
+  id_asesor: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'id_asesor' debe ser texto" },
+    matches: {
+      options: /^c[a-z0-9]{24}$/,
+      errorMessage: "El campo 'id_asesor' debe ser un CUID válido",
+    },
+    trim: true,
+  },
+  proponentes: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'proponentes' debe ser un arreglo de CUIDs" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        if (!value.every((id) => typeof id === "string" && /^c[a-z0-9]{24}$/.test(id))) {
+          throw new Error("Uno o más IDs de proponentes no son CUIDs válidos");
+        }
+        if (new Set(value).size !== value.length) {
+          throw new Error("Los IDs de proponentes no pueden estar duplicados");
+        }
+        return true;
+      },
+    },
+  },
 };
 
 export const UploadAnexoSchema: Schema = {
