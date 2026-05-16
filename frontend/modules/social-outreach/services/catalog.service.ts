@@ -18,6 +18,13 @@ export interface LineaAccion {
   nombre: string;
 }
 
+export interface Estudiante {
+  id: string;
+  name: string;
+  email: string;
+  document: string;
+}
+
 class CatalogService extends BaseApiClient {
   async getFacultades(): Promise<Facultad[]> {
     return this.request<Facultad[]>("/api/catalog/facultades", {
@@ -28,6 +35,13 @@ class CatalogService extends BaseApiClient {
   async getProgramas(idFacultad?: string): Promise<Programa[]> {
     const qs = idFacultad ? `?id_facultad=${encodeURIComponent(idFacultad)}` : "";
     return this.request<Programa[]>(`/api/catalog/programas${qs}`, {
+      requiresAuth: true,
+    });
+  }
+
+  async getEstudiantes(idFacultad?: string): Promise<Estudiante[]> {
+    const qs = idFacultad ? `?id_facultad=${encodeURIComponent(idFacultad)}` : "";
+    return this.request<Estudiante[]>(`/api/catalog/estudiantes${qs}`, {
       requiresAuth: true,
     });
   }
