@@ -254,6 +254,31 @@ export const CreateManualSocialProjectionSchema: Schema = {
       },
     },
   },
+  planes_accion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'planes_accion' debe ser un arreglo" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        for (const item of value) {
+          if (typeof item !== "object" || item === null) {
+            throw new Error("Cada plan de acción debe ser un objeto");
+          }
+          const { objetivo_especifico, actividades, duracion, responsables, meta, indicador } = item as any;
+          if (objetivo_especifico && typeof objetivo_especifico !== "string") throw new Error("objetivo_especifico debe ser texto");
+          if (actividades && typeof actividades !== "string") throw new Error("actividades debe ser texto");
+          if (duracion && typeof duracion !== "string") throw new Error("duracion debe ser texto");
+          if (duracion && duracion.length > 100) throw new Error("duracion no puede exceder 100 caracteres");
+          if (responsables && typeof responsables !== "string") throw new Error("responsables debe ser texto");
+          if (responsables && responsables.length > 500) throw new Error("responsables no puede exceder 500 caracteres");
+          if (meta && typeof meta !== "string") throw new Error("meta debe ser texto");
+          if (indicador && typeof indicador !== "string") throw new Error("indicador debe ser texto");
+        }
+        return true;
+      },
+    },
+  },
 };
 
 export const UploadAnexoSchema: Schema = {

@@ -13,6 +13,7 @@ export interface CreateManualProyeccionSocialInput {
   id_programa?: string | null;
   id_asesor?: string | null;
   proponentes?: string[];
+  planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
   resumen?: string | null;
   palabras_clave?: string | null;
   identificacion_problematica?: string | null;
@@ -185,6 +186,7 @@ export class ProyeccionSocialService {
       metodologia?: string | null;
       bibliografia?: string | null;
       proponentes?: string[];
+      planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
     },
   ) {
     try {
@@ -266,6 +268,27 @@ export class ProyeccionSocialService {
               data: data.proponentes.map((personaId) => ({
                 id_proyecto_social: id,
                 id_persona: personaId,
+              })),
+            });
+          }
+        }
+
+        // Replace planes de acción if provided
+        if (data.planes_accion !== undefined) {
+          await tx.plan_accion_proyecto.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.planes_accion.length > 0) {
+            await tx.plan_accion_proyecto.createMany({
+              data: data.planes_accion.map((plan) => ({
+                id_proyecto_social: id,
+                objetivo_especifico: plan.objetivo_especifico || null,
+                actividades: plan.actividades || null,
+                duracion: plan.duracion || null,
+                responsables: plan.responsables || null,
+                meta: plan.meta || null,
+                indicador: plan.indicador || null,
               })),
             });
           }
@@ -380,6 +403,25 @@ export class ProyeccionSocialService {
               )
             )
           : [];
+
+        // Create planes de acción
+        if (input.planes_accion && input.planes_accion.length > 0) {
+          await Promise.all(
+            input.planes_accion.map((plan) =>
+              tx.plan_accion_proyecto.create({
+                data: {
+                  id_proyecto_social: proyecto.id_proyecto_social,
+                  objetivo_especifico: plan.objetivo_especifico || null,
+                  actividades: plan.actividades || null,
+                  duracion: plan.duracion || null,
+                  responsables: plan.responsables || null,
+                  meta: plan.meta || null,
+                  indicador: plan.indicador || null,
+                },
+              })
+            )
+          );
+        }
 
         return {
           id_proyecto_social: proyecto.id_proyecto_social,

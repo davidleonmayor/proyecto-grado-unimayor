@@ -15,6 +15,7 @@ import {
   type Estudiante,
 } from "@/modules/social-outreach/services/catalog.service";
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
+import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
 
 function matchesSearch(person: Person, search: string): boolean {
   const s = search.toLowerCase().trim();
@@ -60,6 +61,9 @@ export function useNewProject() {
   const [resultadosEsperados, setResultadosEsperados] = useState("");
   const [metodologia, setMetodologia] = useState("");
   const [bibliografia, setBibliografia] = useState("");
+
+  // --- Plan de acción ---
+  const [planesAccion, setPlanesAccion] = useState<PlanAccionItem[]>([]);
 
   // --- Catálogos ---
   const [facultades, setFacultades] = useState<Facultad[]>([]);
@@ -291,6 +295,7 @@ export function useNewProject() {
         resultados_esperados: resultadosEsperados || null,
         metodologia: metodologia || null,
         bibliografia: bibliografia || null,
+        planes_accion: planesAccion.length > 0 ? planesAccion : undefined,
       });
 
       await Swal.fire("¡Éxito!", "Proyecto de proyección social creado exitosamente", "success");
@@ -350,6 +355,8 @@ export function useNewProject() {
     resultadosEsperados, setResultadosEsperados,
     metodologia, setMetodologia,
     bibliografia, setBibliografia,
+    // Plan de acción
+    planesAccion, setPlanesAccion,
     // Actions
     handleSubmit,
     router,

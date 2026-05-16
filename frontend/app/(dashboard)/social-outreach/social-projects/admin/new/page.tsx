@@ -6,6 +6,7 @@ import SectionHeader from "@/modules/social-outreach/components/SectionHeader";
 import PersonSelector from "@/modules/social-outreach/components/PersonSelector";
 import CheckboxGroup from "@/modules/social-outreach/components/CheckboxGroup";
 import TextAreaField from "@/modules/social-outreach/components/TextAreaField";
+import PlanAccionSection from "@/modules/social-outreach/components/PlanAccionSection";
 
 const NewProjectPageContent = () => {
   const {
@@ -68,6 +69,8 @@ const NewProjectPageContent = () => {
     setMetodologia,
     bibliografia,
     setBibliografia,
+    planesAccion,
+    setPlanesAccion,
     handleSubmit,
     router,
   } = useNewProject();
@@ -451,9 +454,8 @@ const NewProjectPageContent = () => {
           onToggle={() => toggleSection("plan")}
         />
         {openSections.plan && (
-          <div className="p-6 border-t border-gray-200 text-sm text-gray-500 italic">
-            Próximamente — define objetivos específicos, actividades, duración,
-            responsables, metas e indicadores.
+          <div className="p-6 border-t border-gray-200">
+            <PlanAccionSection items={planesAccion} onChange={setPlanesAccion} />
           </div>
         )}
 
