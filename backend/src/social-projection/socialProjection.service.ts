@@ -134,36 +134,27 @@ export class ProyeccionSocialService {
     try {
       return await prisma.proyecto_proyeccion_social.findUnique({
         where: { id_proyecto_social: id },
-        select: {
-          id_proyecto_social: true,
-          titulo: true,
-          descripcion: true,
-          fecha_de_presentacion: true,
-          id_persona_registra: true,
-          personas_impactadas: true,
-          estado: true,
+        include: {
+          programa_academico: { select: { id_programa: true, nombre_programa: true } },
+          facultad: { select: { id_facultad: true, nombre_facultad: true } },
+          asesor: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true } },
+          lineas_accion: {
+            include: { linea_accion: { select: { id_linea_accion: true, nombre: true } } },
+          },
+          proponentes: {
+            include: { persona: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true } } },
+          },
           integrantes: {
-            select: {
-              id_persona: true,
-              rol: true,
-              persona: {
-                select: {
-                  nombres: true,
-                  apellidos: true,
-                  correo_electronico: true,
-                  num_doc_identidad: true,
-                }
-              }
-            }
-          }
+            include: { persona: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true, num_doc_identidad: true } } },
+          },
         },
       });
     } catch (error) {
       logger.error(
-        "[ProyeccionSocialService] Error finding project by id:",
+        "[ProyeccionSocialService] Error getting project by id:",
         error,
       );
-      throw new Error("Error al buscar el proyecto.");
+      throw new Error("Error al obtener el proyecto.");
     }
   }
 
