@@ -1136,10 +1136,10 @@ async function main() {
 
         // Presupuesto recursos (3-4 items)
         const recursos = [
-            { tipo: "Materiales", descripcion: "Papelería, insumos de oficina y material didáctico", unitario: 25000, cantidad: 20 },
-            { tipo: "Transporte", descripcion: "Desplazamientos a zona de intervención", unitario: 45000, cantidad: 15 },
-            { tipo: "Equipos", descripcion: "Alquiler de equipos audiovisuales y de cómputo", unitario: 150000, cantidad: 4 },
-            { tipo: "Alimentación", descripcion: "Refrigerios para talleres y jornadas comunitarias", unitario: 8000, cantidad: 50 },
+            { tipo: "Materiales", unitario: 25000, cantidad: 20 },
+            { tipo: "Transporte", unitario: 45000, cantidad: 15 },
+            { tipo: "Equipos", unitario: 150000, cantidad: 4 },
+            { tipo: "Alimentación", unitario: 8000, cantidad: 50 },
         ];
         const numRecursos = (i % 2) + 3; // 3 o 4
         for (let j = 0; j < numRecursos; j++) {
@@ -1148,7 +1148,6 @@ async function main() {
                 data: {
                     id_proyecto_social: proyecto.id_proyecto_social,
                     tipo_recurso: r.tipo,
-                    descripcion_equipo: r.descripcion,
                     valor_unitario: r.unitario,
                     cantidad: r.cantidad,
                     valor_total: r.unitario * r.cantidad,
