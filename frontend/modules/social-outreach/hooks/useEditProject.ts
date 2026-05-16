@@ -15,6 +15,7 @@ import {
 } from "@/modules/social-outreach/services/catalog.service";
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
 import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
+import type { PresupuestoEquipoItem } from "@/modules/social-outreach/components/PresupuestoEquipoSection";
 
 function matchesSearch(person: Person, search: string): boolean {
   const s = search.toLowerCase().trim();
@@ -91,6 +92,9 @@ export function useEditProject() {
   // --- Plan de acción ---
   const [planesAccion, setPlanesAccion] = useState<PlanAccionItem[]>([]);
 
+  // --- Presupuesto equipo humano ---
+  const [presupuestoEquipo, setPresupuestoEquipo] = useState<PresupuestoEquipoItem[]>([]);
+
   // --- Asesor search ---
   const [allDocentes, setAllDocentes] = useState<Person[]>([]);
   const [filteredDocentes, setFilteredDocentes] = useState<Person[]>([]);
@@ -161,6 +165,20 @@ export function useEditProject() {
             responsables: p.responsables || "",
             meta: p.meta || "",
             indicador: p.indicador || "",
+          })),
+        );
+      }
+
+      // Presupuesto equipo humano
+      if (project.presupuesto_equipo) {
+        setPresupuestoEquipo(
+          project.presupuesto_equipo.map((item: any) => ({
+            nombre: item.nombre || "",
+            cargo: item.cargo || "",
+            funcion: item.funcion || "",
+            tipo_vinculacion: item.tipo_vinculacion || "",
+            salario: item.salario ? Number(item.salario) : "",
+            total: item.total ? Number(item.total) : "",
           })),
         );
       }
@@ -321,6 +339,16 @@ export function useEditProject() {
         metodologia: metodologia || null,
         bibliografia: bibliografia || null,
         planes_accion: planesAccion.length > 0 ? planesAccion : [],
+        presupuesto_equipo: presupuestoEquipo.length > 0
+          ? presupuestoEquipo.map((item) => ({
+              nombre: item.nombre || undefined,
+              cargo: item.cargo || undefined,
+              funcion: item.funcion || undefined,
+              tipo_vinculacion: item.tipo_vinculacion || undefined,
+              salario: item.salario || undefined,
+              total: item.total || undefined,
+            }))
+          : [],
       });
 
       await Swal.fire("¡Actualizado!", "Proyecto actualizado correctamente", "success");
@@ -365,6 +393,7 @@ export function useEditProject() {
     metodologia, setMetodologia,
     bibliografia, setBibliografia,
     planesAccion, setPlanesAccion,
+    presupuestoEquipo, setPresupuestoEquipo,
     handleSubmit, router,
   };
 }

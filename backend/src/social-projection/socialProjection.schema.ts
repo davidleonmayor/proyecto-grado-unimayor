@@ -279,6 +279,32 @@ export const CreateManualSocialProjectionSchema: Schema = {
       },
     },
   },
+  presupuesto_equipo: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'presupuesto_equipo' debe ser un arreglo" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        for (const item of value) {
+          if (typeof item !== "object" || item === null) {
+            throw new Error("Cada item de presupuesto equipo debe ser un objeto");
+          }
+          const { nombre, cargo, funcion, tipo_vinculacion, salario, total } = item as any;
+          if (nombre && typeof nombre !== "string") throw new Error("nombre debe ser texto");
+          if (nombre && nombre.length > 200) throw new Error("nombre no puede exceder 200 caracteres");
+          if (cargo && typeof cargo !== "string") throw new Error("cargo debe ser texto");
+          if (cargo && cargo.length > 150) throw new Error("cargo no puede exceder 150 caracteres");
+          if (funcion && typeof funcion !== "string") throw new Error("funcion debe ser texto");
+          if (tipo_vinculacion && typeof tipo_vinculacion !== "string") throw new Error("tipo_vinculacion debe ser texto");
+          if (tipo_vinculacion && tipo_vinculacion.length > 100) throw new Error("tipo_vinculacion no puede exceder 100 caracteres");
+          if (salario !== undefined && salario !== null && isNaN(Number(salario))) throw new Error("salario debe ser un número");
+          if (total !== undefined && total !== null && isNaN(Number(total))) throw new Error("total debe ser un número");
+        }
+        return true;
+      },
+    },
+  },
 };
 
 export const UploadAnexoSchema: Schema = {

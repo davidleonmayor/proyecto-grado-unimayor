@@ -106,6 +106,7 @@ export class ProyeccionSocialController {
         bibliografia,
         proponentes,
         planes_accion,
+        presupuesto_equipo,
       } = req.body;
 
       const created = await this.service.createManual({
@@ -131,6 +132,7 @@ export class ProyeccionSocialController {
         bibliografia,
         proponentes,
         planes_accion,
+        presupuesto_equipo,
       });
 
       return res.status(201).json({
@@ -222,6 +224,7 @@ export class ProyeccionSocialController {
         bibliografia,
         proponentes,
         planes_accion,
+        presupuesto_equipo,
       } = req.body;
 
       const updated = await this.service.update(id, {
@@ -247,6 +250,7 @@ export class ProyeccionSocialController {
         bibliografia,
         proponentes,
         planes_accion,
+        presupuesto_equipo,
       });
 
       return res.status(200).json({

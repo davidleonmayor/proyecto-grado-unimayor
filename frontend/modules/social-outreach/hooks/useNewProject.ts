@@ -16,6 +16,7 @@ import {
 } from "@/modules/social-outreach/services/catalog.service";
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
 import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
+import type { PresupuestoEquipoItem } from "@/modules/social-outreach/components/PresupuestoEquipoSection";
 
 function matchesSearch(person: Person, search: string): boolean {
   const s = search.toLowerCase().trim();
@@ -64,6 +65,9 @@ export function useNewProject() {
 
   // --- Plan de acción ---
   const [planesAccion, setPlanesAccion] = useState<PlanAccionItem[]>([]);
+
+  // --- Presupuesto equipo humano ---
+  const [presupuestoEquipo, setPresupuestoEquipo] = useState<PresupuestoEquipoItem[]>([]);
 
   // --- Catálogos ---
   const [facultades, setFacultades] = useState<Facultad[]>([]);
@@ -296,6 +300,16 @@ export function useNewProject() {
         metodologia: metodologia || null,
         bibliografia: bibliografia || null,
         planes_accion: planesAccion.length > 0 ? planesAccion : undefined,
+        presupuesto_equipo: presupuestoEquipo.length > 0
+          ? presupuestoEquipo.map((item) => ({
+              nombre: item.nombre || undefined,
+              cargo: item.cargo || undefined,
+              funcion: item.funcion || undefined,
+              tipo_vinculacion: item.tipo_vinculacion || undefined,
+              salario: item.salario || undefined,
+              total: item.total || undefined,
+            }))
+          : undefined,
       });
 
       await Swal.fire("¡Éxito!", "Proyecto de proyección social creado exitosamente", "success");
@@ -357,6 +371,7 @@ export function useNewProject() {
     bibliografia, setBibliografia,
     // Plan de acción
     planesAccion, setPlanesAccion,
+    presupuestoEquipo, setPresupuestoEquipo,
     // Actions
     handleSubmit,
     router,

@@ -7,6 +7,7 @@ import PersonSelector from "@/modules/social-outreach/components/PersonSelector"
 import CheckboxGroup from "@/modules/social-outreach/components/CheckboxGroup";
 import TextAreaField from "@/modules/social-outreach/components/TextAreaField";
 import PlanAccionSection from "@/modules/social-outreach/components/PlanAccionSection";
+import PresupuestoEquipoSection from "@/modules/social-outreach/components/PresupuestoEquipoSection";
 
 const NewProjectPageContent = () => {
   const {
@@ -71,6 +72,8 @@ const NewProjectPageContent = () => {
     setBibliografia,
     planesAccion,
     setPlanesAccion,
+    presupuestoEquipo,
+    setPresupuestoEquipo,
     handleSubmit,
     router,
   } = useNewProject();
@@ -468,9 +471,8 @@ const NewProjectPageContent = () => {
           onToggle={() => toggleSection("presupuesto")}
         />
         {openSections.presupuesto && (
-          <div className="p-6 border-t border-gray-200 text-sm text-gray-500 italic">
-            Próximamente — equipo humano, recursos (materiales, viáticos) y
-            presupuesto total.
+          <div className="p-6 border-t border-gray-200">
+            <PresupuestoEquipoSection items={presupuestoEquipo} onChange={setPresupuestoEquipo} />
           </div>
         )}
 

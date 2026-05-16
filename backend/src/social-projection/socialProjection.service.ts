@@ -14,6 +14,7 @@ export interface CreateManualProyeccionSocialInput {
   id_asesor?: string | null;
   proponentes?: string[];
   planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
+  presupuesto_equipo?: { nombre?: string; cargo?: string; funcion?: string; tipo_vinculacion?: string; salario?: number; total?: number }[];
   resumen?: string | null;
   palabras_clave?: string | null;
   identificacion_problematica?: string | null;
@@ -149,6 +150,7 @@ export class ProyeccionSocialService {
             include: { persona: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true, num_doc_identidad: true } } },
           },
           planes_accion: true,
+          presupuesto_equipo: true,
         },
       });
     } catch (error) {
@@ -188,6 +190,7 @@ export class ProyeccionSocialService {
       bibliografia?: string | null;
       proponentes?: string[];
       planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
+      presupuesto_equipo?: { nombre?: string; cargo?: string; funcion?: string; tipo_vinculacion?: string; salario?: number; total?: number }[];
     },
   ) {
     try {
@@ -290,6 +293,27 @@ export class ProyeccionSocialService {
                 responsables: plan.responsables || null,
                 meta: plan.meta || null,
                 indicador: plan.indicador || null,
+              })),
+            });
+          }
+        }
+
+        // Replace presupuesto equipo humano if provided
+        if (data.presupuesto_equipo !== undefined) {
+          await tx.presupuesto_equipo_humano.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.presupuesto_equipo.length > 0) {
+            await tx.presupuesto_equipo_humano.createMany({
+              data: data.presupuesto_equipo.map((item) => ({
+                id_proyecto_social: id,
+                nombre: item.nombre || null,
+                cargo: item.cargo || null,
+                funcion: item.funcion || null,
+                tipo_vinculacion: item.tipo_vinculacion || null,
+                salario: item.salario || null,
+                total: item.total || null,
               })),
             });
           }
@@ -418,6 +442,25 @@ export class ProyeccionSocialService {
                   responsables: plan.responsables || null,
                   meta: plan.meta || null,
                   indicador: plan.indicador || null,
+                },
+              })
+            )
+          );
+        }
+
+        // Create presupuesto equipo humano
+        if (input.presupuesto_equipo && input.presupuesto_equipo.length > 0) {
+          await Promise.all(
+            input.presupuesto_equipo.map((item) =>
+              tx.presupuesto_equipo_humano.create({
+                data: {
+                  id_proyecto_social: proyecto.id_proyecto_social,
+                  nombre: item.nombre || null,
+                  cargo: item.cargo || null,
+                  funcion: item.funcion || null,
+                  tipo_vinculacion: item.tipo_vinculacion || null,
+                  salario: item.salario || null,
+                  total: item.total || null,
                 },
               })
             )
