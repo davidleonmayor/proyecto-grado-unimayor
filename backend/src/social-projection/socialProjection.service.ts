@@ -148,6 +148,7 @@ export class ProyeccionSocialService {
           integrantes: {
             include: { persona: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true, num_doc_identidad: true } } },
           },
+          planes_accion: true,
         },
       });
     } catch (error) {

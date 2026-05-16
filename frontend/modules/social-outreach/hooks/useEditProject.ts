@@ -14,6 +14,7 @@ import {
   type Estudiante,
 } from "@/modules/social-outreach/services/catalog.service";
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
+import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
 
 function matchesSearch(person: Person, search: string): boolean {
   const s = search.toLowerCase().trim();
@@ -87,6 +88,9 @@ export function useEditProject() {
   const [proponenteIds, setProponenteIds] = useState<string[]>([]);
   const [proponentesCandidatos, setProponentesCandidatos] = useState<Estudiante[]>([]);
 
+  // --- Plan de acción ---
+  const [planesAccion, setPlanesAccion] = useState<PlanAccionItem[]>([]);
+
   // --- Asesor search ---
   const [allDocentes, setAllDocentes] = useState<Person[]>([]);
   const [filteredDocentes, setFilteredDocentes] = useState<Person[]>([]);
@@ -145,6 +149,20 @@ export function useEditProject() {
       // Proponentes
       if (project.proponentes) {
         setProponenteIds(project.proponentes.map((p: any) => p.id_persona));
+      }
+
+      // Planes de acción
+      if (project.planes_accion) {
+        setPlanesAccion(
+          project.planes_accion.map((p: any) => ({
+            objetivo_especifico: p.objetivo_especifico || "",
+            actividades: p.actividades || "",
+            duracion: p.duracion || "",
+            responsables: p.responsables || "",
+            meta: p.meta || "",
+            indicador: p.indicador || "",
+          })),
+        );
       }
 
       // Integrantes → assigned/available
@@ -302,6 +320,7 @@ export function useEditProject() {
         resultados_esperados: resultadosEsperados || null,
         metodologia: metodologia || null,
         bibliografia: bibliografia || null,
+        planes_accion: planesAccion.length > 0 ? planesAccion : [],
       });
 
       await Swal.fire("¡Actualizado!", "Proyecto actualizado correctamente", "success");
@@ -345,6 +364,7 @@ export function useEditProject() {
     resultadosEsperados, setResultadosEsperados,
     metodologia, setMetodologia,
     bibliografia, setBibliografia,
+    planesAccion, setPlanesAccion,
     handleSubmit, router,
   };
 }
