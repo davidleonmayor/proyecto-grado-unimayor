@@ -337,15 +337,15 @@ model proyecto_proyeccion_social {
   departamento                String?  @map("departamento_ejecucion") @db.VarChar(100)
   duracion                    String?  @db.VarChar(100)
   lugar_y_tiempo_ejecucion    String?  @db.Text
-  palabras_clave              String?  @db.VarChar(500)
-  identificacion_problematica String?  @db.Text
-  propuesta_solucion          String?  @db.Text
-  caracterizacion_poblacion   String?  @db.Text
-  objetivo_general            String?  @db.Text
-  objetivos_especificos       String?  @db.Text
-  resultados_esperados        String?  @db.Text
-  metodologia                 String?  @db.Text
-  bibliografia                String?  @db.Text
+  resumen                     String?  @db.VarChar(200)
+  palabras_clave              String?  @db.VarChar(100)
+  identificacion_problematica String?  @db.VarChar(1000)
+  propuesta_solucion          String?  @db.VarChar(700)
+  caracterizacion_poblacion   String?  @db.VarChar(900)
+  objetivos                   String?  @db.VarChar(900)
+  resultados_esperados        String?  @db.VarChar(700)
+  metodologia                 String?  @db.VarChar(1000)
+  bibliografia                String?  @db.VarChar(600)
   total_presupuesto           Decimal? @db.Decimal(15, 2)
 
   persona_registra     persona?                         @relation(fields: [id_persona_registra], references: [id_persona])

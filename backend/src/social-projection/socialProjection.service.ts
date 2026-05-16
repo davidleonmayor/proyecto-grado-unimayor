@@ -13,6 +13,15 @@ export interface CreateManualProyeccionSocialInput {
   id_programa?: string | null;
   id_asesor?: string | null;
   proponentes?: string[];
+  resumen?: string | null;
+  palabras_clave?: string | null;
+  identificacion_problematica?: string | null;
+  propuesta_solucion?: string | null;
+  caracterizacion_poblacion?: string | null;
+  objetivos?: string | null;
+  resultados_esperados?: string | null;
+  metodologia?: string | null;
+  bibliografia?: string | null;
 }
 
 interface SearchResult {
@@ -266,6 +275,15 @@ export class ProyeccionSocialService {
             ...(input.semestre !== undefined && { semestre: input.semestre }),
             ...(input.id_programa !== undefined && { id_programa: input.id_programa }),
             ...(input.id_asesor !== undefined && { id_asesor: input.id_asesor }),
+            ...(input.resumen !== undefined && { resumen: input.resumen }),
+            ...(input.palabras_clave !== undefined && { palabras_clave: input.palabras_clave }),
+            ...(input.identificacion_problematica !== undefined && { identificacion_problematica: input.identificacion_problematica }),
+            ...(input.propuesta_solucion !== undefined && { propuesta_solucion: input.propuesta_solucion }),
+            ...(input.caracterizacion_poblacion !== undefined && { caracterizacion_poblacion: input.caracterizacion_poblacion }),
+            ...(input.objetivos !== undefined && { objetivos: input.objetivos }),
+            ...(input.resultados_esperados !== undefined && { resultados_esperados: input.resultados_esperados }),
+            ...(input.metodologia !== undefined && { metodologia: input.metodologia }),
+            ...(input.bibliografia !== undefined && { bibliografia: input.bibliografia }),
             ...(input.lineas_accion && input.lineas_accion.length > 0 && {
               lineas_accion: {
                 create: input.lineas_accion.map((id_linea_accion) => ({ id_linea_accion })),

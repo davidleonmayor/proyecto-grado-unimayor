@@ -1016,6 +1016,7 @@ async function main() {
             data: {
                 titulo: nombresproyeccionSocial[i],
                 descripcion: descripcionesSociales[i],
+                resumen: `Proyecto de proyección social enfocado en ${nombresproyeccionSocial[i].toLowerCase()} para beneficiar a la comunidad.`,
                 id_persona_registra: docentesParaSocial[i].id_persona,
                 personas_impactadas: Math.floor(Math.random() * 450) + 50,
                 estado: i % 3 === 0 ? "Finalizado" : "En proceso",
@@ -1030,8 +1031,7 @@ async function main() {
                 palabras_clave: `proyección social, ${nombresproyeccionSocial[i].toLowerCase().split(" ").slice(0, 3).join(", ")}`,
                 identificacion_problematica: `La comunidad presenta necesidades en el área de ${nombresproyeccionSocial[i].toLowerCase()}, afectando la calidad de vida de la población vulnerable.`,
                 propuesta_solucion: descripcionesSociales[i],
-                objetivo_general: `Contribuir al mejoramiento de las condiciones de vida de la comunidad mediante ${nombresproyeccionSocial[i].toLowerCase()}.`,
-                objetivos_especificos: `1. Diagnosticar las necesidades de la población objetivo.\n2. Diseñar estrategias de intervención participativa.\n3. Ejecutar actividades con la comunidad.\n4. Evaluar el impacto de las acciones realizadas.`,
+                objetivos: `Contribuir al mejoramiento de las condiciones de vida de la comunidad mediante ${nombresproyeccionSocial[i].toLowerCase()}.\n1. Diagnosticar las necesidades de la población objetivo.\n2. Diseñar estrategias de intervención.\n3. Ejecutar actividades con la comunidad.\n4. Evaluar el impacto.`,
                 resultados_esperados: `Mínimo ${Math.floor(Math.random() * 100) + 50} personas beneficiadas directamente, documentación del proceso y transferencia de conocimiento a la comunidad.`,
                 metodologia: metodologias[i % metodologias.length],
                 bibliografia: `DANE (2023). Estadísticas sociales. MEN (2024). Lineamientos de proyección social. UniMayor (2024). Manual de proyección social institucional.`,

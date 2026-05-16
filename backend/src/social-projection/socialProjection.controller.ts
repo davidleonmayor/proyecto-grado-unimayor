@@ -95,6 +95,15 @@ export class ProyeccionSocialController {
         semestre,
         id_programa,
         id_asesor,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
         proponentes,
       } = req.body;
 
@@ -110,6 +119,15 @@ export class ProyeccionSocialController {
         semestre,
         id_programa,
         id_asesor,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
         proponentes,
       });
 
