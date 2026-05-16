@@ -1,5 +1,5 @@
 // seed.ts - Script para poblar la base de datos con datos de ejemplo
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import * as bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
@@ -89,8 +89,15 @@ async function main() {
     await (prisma as any).mensaje_entrega.deleteMany({});
     await (prisma as any).mensaje.deleteMany({});
     // Clean social projection tables before persona (FK constraints)
+    await prisma.linea_accion_proyeccion_social.deleteMany({});
+    await prisma.proponente_proyeccion_social.deleteMany({});
+    await prisma.plan_accion_proyecto.deleteMany({});
+    await prisma.presupuesto_equipo_humano.deleteMany({});
+    await prisma.presupuesto_recursos.deleteMany({});
+    await prisma.anexo_proyecto_social.deleteMany({});
     await prisma.integrante_proyecto_social.deleteMany({});
     await prisma.proyecto_proyeccion_social.deleteMany({});
+    await prisma.linea_accion.deleteMany({});
     // Clean webhook subscriptions
     await prisma.suscripcionWebhook.deleteMany({});
     await prisma.persona.deleteMany({});
@@ -207,6 +214,16 @@ async function main() {
                 codigo_facultad: "CSA",
             },
         }),
+    ]);
+
+    // 3.5 LÍNEAS DE ACCIÓN (catálogo para proyección social)
+    console.log("Creando líneas de acción...");
+    const lineasAccion = await Promise.all([
+        prisma.linea_accion.create({ data: { nombre: "Educación" } }),
+        prisma.linea_accion.create({ data: { nombre: "Convivencia y Cultura" } }),
+        prisma.linea_accion.create({ data: { nombre: "Medio Ambiente" } }),
+        prisma.linea_accion.create({ data: { nombre: "Emprendimiento" } }),
+        prisma.linea_accion.create({ data: { nombre: "Servicio Social" } }),
     ]);
 
     // 4. NIVELES DE FORMACIÓN
@@ -970,22 +987,59 @@ async function main() {
         "Identificación de causas de deserción y estrategias de retención escolar en zonas rurales.",
     ];
 
+    const ciudadesDepartamentos = [
+        { ciudad: "Popayán", departamento: "Cauca" },
+        { ciudad: "Cali", departamento: "Valle del Cauca" },
+        { ciudad: "Bogotá", departamento: "Cundinamarca" },
+        { ciudad: "Medellín", departamento: "Antioquia" },
+        { ciudad: "Pasto", departamento: "Nariño" },
+    ];
+    const semestres = ["2024-1", "2024-2", "2025-1", "2025-2"];
+    const duraciones = ["3 meses", "6 meses", "9 meses", "12 meses"];
+    const metodologias = [
+        "Investigación acción participativa con enfoque comunitario, talleres grupales y seguimiento individualizado.",
+        "Metodología mixta: diagnóstico cuantitativo inicial, intervención cualitativa y evaluación de impacto final.",
+        "Aprendizaje basado en proyectos con acompañamiento técnico y validación con la comunidad beneficiaria.",
+        "Enfoque de marco lógico: diagnóstico, planificación, ejecución, monitoreo y evaluación participativa.",
+    ];
+
     const proyeccionesSociales = [];
-    const docentesParaSocial = profesores.slice(0, 20); // Usar los primeros 20 docentes
-    const estudiantesParaSocial = estudiantes.slice(0, 60); // Usar los primeros 60 estudiantes
+    const docentesParaSocial = profesores.slice(0, 20);
+    const estudiantesParaSocial = estudiantes.slice(0, 60);
 
     for (let i = 0; i < 20; i++) {
+        const ubicacion = ciudadesDepartamentos[i % ciudadesDepartamentos.length];
+        const programa = programas[i % programas.length];
+        const facultadId = programaToFacultad[programa.id_programa] || facultades[0].id_facultad;
+
         const proyecto = await prisma.proyecto_proyeccion_social.create({
             data: {
-                nombre: nombresproyeccionSocial[i],
+                titulo: nombresproyeccionSocial[i],
                 descripcion: descripcionesSociales[i],
                 id_persona_registra: docentesParaSocial[i].id_persona,
-                personas_impactadas: Math.floor(Math.random() * 450) + 50, // Entre 50 y 500 personas impactadas
-                estado: i % 3 === 0 ? "Finalizado" : "En proceso", // Mezclar estados para métricas
+                personas_impactadas: Math.floor(Math.random() * 450) + 50,
+                estado: i % 3 === 0 ? "Finalizado" : "En proceso",
+                // Nuevos campos de la Ficha Técnica
+                id_programa: programa.id_programa,
+                id_facultad: facultadId,
+                id_asesor: docentesParaSocial[i].id_persona,
+                semestre: semestres[i % semestres.length],
+                ciudad: ubicacion.ciudad,
+                departamento: ubicacion.departamento,
+                duracion: duraciones[i % duraciones.length],
+                palabras_clave: `proyección social, ${nombresproyeccionSocial[i].toLowerCase().split(" ").slice(0, 3).join(", ")}`,
+                identificacion_problematica: `La comunidad presenta necesidades en el área de ${nombresproyeccionSocial[i].toLowerCase()}, afectando la calidad de vida de la población vulnerable.`,
+                propuesta_solucion: descripcionesSociales[i],
+                objetivo_general: `Contribuir al mejoramiento de las condiciones de vida de la comunidad mediante ${nombresproyeccionSocial[i].toLowerCase()}.`,
+                objetivos_especificos: `1. Diagnosticar las necesidades de la población objetivo.\n2. Diseñar estrategias de intervención participativa.\n3. Ejecutar actividades con la comunidad.\n4. Evaluar el impacto de las acciones realizadas.`,
+                resultados_esperados: `Mínimo ${Math.floor(Math.random() * 100) + 50} personas beneficiadas directamente, documentación del proceso y transferencia de conocimiento a la comunidad.`,
+                metodologia: metodologias[i % metodologias.length],
+                bibliografia: `DANE (2023). Estadísticas sociales. MEN (2024). Lineamientos de proyección social. UniMayor (2024). Manual de proyección social institucional.`,
+                total_presupuesto: new Prisma.Decimal((Math.floor(Math.random() * 15000000) + 5000000).toString()),
             },
         });
 
-        // Agregar 2-3 estudiantes al proyecto
+        // Integrantes: 2-3 estudiantes + 1 docente
         const numEstudiantes = i % 3 === 0 ? 3 : 2;
         const baseIdx = i * 3;
         for (let j = 0; j < numEstudiantes; j++) {
@@ -1000,8 +1054,6 @@ async function main() {
                 });
             }
         }
-
-        // Agregar 1 docente al proyecto
         await prisma.integrante_proyecto_social.create({
             data: {
                 id_proyecto_social: proyecto.id_proyecto_social,
@@ -1010,10 +1062,104 @@ async function main() {
             },
         });
 
+        // Líneas de acción (1-2 por proyecto)
+        const numLineas = (i % 2) + 1;
+        for (let j = 0; j < numLineas; j++) {
+            await prisma.linea_accion_proyeccion_social.create({
+                data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    id_linea_accion: lineasAccion[(i + j) % lineasAccion.length].id_linea_accion,
+                },
+            });
+        }
+
+        // Proponentes (el docente registrante + primer estudiante)
+        await prisma.proponente_proyeccion_social.create({
+            data: {
+                id_proyecto_social: proyecto.id_proyecto_social,
+                id_persona: docentesParaSocial[i].id_persona,
+            },
+        });
+        if (baseIdx < estudiantesParaSocial.length) {
+            await prisma.proponente_proyeccion_social.create({
+                data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    id_persona: estudiantesParaSocial[baseIdx].id_persona,
+                },
+            });
+        }
+
+        // Plan de acción (2-3 items por proyecto)
+        const planItems = [
+            { objetivo: "Diagnóstico comunitario", actividad: "Encuestas, entrevistas y talleres de diagnóstico participativo", meta: "Informe diagnóstico completo", indicador: "Número de participantes / cobertura del diagnóstico" },
+            { objetivo: "Diseño de la intervención", actividad: "Revisión bibliográfica, diseño metodológico y validación con la comunidad", meta: "Plan de intervención aprobado", indicador: "Documento aprobado por comité" },
+            { objetivo: "Ejecución de actividades", actividad: "Talleres, capacitaciones, jornadas de campo y acompañamiento", meta: "80% de actividades ejecutadas", indicador: "Actividades ejecutadas / actividades planeadas" },
+            { objetivo: "Evaluación de impacto", actividad: "Aplicación de instrumentos de evaluación pre y post intervención", meta: "Informe de evaluación final", indicador: "Variación en indicadores de línea base" },
+        ];
+        const numPlanes = (i % 2) + 2; // 2 o 3
+        for (let j = 0; j < numPlanes; j++) {
+            const plan = planItems[j % planItems.length];
+            await prisma.plan_accion_proyecto.create({
+                data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    objetivo_especifico: plan.objetivo,
+                    actividades: plan.actividad,
+                    duracion: `${(j + 1) * 2} semanas`,
+                    responsables: `${docentesParaSocial[i].nombres} ${docentesParaSocial[i].apellidos}`,
+                    meta: plan.meta,
+                    indicador: plan.indicador,
+                },
+            });
+        }
+
+        // Presupuesto equipo humano (2-3 personas)
+        const cargos = [
+            { cargo: "Coordinador del proyecto", funcion: "Liderar y coordinar todas las actividades del proyecto", tipo: "Docente de planta", salario: 3500000 },
+            { cargo: "Profesional de apoyo", funcion: "Ejecutar actividades de campo y acompañamiento comunitario", tipo: "Contratista", salario: 2200000 },
+            { cargo: "Auxiliar administrativo", funcion: "Gestión documental, logística y soporte operativo", tipo: "Estudiante practicante", salario: 800000 },
+        ];
+        const numEquipo = (i % 2) + 2; // 2 o 3
+        for (let j = 0; j < numEquipo; j++) {
+            const c = cargos[j % cargos.length];
+            await prisma.presupuesto_equipo_humano.create({
+                data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    nombre: `${getRandomName()} ${getRandomLastName()}`,
+                    cargo: c.cargo,
+                    funcion: c.funcion,
+                    tipo_vinculacion: c.tipo,
+                    salario: c.salario,
+                    total: c.salario * 6, // 6 meses
+                },
+            });
+        }
+
+        // Presupuesto recursos (3-4 items)
+        const recursos = [
+            { tipo: "Materiales", descripcion: "Papelería, insumos de oficina y material didáctico", unitario: 25000, cantidad: 20 },
+            { tipo: "Transporte", descripcion: "Desplazamientos a zona de intervención", unitario: 45000, cantidad: 15 },
+            { tipo: "Equipos", descripcion: "Alquiler de equipos audiovisuales y de cómputo", unitario: 150000, cantidad: 4 },
+            { tipo: "Alimentación", descripcion: "Refrigerios para talleres y jornadas comunitarias", unitario: 8000, cantidad: 50 },
+        ];
+        const numRecursos = (i % 2) + 3; // 3 o 4
+        for (let j = 0; j < numRecursos; j++) {
+            const r = recursos[j % recursos.length];
+            await prisma.presupuesto_recursos.create({
+                data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    tipo_recurso: r.tipo,
+                    descripcion_equipo: r.descripcion,
+                    valor_unitario: r.unitario,
+                    cantidad: r.cantidad,
+                    valor_total: r.unitario * r.cantidad,
+                },
+            });
+        }
+
         proyeccionesSociales.push(proyecto);
     }
 
-    console.log(`✓ ${proyeccionesSociales.length} proyectos de proyección social creados`);
+    console.log(`✓ ${proyeccionesSociales.length} proyectos de proyección social creados (con líneas de acción, proponentes, plan de acción y presupuestos)`);
 
     console.log("Seed completado exitosamente!");
     console.log(`
@@ -1034,7 +1180,9 @@ Resumen de datos creados:
 - ${actores.length} asignaciones de actores
 - 100+ seguimientos registrados
 - ${eventos.length} eventos creados
-- ${proyeccionesSociales.length} proyectos de proyección social
+- ${lineasAccion.length} líneas de acción (catálogo)
+- ${proyeccionesSociales.length} proyectos de proyección social (con ficha técnica completa)
+  → cada proyecto incluye: líneas de acción, proponentes, plan de acción, presupuesto equipo humano y presupuesto recursos
 
 AUTENTICACIÓN:
 - ${personas.filter((p) => p.password && p.confirmed).length} usuarios con acceso (password: Password123!)
