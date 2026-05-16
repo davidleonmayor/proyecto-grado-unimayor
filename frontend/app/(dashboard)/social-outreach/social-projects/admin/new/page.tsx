@@ -5,6 +5,7 @@ import { useNewProject } from "@/modules/social-outreach/hooks/useNewProject";
 import SectionHeader from "@/modules/social-outreach/components/SectionHeader";
 import PersonSelector from "@/modules/social-outreach/components/PersonSelector";
 import CheckboxGroup from "@/modules/social-outreach/components/CheckboxGroup";
+import TextAreaField from "@/modules/social-outreach/components/TextAreaField";
 
 const NewProjectPageContent = () => {
   const {
@@ -49,6 +50,24 @@ const NewProjectPageContent = () => {
     proponenteIds,
     setProponenteIds,
     proponentesCandidatos,
+    resumen,
+    setResumen,
+    palabrasClave,
+    setPalabrasClave,
+    identificacionProblematica,
+    setIdentificacionProblematica,
+    propuestaSolucion,
+    setPropuestaSolucion,
+    caracterizacionPoblacion,
+    setCaracterizacionPoblacion,
+    objetivos,
+    setObjetivos,
+    resultadosEsperados,
+    setResultadosEsperados,
+    metodologia,
+    setMetodologia,
+    bibliografia,
+    setBibliografia,
     handleSubmit,
     router,
   } = useNewProject();
@@ -287,6 +306,96 @@ const NewProjectPageContent = () => {
                 </div>
               )}
             </div>
+
+            <TextAreaField
+              label="Resumen"
+              value={resumen}
+              onChange={setResumen}
+              maxLength={200}
+              rows={3}
+              placeholder="Describa brevemente el propósito y alcance del proyecto..."
+              description="Síntesis del proyecto en máximo 200 caracteres."
+            />
+
+            <TextAreaField
+              label="Palabras clave"
+              value={palabrasClave}
+              onChange={setPalabrasClave}
+              maxLength={100}
+              rows={2}
+              placeholder="Ej: medio ambiente, reciclaje, educación ambiental"
+              description="Términos clave separados por comas."
+            />
+
+            <TextAreaField
+              label="Identificación de la problemática"
+              value={identificacionProblematica}
+              onChange={setIdentificacionProblematica}
+              maxLength={1000}
+              rows={5}
+              placeholder="Describa la problemática que aborda el proyecto..."
+              description="Contexto y justificación del problema identificado."
+            />
+
+            <TextAreaField
+              label="Propuesta de solución"
+              value={propuestaSolucion}
+              onChange={setPropuestaSolucion}
+              maxLength={700}
+              rows={4}
+              placeholder="Describa la propuesta para atender la problemática..."
+              description="Cómo el proyecto aborda el problema identificado."
+            />
+
+            <TextAreaField
+              label="Caracterización de la población beneficiaria"
+              value={caracterizacionPoblacion}
+              onChange={setCaracterizacionPoblacion}
+              maxLength={900}
+              rows={4}
+              placeholder="Describa la población a la que va dirigido el proyecto..."
+              description="Perfil demográfico y social de los beneficiarios."
+            />
+
+            <TextAreaField
+              label="Objetivos"
+              value={objetivos}
+              onChange={setObjetivos}
+              maxLength={900}
+              rows={5}
+              placeholder="Objetivo general y específicos del proyecto..."
+              description="Incluya el objetivo general y los objetivos específicos."
+            />
+
+            <TextAreaField
+              label="Resultados esperados"
+              value={resultadosEsperados}
+              onChange={setResultadosEsperados}
+              maxLength={700}
+              rows={4}
+              placeholder="Describa los resultados que se esperan alcanzar..."
+              description="Productos, cambios o beneficios esperados."
+            />
+
+            <TextAreaField
+              label="Metodología"
+              value={metodologia}
+              onChange={setMetodologia}
+              maxLength={1000}
+              rows={5}
+              placeholder="Describa el enfoque metodológico y las actividades..."
+              description="Enfoque, técnicas y estrategias de intervención."
+            />
+
+            <TextAreaField
+              label="Bibliografía"
+              value={bibliografia}
+              onChange={setBibliografia}
+              maxLength={600}
+              rows={3}
+              placeholder="Referencias bibliográficas de soporte..."
+              description="Fuentes consultadas en formato libre."
+            />
 
             {/* Personas Impactadas */}
             <div>

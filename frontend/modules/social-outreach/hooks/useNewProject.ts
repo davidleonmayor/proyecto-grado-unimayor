@@ -50,6 +50,17 @@ export function useNewProject() {
   const [semestre, setSemestre] = useState("");
   const [personasImpactadas] = useState<number>(0);
 
+  // --- Campos de texto de la Ficha Técnica ---
+  const [resumen, setResumen] = useState("");
+  const [palabrasClave, setPalabrasClave] = useState("");
+  const [identificacionProblematica, setIdentificacionProblematica] = useState("");
+  const [propuestaSolucion, setPropuestaSolucion] = useState("");
+  const [caracterizacionPoblacion, setCaracterizacionPoblacion] = useState("");
+  const [objetivos, setObjetivos] = useState("");
+  const [resultadosEsperados, setResultadosEsperados] = useState("");
+  const [metodologia, setMetodologia] = useState("");
+  const [bibliografia, setBibliografia] = useState("");
+
   // --- Catálogos ---
   const [facultades, setFacultades] = useState<Facultad[]>([]);
   const [programas, setProgramas] = useState<Programa[]>([]);
@@ -271,6 +282,15 @@ export function useNewProject() {
         id_programa: idPrograma || null,
         id_asesor: idAsesor,
         proponentes: proponenteIds.length > 0 ? proponenteIds : undefined,
+        resumen: resumen || null,
+        palabras_clave: palabrasClave || null,
+        identificacion_problematica: identificacionProblematica || null,
+        propuesta_solucion: propuestaSolucion || null,
+        caracterizacion_poblacion: caracterizacionPoblacion || null,
+        objetivos: objetivos || null,
+        resultados_esperados: resultadosEsperados || null,
+        metodologia: metodologia || null,
+        bibliografia: bibliografia || null,
       });
 
       await Swal.fire("¡Éxito!", "Proyecto de proyección social creado exitosamente", "success");
@@ -320,6 +340,16 @@ export function useNewProject() {
     // Proponentes
     proponenteIds, setProponenteIds,
     proponentesCandidatos,
+    // Ficha técnica text fields
+    resumen, setResumen,
+    palabrasClave, setPalabrasClave,
+    identificacionProblematica, setIdentificacionProblematica,
+    propuestaSolucion, setPropuestaSolucion,
+    caracterizacionPoblacion, setCaracterizacionPoblacion,
+    objetivos, setObjetivos,
+    resultadosEsperados, setResultadosEsperados,
+    metodologia, setMetodologia,
+    bibliografia, setBibliografia,
     // Actions
     handleSubmit,
     router,
