@@ -10,6 +10,7 @@ import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
 import { dashboardService } from "@/modules/dashboard/services/dashboard.service";
 import DashboardFilters from "@/modules/social-outreach/components/DashboardFilters";
 import type { DashboardFilterValues } from "@/modules/social-outreach/components/DashboardFilters";
+import ProjectSummaryCard from "@/modules/social-outreach/components/ProjectSummaryCard";
 
 function SocialOutreachDashboard() {
   const [stats, setStats] = useState<any>(null);
@@ -105,6 +106,19 @@ function SocialOutreachDashboard() {
                 href="/social-outreach/social-projects"
               />
             </div>
+            {/* FILTERED PROJECTS */}
+            {socialStats?.proyectos && socialStats.proyectos.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h3 className="text-base font-semibold text-gray-800 mb-4">
+                  Proyectos ({socialStats.proyectos.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {socialStats.proyectos.map((project: any) => (
+                    <ProjectSummaryCard key={project.id_proyecto_social} project={project} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           {/* RIGHT */}
           <div className="w-full lg:w-1/3 flex flex-col gap-8">

@@ -24,6 +24,15 @@ export interface SocialProjectionDashboardStats {
         porcentajeSinEntregar: number;
     };
     monthlyFinalized?: Array<{ name: string; finalizados: number }>;
+    proyectos?: Array<{
+        id_proyecto_social: string;
+        titulo: string;
+        descripcion?: string | null;
+        estado: string;
+        fecha_de_presentacion: string;
+        fecha_finalizacion?: string | null;
+        personas_impactadas: number;
+    }>;
 }
 
 export class DashboardService extends BaseApiClient {
