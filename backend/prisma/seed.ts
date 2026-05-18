@@ -896,11 +896,11 @@ async function main() {
 
     const actores = await Promise.all(actoresPromises);
 
-    // 14. SEGUIMIENTOS (100+)
+    // 14. SEGUIMIENTOS (100+) — batched to avoid connection pool exhaustion
     console.log("Creando seguimientos (100+)...");
-    const seguimientosPromises: Promise<Awaited<ReturnType<typeof prisma.seguimiento_tg.create>>>[] = [];
     const tiposAccion = ["Registro", "Revisión", "Asignación jurado", "Sustentación", "Aprobación", "Entrega versión final"];
 
+    const seguimientosData = [];
     for (let i = 0; i < 100; i++) {
         const trabajo = trabajos[Math.floor(Math.random() * trabajos.length)];
         const actoresTrabajo = actores.filter(a => a.id_trabajo_grado === trabajo.id_trabajo_grado);
@@ -916,23 +916,24 @@ async function main() {
         const fechaSeguimiento = new Date(trabajo.fecha_inicio);
         fechaSeguimiento.setDate(fechaSeguimiento.getDate() + Math.floor(Math.random() * 180));
 
-        seguimientosPromises.push(
-            prisma.seguimiento_tg.create({
-                data: {
-                    id_trabajo_grado: trabajo.id_trabajo_grado,
-                    id_actor: actor.id_actor,
-                    id_accion: accion.id_accion,
-                    resumen: `Seguimiento ${i + 1}: ${accionNombre.toLowerCase()} del proyecto "${trabajo.titulo_trabajo.substring(0, 50)}..."`,
-                    id_estado_anterior: estadoAnterior,
-                    id_estado_nuevo: estadoNuevo,
-                    numero_oficio: `OF-2024-${String(i + 1).padStart(3, '0')}`,
-                    fecha_oficio: fechaSeguimiento,
-                    numero_resolucion: Math.random() > 0.5 ? `RES-2024-${String(i + 1).padStart(4, '0')}` : null,
-                },
-            })
+        seguimientosData.push({
+            id_trabajo_grado: trabajo.id_trabajo_grado,
+            id_actor: actor.id_actor,
+            id_accion: accion.id_accion,
+            resumen: `Seguimiento ${i + 1}: ${accionNombre.toLowerCase()} del proyecto "${trabajo.titulo_trabajo.substring(0, 50)}..."`,
+            id_estado_anterior: estadoAnterior,
+            id_estado_nuevo: estadoNuevo,
+            numero_oficio: `OF-2024-${String(i + 1).padStart(3, '0')}`,
+            fecha_oficio: fechaSeguimiento,
+            numero_resolucion: Math.random() > 0.5 ? `RES-2024-${String(i + 1).padStart(4, '0')}` : null,
+        });
+    }
+    // Insert in batches of 10 to stay within connection pool limits
+    for (let i = 0; i < seguimientosData.length; i += 10) {
+        await Promise.all(
+            seguimientosData.slice(i, i + 10).map(data => prisma.seguimiento_tg.create({ data }))
         );
     }
-    await Promise.all(seguimientosPromises);
 
     // 15. EVENTOS (Deshabilitado: no se crean eventos de prueba para evitar que salgan en los correos)
     console.log("Omitiendo la creación de eventos de prueba para evitar contaminación en correos...");
