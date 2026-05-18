@@ -39,8 +39,11 @@ class CatalogService extends BaseApiClient {
     });
   }
 
-  async getEstudiantes(idFacultad?: string): Promise<Estudiante[]> {
-    const qs = idFacultad ? `?id_facultad=${encodeURIComponent(idFacultad)}` : "";
+  async getEstudiantes(idFacultad?: string, idPrograma?: string): Promise<Estudiante[]> {
+    const params = new URLSearchParams();
+    if (idFacultad) params.set("id_facultad", idFacultad);
+    if (idPrograma) params.set("id_programa", idPrograma);
+    const qs = params.toString() ? `?${params.toString()}` : "";
     return this.request<Estudiante[]>(`/api/catalog/estudiantes${qs}`, {
       requiresAuth: true,
     });

@@ -14,7 +14,6 @@ const NewProjectPageContent = () => {
   const {
     isLoading,
     isSaving,
-    currentUser,
     openSections,
     toggleSection,
     titulo,
@@ -33,6 +32,7 @@ const NewProjectPageContent = () => {
     setIdAsesor,
     asesorSearch,
     setAsesorSearch,
+    allDocentes,
     filteredDocentes,
     personasImpactadas,
     fechaPresentacion,
@@ -42,21 +42,12 @@ const NewProjectPageContent = () => {
     facultades,
     programas,
     lineasAccion,
-    assignedStudents,
-    filteredAvailableStudents,
-    studentSearch,
-    setStudentSearch,
-    addStudent,
-    removeStudent,
-    assignedAdvisors,
-    filteredAvailableAdvisors,
-    advisorSearch,
-    setAdvisorSearch,
-    addAdvisor,
-    removeAdvisor,
-    proponenteIds,
-    setProponenteIds,
-    proponentesCandidatos,
+    assignedProponentes,
+    filteredAvailableProponentes,
+    proponenteSearch,
+    setProponenteSearch,
+    addProponente,
+    removeProponente,
     resumen,
     setResumen,
     palabrasClave,
@@ -174,30 +165,6 @@ const NewProjectPageContent = () => {
               </select>
             </div>
 
-            {/* Proponentes (estudiantes de la facultad seleccionada) */}
-            <div>
-              <CheckboxGroup
-                label="Proponentes"
-                description={
-                  idFacultad
-                    ? "Selecciona los estudiantes que serán proponentes del proyecto."
-                    : "Selecciona una facultad para ver los estudiantes disponibles como proponentes."
-                }
-                items={proponentesCandidatos.map((p) => ({
-                  id: p.id,
-                  label: p.name,
-                  sublabel: p.email,
-                }))}
-                selectedIds={proponenteIds}
-                onChange={setProponenteIds}
-                emptyMessage={
-                  idFacultad
-                    ? "No se encontraron estudiantes en esta facultad."
-                    : "Selecciona una facultad primero."
-                }
-              />
-            </div>
-
             {/* Programa */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -221,6 +188,30 @@ const NewProjectPageContent = () => {
                 ))}
               </select>
             </div>
+
+            {/* Proponentes (estudiantes de la facultad y programa seleccionados) */}
+            {idFacultad && idPrograma ? (
+              <PersonSelector
+                label="Proponentes * (Selecciona 1 o más estudiantes)"
+                assigned={assignedProponentes}
+                available={filteredAvailableProponentes}
+                search={proponenteSearch}
+                onSearchChange={setProponenteSearch}
+                onAdd={addProponente}
+                onRemove={removeProponente}
+              />
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Proponentes *
+                </label>
+                <p className="text-xs text-gray-500">
+                  {!idFacultad
+                    ? "Selecciona una facultad y un programa académico para ver los estudiantes disponibles."
+                    : "Selecciona un programa académico para ver los estudiantes disponibles."}
+                </p>
+              </div>
+            )}
 
             {/* Semestre */}
             <div>
@@ -274,14 +265,11 @@ const NewProjectPageContent = () => {
                 <div className="flex items-center justify-between p-3 mb-2 rounded-lg bg-blue-50 border border-blue-200">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-900">
-                      {filteredDocentes.find((d) => d.id === idAsesor)?.name ||
-                        [...(assignedAdvisors || [])].find(
-                          (a) => a.id === idAsesor,
-                        )?.name ||
+                      {allDocentes.find((d) => d.id === idAsesor)?.name ||
                         "Asesor seleccionado"}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {filteredDocentes.find((d) => d.id === idAsesor)?.email ||
+                      {allDocentes.find((d) => d.id === idAsesor)?.email ||
                         ""}
                     </div>
                   </div>
@@ -456,28 +444,6 @@ const NewProjectPageContent = () => {
               />
             </div>
 
-            {/* Estudiantes */}
-            <PersonSelector
-              label="Estudiantes * (Selecciona 1 o más)"
-              assigned={assignedStudents}
-              available={filteredAvailableStudents}
-              search={studentSearch}
-              onSearchChange={setStudentSearch}
-              onAdd={addStudent}
-              onRemove={removeStudent}
-            />
-
-            {/* Docentes */}
-            <PersonSelector
-              label="Docentes * (Selecciona 1 o más)"
-              assigned={assignedAdvisors}
-              available={filteredAvailableAdvisors}
-              search={advisorSearch}
-              onSearchChange={setAdvisorSearch}
-              onAdd={addAdvisor}
-              onRemove={removeAdvisor}
-              protectedIds={currentUser ? [currentUser.id] : []}
-            />
           </div>
         )}
 

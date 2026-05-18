@@ -6,13 +6,11 @@ import Swal from "sweetalert2";
 
 import { socialProjectsService } from "@/modules/social-outreach/services/social-projects.service";
 import { projectsService } from "@/modules/projects/services/projects.service";
-import { authService } from "@/modules/auth/services/auth.service";
 import {
   catalogService,
   type Facultad,
   type Programa,
   type LineaAccion,
-  type Estudiante,
 } from "@/modules/social-outreach/services/catalog.service";
 import type { Person } from "@/modules/social-outreach/components/PersonSelector";
 import type { PlanAccionItem } from "@/modules/social-outreach/components/PlanAccionSection";
@@ -33,7 +31,6 @@ export function useNewProject() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [currentUser, setCurrentUser] = useState<Person | null>(null);
 
   // Collapsible sections
   const [openSections, setOpenSections] = useState({
@@ -80,25 +77,17 @@ export function useNewProject() {
   const [programas, setProgramas] = useState<Programa[]>([]);
   const [lineasAccion, setLineasAccion] = useState<LineaAccion[]>([]);
 
-  // --- Personas ---
-  const [assignedStudents, setAssignedStudents] = useState<Person[]>([]);
-  const [availableStudents, setAvailableStudents] = useState<Person[]>([]);
-  const [filteredAvailableStudents, setFilteredAvailableStudents] = useState<Person[]>([]);
-  const [assignedAdvisors, setAssignedAdvisors] = useState<Person[]>([]);
-  const [availableAdvisors, setAvailableAdvisors] = useState<Person[]>([]);
-  const [filteredAvailableAdvisors, setFilteredAvailableAdvisors] = useState<Person[]>([]);
-  const [studentSearch, setStudentSearch] = useState("");
-  const [advisorSearch, setAdvisorSearch] = useState("");
+  // --- Proponentes (estudiantes de la facultad seleccionada) ---
+  const [assignedProponentes, setAssignedProponentes] = useState<Person[]>([]);
+  const [availableProponentes, setAvailableProponentes] = useState<Person[]>([]);
+  const [filteredAvailableProponentes, setFilteredAvailableProponentes] = useState<Person[]>([]);
+  const [proponenteSearch, setProponenteSearch] = useState("");
 
   // --- Asesor (docente asesor del proyecto) ---
   const [idAsesor, setIdAsesor] = useState<string | null>(null);
   const [asesorSearch, setAsesorSearch] = useState("");
   const [allDocentes, setAllDocentes] = useState<Person[]>([]);
   const [filteredDocentes, setFilteredDocentes] = useState<Person[]>([]);
-
-  // --- Proponentes ---
-  const [proponenteIds, setProponenteIds] = useState<string[]>([]);
-  const [proponentesCandidatos, setProponentesCandidatos] = useState<Estudiante[]>([]);
 
   // --- Data loading ---
   useEffect(() => {
@@ -107,37 +96,13 @@ export function useNewProject() {
 
   const loadInitialData = async () => {
     try {
-      const [studentsData, advisorsData, userData, facultadesData, lineasData] =
+      const [advisorsData, facultadesData, lineasData] =
         await Promise.all([
-          projectsService.getAvailableStudents(),
           projectsService.getAvailableAdvisors(),
-          authService.getCurrentUser(),
           catalogService.getFacultades(),
           catalogService.getLineasAccion(),
         ]);
 
-      let initialAssignedAdvisors: Person[] = [];
-      let initialAvailableAdvisors = advisorsData as Person[];
-
-      if (userData) {
-        const mappedUser: Person = {
-          id: userData.id_persona,
-          name: `${userData.nombres} ${userData.apellidos}`,
-          email: userData.correo_electronico,
-          document: userData.num_doc_identidad,
-        };
-        setCurrentUser(mappedUser);
-
-        const fromList = advisorsData.find((a: Person) => a.id === mappedUser.id);
-        initialAssignedAdvisors = [fromList ?? mappedUser];
-        initialAvailableAdvisors = advisorsData.filter((a: Person) => a.id !== mappedUser.id);
-      }
-
-      setAvailableStudents(studentsData);
-      setFilteredAvailableStudents(studentsData);
-      setAssignedAdvisors(initialAssignedAdvisors);
-      setAvailableAdvisors(initialAvailableAdvisors);
-      setFilteredAvailableAdvisors(initialAvailableAdvisors);
       setAllDocentes(advisorsData as Person[]);
       setFilteredDocentes(advisorsData as Person[]);
       setFacultades(facultadesData);
@@ -172,51 +137,53 @@ export function useNewProject() {
     return () => { cancelled = true; };
   }, [idFacultad]);
 
-  // Carga estudiantes candidatos a proponentes cuando cambia la facultad
+  // Carga estudiantes candidatos a proponentes cuando cambia la facultad o programa
   useEffect(() => {
-    if (!idFacultad) {
-      setProponentesCandidatos([]);
-      setProponenteIds([]);
+    if (!idFacultad || !idPrograma) {
+      setAvailableProponentes([]);
+      setFilteredAvailableProponentes([]);
+      setAssignedProponentes([]);
+      setProponenteSearch("");
       return;
     }
     let cancelled = false;
     catalogService
-      .getEstudiantes(idFacultad)
+      .getEstudiantes(idFacultad, idPrograma)
       .then((data) => {
         if (cancelled) return;
-        setProponentesCandidatos(data);
+        const mapped: Person[] = data.map((e) => ({
+          id: e.id,
+          name: e.name,
+          email: e.email,
+          document: e.document,
+        }));
+        setAvailableProponentes(mapped);
+        setFilteredAvailableProponentes(mapped);
+        setAssignedProponentes([]);
+        setProponenteSearch("");
       })
       .catch(() => {
-        if (!cancelled) setProponentesCandidatos([]);
+        if (!cancelled) {
+          setAvailableProponentes([]);
+          setFilteredAvailableProponentes([]);
+        }
       });
     return () => { cancelled = true; };
-  }, [idFacultad]);
+  }, [idFacultad, idPrograma]);
 
-  // --- Filtros de búsqueda ---
-  const filterStudents = useCallback(
+  // --- Filtro de búsqueda de proponentes ---
+  const filterProponentes = useCallback(
     (searchTerm: string) => {
       if (!searchTerm.trim()) {
-        setFilteredAvailableStudents(availableStudents);
+        setFilteredAvailableProponentes(availableProponentes);
         return;
       }
-      setFilteredAvailableStudents(availableStudents.filter((s) => matchesSearch(s, searchTerm)));
+      setFilteredAvailableProponentes(availableProponentes.filter((p) => matchesSearch(p, searchTerm)));
     },
-    [availableStudents],
+    [availableProponentes],
   );
 
-  const filterAdvisors = useCallback(
-    (searchTerm: string) => {
-      if (!searchTerm.trim()) {
-        setFilteredAvailableAdvisors(availableAdvisors);
-        return;
-      }
-      setFilteredAvailableAdvisors(availableAdvisors.filter((a) => matchesSearch(a, searchTerm)));
-    },
-    [availableAdvisors],
-  );
-
-  useEffect(() => { filterStudents(studentSearch); }, [studentSearch, filterStudents]);
-  useEffect(() => { filterAdvisors(advisorSearch); }, [advisorSearch, filterAdvisors]);
+  useEffect(() => { filterProponentes(proponenteSearch); }, [proponenteSearch, filterProponentes]);
 
   useEffect(() => {
     if (!asesorSearch.trim()) {
@@ -226,43 +193,22 @@ export function useNewProject() {
     setFilteredDocentes(allDocentes.filter((d) => matchesSearch(d, asesorSearch)));
   }, [asesorSearch, allDocentes]);
 
-  // --- Handlers de personas ---
-  const addStudent = (student: Person) => {
-    setAssignedStudents([...assignedStudents, student]);
-    const newAvailable = availableStudents.filter((s) => s.id !== student.id);
-    setAvailableStudents(newAvailable);
-    setFilteredAvailableStudents(
-      studentSearch.trim() ? newAvailable.filter((s) => matchesSearch(s, studentSearch)) : newAvailable,
+  // --- Handlers de proponentes ---
+  const addProponente = (person: Person) => {
+    setAssignedProponentes((prev) => [...prev, person]);
+    const newAvailable = availableProponentes.filter((p) => p.id !== person.id);
+    setAvailableProponentes(newAvailable);
+    setFilteredAvailableProponentes(
+      proponenteSearch.trim() ? newAvailable.filter((p) => matchesSearch(p, proponenteSearch)) : newAvailable,
     );
   };
 
-  const removeStudent = (student: Person) => {
-    setProponenteIds((prev) => prev.filter((id) => id !== student.id));
-    setAssignedStudents(assignedStudents.filter((s) => s.id !== student.id));
-    const newAvailable = [...availableStudents, student];
-    setAvailableStudents(newAvailable);
-    setFilteredAvailableStudents(
-      studentSearch.trim() ? newAvailable.filter((s) => matchesSearch(s, studentSearch)) : newAvailable,
-    );
-  };
-
-  const addAdvisor = (advisor: Person) => {
-    setAssignedAdvisors([...assignedAdvisors, advisor]);
-    const newAvailable = availableAdvisors.filter((a) => a.id !== advisor.id);
-    setAvailableAdvisors(newAvailable);
-    setFilteredAvailableAdvisors(
-      advisorSearch.trim() ? newAvailable.filter((a) => matchesSearch(a, advisorSearch)) : newAvailable,
-    );
-  };
-
-  const removeAdvisor = (advisor: Person) => {
-    if (currentUser && advisor.id === currentUser.id) return;
-    setProponenteIds((prev) => prev.filter((id) => id !== advisor.id));
-    setAssignedAdvisors(assignedAdvisors.filter((a) => a.id !== advisor.id));
-    const newAvailable = [...availableAdvisors, advisor];
-    setAvailableAdvisors(newAvailable);
-    setFilteredAvailableAdvisors(
-      advisorSearch.trim() ? newAvailable.filter((a) => matchesSearch(a, advisorSearch)) : newAvailable,
+  const removeProponente = (person: Person) => {
+    setAssignedProponentes((prev) => prev.filter((p) => p.id !== person.id));
+    const newAvailable = [...availableProponentes, person];
+    setAvailableProponentes(newAvailable);
+    setFilteredAvailableProponentes(
+      proponenteSearch.trim() ? newAvailable.filter((p) => matchesSearch(p, proponenteSearch)) : newAvailable,
     );
   };
 
@@ -274,12 +220,8 @@ export function useNewProject() {
       Swal.fire("Error", "El título es obligatorio", "error");
       return;
     }
-    if (assignedStudents.length < 1) {
-      Swal.fire("Error", "Debe seleccionar al menos 1 estudiante", "error");
-      return;
-    }
-    if (assignedAdvisors.length < 1) {
-      Swal.fire("Error", "Debe seleccionar al menos 1 docente", "error");
+    if (assignedProponentes.length < 1) {
+      Swal.fire("Error", "Debe seleccionar al menos 1 proponente", "error");
       return;
     }
     if (fechaFinalizacion && fechaPresentacion && fechaFinalizacion < fechaPresentacion) {
@@ -293,15 +235,15 @@ export function useNewProject() {
         titulo,
         descripcion: descripcion || null,
         personas_impactadas: personasImpactadas,
-        estudiantes: assignedStudents.map((s) => s.id),
-        docentes: assignedAdvisors.map((a) => a.id),
+        estudiantes: assignedProponentes.map((p) => p.id),
+        docentes: idAsesor ? [idAsesor] : [],
         lineas_accion: lineasAccionIds,
         semestre: semestre || null,
         id_programa: idPrograma || null,
         fecha_de_presentacion: fechaPresentacion || undefined,
         fecha_finalizacion: fechaFinalizacion || null,
         id_asesor: idAsesor,
-        proponentes: proponenteIds.length > 0 ? proponenteIds : undefined,
+        proponentes: assignedProponentes.map((p) => p.id),
         resumen: resumen || null,
         palabras_clave: palabrasClave || null,
         identificacion_problematica: identificacionProblematica || null,
@@ -344,7 +286,6 @@ export function useNewProject() {
     // State
     isLoading,
     isSaving,
-    currentUser,
     openSections,
     toggleSection,
     // General info
@@ -361,25 +302,17 @@ export function useNewProject() {
     facultades,
     programas,
     lineasAccion,
-    // Students
-    assignedStudents,
-    filteredAvailableStudents,
-    studentSearch, setStudentSearch,
-    addStudent,
-    removeStudent,
-    // Advisors
-    assignedAdvisors,
-    filteredAvailableAdvisors,
-    advisorSearch, setAdvisorSearch,
-    addAdvisor,
-    removeAdvisor,
     // Asesor
     idAsesor, setIdAsesor,
     asesorSearch, setAsesorSearch,
+    allDocentes,
     filteredDocentes,
     // Proponentes
-    proponenteIds, setProponenteIds,
-    proponentesCandidatos,
+    assignedProponentes,
+    filteredAvailableProponentes,
+    proponenteSearch, setProponenteSearch,
+    addProponente,
+    removeProponente,
     // Ficha técnica text fields
     resumen, setResumen,
     palabrasClave, setPalabrasClave,

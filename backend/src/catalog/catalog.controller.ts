@@ -83,13 +83,13 @@ export class CatalogController {
   };
 
   /**
-   * GET /api/catalog/estudiantes?id_facultad=...
-   * Lista estudiantes (personas confirmadas) filtrados por facultad.
+   * GET /api/catalog/estudiantes?id_facultad=...&id_programa=...
+   * Lista estudiantes (personas confirmadas) filtrados por facultad y/o programa.
    * Útil para seleccionar proponentes de un proyecto de proyección social.
    */
   getEstudiantes = async (req: Request, res: Response) => {
     try {
-      const { id_facultad } = req.query;
+      const { id_facultad, id_programa } = req.query;
 
       const where: any = {
         confirmed: true,
@@ -98,6 +98,10 @@ export class CatalogController {
 
       if (typeof id_facultad === "string" && id_facultad.trim()) {
         where.id_facultad = id_facultad.trim();
+      }
+
+      if (typeof id_programa === "string" && id_programa.trim()) {
+        where.id_programa_academico = id_programa.trim();
       }
 
       const estudiantes = await prisma.persona.findMany({
