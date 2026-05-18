@@ -1013,6 +1013,17 @@ async function main() {
         const programa = programas[i % programas.length];
         const facultadId = programaToFacultad[programa.id_programa] || facultades[0].id_facultad;
 
+        // Spread projects across the last 12 months so date filters work
+        const monthsAgo = Math.floor(i * 0.6); // 0..11 months back
+        const fechaPresentacion = new Date();
+        fechaPresentacion.setMonth(fechaPresentacion.getMonth() - monthsAgo);
+        fechaPresentacion.setDate(Math.floor(Math.random() * 28) + 1);
+
+        const esFinalizado = i % 3 === 0;
+        const fechaFinalizacion = esFinalizado
+            ? new Date(fechaPresentacion.getTime() + (Math.floor(Math.random() * 90) + 30) * 24 * 60 * 60 * 1000)
+            : null;
+
         const proyecto = await prisma.proyecto_proyeccion_social.create({
             data: {
                 titulo: nombresproyeccionSocial[i],
@@ -1020,7 +1031,9 @@ async function main() {
                 resumen: `Proyecto de proyección social enfocado en ${nombresproyeccionSocial[i].toLowerCase()} para beneficiar a la comunidad.`,
                 id_persona_registra: docentesParaSocial[i].id_persona,
                 personas_impactadas: Math.floor(Math.random() * 450) + 50,
-                estado: i % 3 === 0 ? "Finalizado" : "En proceso",
+                estado: esFinalizado ? "Finalizado" : "En proceso",
+                fecha_de_presentacion: fechaPresentacion,
+                fecha_finalizacion: fechaFinalizacion,
                 // Nuevos campos de la Ficha Técnica
                 id_programa: programa.id_programa,
                 id_facultad: facultadId,

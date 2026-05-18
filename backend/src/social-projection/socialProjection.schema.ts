@@ -129,6 +129,25 @@ export const CreateManualSocialProjectionSchema: Schema = {
     isString: { errorMessage: "El campo 'estado' debe ser texto" },
     trim: true,
   },
+  fecha_de_presentacion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isISO8601: { errorMessage: "El campo 'fecha_de_presentacion' debe ser una fecha válida (ISO 8601)" },
+  },
+  fecha_finalizacion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isISO8601: { errorMessage: "El campo 'fecha_finalizacion' debe ser una fecha válida (ISO 8601)" },
+    custom: {
+      options: (value: unknown, { req }: any) => {
+        if (!value || !req.body.fecha_de_presentacion) return true;
+        if (new Date(value as string) < new Date(req.body.fecha_de_presentacion)) {
+          throw new Error("La fecha de finalización no puede ser anterior a la fecha de presentación");
+        }
+        return true;
+      },
+    },
+  },
   // Campos de la Ficha Técnica — sección "Información General"
   lineas_accion: {
     in: ["body"],

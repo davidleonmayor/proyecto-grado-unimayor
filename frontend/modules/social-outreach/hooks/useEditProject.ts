@@ -57,6 +57,8 @@ export function useEditProject() {
   const [idFacultad, setIdFacultad] = useState("");
   const [idPrograma, setIdPrograma] = useState("");
   const [semestre, setSemestre] = useState("");
+  const [fechaPresentacion, setFechaPresentacion] = useState("");
+  const [fechaFinalizacion, setFechaFinalizacion] = useState("");
   const [idAsesor, setIdAsesor] = useState<string | null>(null);
   const [asesorSearch, setAsesorSearch] = useState("");
 
@@ -132,6 +134,8 @@ export function useEditProject() {
       setEstado(project.estado || "En proceso");
       setPersonasImpactadas(project.personas_impactadas || 0);
       setSemestre(project.semestre || "");
+      setFechaPresentacion(project.fecha_de_presentacion ? new Date(project.fecha_de_presentacion).toISOString().slice(0, 10) : "");
+      setFechaFinalizacion(project.fecha_finalizacion ? new Date(project.fecha_finalizacion).toISOString().slice(0, 10) : "");
       setIdFacultad(project.id_facultad || "");
       setIdPrograma(project.id_programa || "");
       setIdAsesor(project.id_asesor || null);
@@ -328,6 +332,10 @@ export function useEditProject() {
       Swal.fire("Error", "El título es obligatorio", "error");
       return;
     }
+    if (fechaFinalizacion && fechaPresentacion && fechaFinalizacion < fechaPresentacion) {
+      Swal.fire("Error", "La fecha de finalización no puede ser anterior a la fecha de presentación", "error");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -336,6 +344,8 @@ export function useEditProject() {
         descripcion: descripcion || null,
         personas_impactadas: personasImpactadas,
         estado,
+        fecha_de_presentacion: fechaPresentacion || undefined,
+        fecha_finalizacion: fechaFinalizacion || null,
         estudiantes: assignedStudents.map((s) => s.id),
         docentes: assignedAdvisors.map((a) => a.id),
         lineas_accion: lineasAccionIds,
@@ -393,6 +403,8 @@ export function useEditProject() {
     idFacultad, setIdFacultad,
     idPrograma, setIdPrograma,
     semestre, setSemestre,
+    fechaPresentacion, setFechaPresentacion,
+    fechaFinalizacion, setFechaFinalizacion,
     idAsesor, setIdAsesor,
     asesorSearch, setAsesorSearch,
     filteredDocentes,

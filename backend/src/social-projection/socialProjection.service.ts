@@ -8,6 +8,8 @@ export interface CreateManualProyeccionSocialInput {
   docentes: string[];
   personas_impactadas?: number;
   estado?: string;
+  fecha_de_presentacion?: string;
+  fecha_finalizacion?: string | null;
   lineas_accion?: string[] | null;
   semestre?: string | null;
   id_programa?: string | null;
@@ -174,6 +176,8 @@ export class ProyeccionSocialService {
       descripcion?: string | null;
       personas_impactadas?: number;
       estado?: string;
+      fecha_de_presentacion?: string;
+      fecha_finalizacion?: string | null;
       estudiantes?: string[];
       docentes?: string[];
       lineas_accion?: string[];
@@ -205,6 +209,8 @@ export class ProyeccionSocialService {
             ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
             ...(data.estado !== undefined && { estado: data.estado }),
+            ...(data.fecha_de_presentacion && { fecha_de_presentacion: new Date(data.fecha_de_presentacion) }),
+            ...(data.fecha_finalizacion !== undefined && { fecha_finalizacion: data.fecha_finalizacion ? new Date(data.fecha_finalizacion) : null }),
             ...(data.semestre !== undefined && { semestre: data.semestre }),
             ...(data.id_programa !== undefined && { id_programa: data.id_programa }),
             ...(data.id_asesor !== undefined && { id_asesor: data.id_asesor }),
@@ -391,6 +397,8 @@ export class ProyeccionSocialService {
             id_persona_registra: input.id_persona_registra,
             personas_impactadas: input.personas_impactadas ?? 0,
             estado: input.estado ?? "En proceso",
+            ...(input.fecha_de_presentacion && { fecha_de_presentacion: new Date(input.fecha_de_presentacion) }),
+            ...(input.fecha_finalizacion !== undefined && { fecha_finalizacion: input.fecha_finalizacion ? new Date(input.fecha_finalizacion) : null }),
             ...(input.semestre !== undefined && { semestre: input.semestre }),
             ...(input.id_programa !== undefined && { id_programa: input.id_programa }),
             ...(input.id_asesor !== undefined && { id_asesor: input.id_asesor }),
@@ -741,6 +749,22 @@ export class ProyeccionSocialService {
       }
     });
 
+    // Filtered project list for display below charts
+    const proyectosFiltrados = await prisma.proyecto_proyeccion_social.findMany({
+      where,
+      select: {
+        id_proyecto_social: true,
+        titulo: true,
+        descripcion: true,
+        estado: true,
+        fecha_de_presentacion: true,
+        fecha_finalizacion: true,
+        personas_impactadas: true,
+      },
+      orderBy: { fecha_de_presentacion: "desc" },
+      take: 50,
+    });
+
     return {
       totalProjects,
       totalImpactadas,
@@ -752,7 +776,8 @@ export class ProyeccionSocialService {
         porcentajeFinalizado,
         porcentajeSinEntregar
       },
-      monthlyFinalized
+      monthlyFinalized,
+      proyectos: proyectosFiltrados,
     };
   }
 }

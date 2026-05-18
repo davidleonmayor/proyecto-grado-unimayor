@@ -322,7 +322,8 @@ model proyecto_proyeccion_social {
   id_proyecto_social    String   @id @default(cuid())
   titulo                String   @map("nombre") @db.VarChar(200)
   descripcion           String?  @db.Text
-  fecha_de_presentacion DateTime @default(now()) @map("fecha_registro") @db.DateTime(0)
+  fecha_de_presentacion DateTime  @default(now()) @map("fecha_registro") @db.DateTime(0)
+  fecha_finalizacion    DateTime? @db.DateTime(0)
   tipo_mime             String?  @db.VarChar(100)
   archivo               Bytes?   @db.LongBlob
   id_persona_registra   String?

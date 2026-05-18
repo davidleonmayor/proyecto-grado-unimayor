@@ -52,6 +52,8 @@ export function useNewProject() {
   const [idPrograma, setIdPrograma] = useState("");
   const [semestre, setSemestre] = useState("");
   const [personasImpactadas] = useState<number>(0);
+  const [fechaPresentacion, setFechaPresentacion] = useState("");
+  const [fechaFinalizacion, setFechaFinalizacion] = useState("");
 
   // --- Campos de texto de la Ficha Técnica ---
   const [resumen, setResumen] = useState("");
@@ -280,6 +282,10 @@ export function useNewProject() {
       Swal.fire("Error", "Debe seleccionar al menos 1 docente", "error");
       return;
     }
+    if (fechaFinalizacion && fechaPresentacion && fechaFinalizacion < fechaPresentacion) {
+      Swal.fire("Error", "La fecha de finalización no puede ser anterior a la fecha de presentación", "error");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -292,6 +298,8 @@ export function useNewProject() {
         lineas_accion: lineasAccionIds,
         semestre: semestre || null,
         id_programa: idPrograma || null,
+        fecha_de_presentacion: fechaPresentacion || undefined,
+        fecha_finalizacion: fechaFinalizacion || null,
         id_asesor: idAsesor,
         proponentes: proponenteIds.length > 0 ? proponenteIds : undefined,
         resumen: resumen || null,
@@ -347,6 +355,8 @@ export function useNewProject() {
     idPrograma, setIdPrograma,
     semestre, setSemestre,
     personasImpactadas,
+    fechaPresentacion, setFechaPresentacion,
+    fechaFinalizacion, setFechaFinalizacion,
     // Catalogs
     facultades,
     programas,
