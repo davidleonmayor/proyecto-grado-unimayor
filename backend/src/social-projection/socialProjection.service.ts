@@ -626,14 +626,43 @@ export class ProyeccionSocialService {
    * - Totales generales
    * - Gráfica de personas impactadas por semana (últimas 4 semanas)
    */
-  async getSocialDashboardStats() {
+  async getSocialDashboardStats(filters?: {
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    id_facultad?: string;
+    id_programa?: string;
+  }) {
     const now = new Date();
 
+    // Build dynamic where clause from filters
+    const where: any = {};
+
+    if (filters?.fecha_inicio || filters?.fecha_fin) {
+      where.fecha_de_presentacion = {};
+      if (filters.fecha_inicio) {
+        where.fecha_de_presentacion.gte = new Date(filters.fecha_inicio);
+      }
+      if (filters.fecha_fin) {
+        const endDate = new Date(filters.fecha_fin);
+        endDate.setHours(23, 59, 59, 999);
+        where.fecha_de_presentacion.lte = endDate;
+      }
+    }
+
+    if (filters?.id_facultad) {
+      where.id_facultad = filters.id_facultad;
+    }
+
+    if (filters?.id_programa) {
+      where.id_programa = filters.id_programa;
+    }
+
     // Total projects
-    const totalProjects = await prisma.proyecto_proyeccion_social.count();
+    const totalProjects = await prisma.proyecto_proyeccion_social.count({ where });
 
     // Total impacto acumulado
     const impactoAgg = await prisma.proyecto_proyeccion_social.aggregate({
+      where,
       _sum: { personas_impactadas: true },
     });
     const totalImpactadas = impactoAgg._sum.personas_impactadas ?? 0;
@@ -643,7 +672,7 @@ export class ProyeccionSocialService {
     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
 
     const proyectosRecientes = await prisma.proyecto_proyeccion_social.findMany({
-      where: { fecha_de_presentacion: { gte: fourWeeksAgo } },
+      where: { ...where, fecha_de_presentacion: { ...where.fecha_de_presentacion, gte: fourWeeksAgo } },
       select: { fecha_de_presentacion: true, personas_impactadas: true },
       orderBy: { fecha_de_presentacion: 'asc' },
     });
@@ -667,6 +696,7 @@ export class ProyeccionSocialService {
 
     const statusCounts = await prisma.proyecto_proyeccion_social.groupBy({
       by: ['estado'],
+      where,
       _count: {
         id_proyecto_social: true
       }
@@ -690,6 +720,7 @@ export class ProyeccionSocialService {
     // Obtener proyecciones sociales finalizadas agrupadas por mes (Ene - Dic)
     const proyectosFinalizados = await prisma.proyecto_proyeccion_social.findMany({
       where: {
+        ...where,
         estado: {
           in: ["Finalizado", "Finalizados"]
         }

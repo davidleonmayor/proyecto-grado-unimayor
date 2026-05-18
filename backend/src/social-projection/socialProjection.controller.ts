@@ -345,9 +345,18 @@ export class ProyeccionSocialController {
     }
   };
 
-  getDashboardStats = async (_req: Request, res: Response) => {
+  getDashboardStats = async (req: Request, res: Response) => {
     try {
-      const data = await this.service.getSocialDashboardStats();
+      const { fecha_inicio, fecha_fin, id_facultad, id_programa } = req.query;
+
+      const filters = {
+        fecha_inicio: typeof fecha_inicio === "string" ? fecha_inicio : undefined,
+        fecha_fin: typeof fecha_fin === "string" ? fecha_fin : undefined,
+        id_facultad: typeof id_facultad === "string" ? id_facultad : undefined,
+        id_programa: typeof id_programa === "string" ? id_programa : undefined,
+      };
+
+      const data = await this.service.getSocialDashboardStats(filters);
       return res.json(data);
     } catch (error: any) {
       logger.error("Error getting social dashboard stats:", error);

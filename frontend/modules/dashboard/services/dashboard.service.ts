@@ -44,11 +44,24 @@ export class DashboardService extends BaseApiClient {
         );
     }
 
-    async getSocialProjectionDashboard(): Promise<SocialProjectionDashboardStats> {
-        return this.request<SocialProjectionDashboardStats>(
-            '/api/proyeccion-social/dashboard',
-            { requiresAuth: true }
-        );
+    async getSocialProjectionDashboard(filters?: {
+        fecha_inicio?: string;
+        fecha_fin?: string;
+        id_facultad?: string;
+        id_programa?: string;
+    }): Promise<SocialProjectionDashboardStats> {
+        const params = new URLSearchParams();
+        if (filters?.fecha_inicio) params.set('fecha_inicio', filters.fecha_inicio);
+        if (filters?.fecha_fin) params.set('fecha_fin', filters.fecha_fin);
+        if (filters?.id_facultad) params.set('id_facultad', filters.id_facultad);
+        if (filters?.id_programa) params.set('id_programa', filters.id_programa);
+
+        const query = params.toString();
+        const url = `/api/proyeccion-social/dashboard${query ? `?${query}` : ''}`;
+
+        return this.request<SocialProjectionDashboardStats>(url, {
+            requiresAuth: true,
+        });
     }
 }
 
