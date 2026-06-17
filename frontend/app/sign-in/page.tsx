@@ -118,6 +118,12 @@ export default function SignIn() {
             )}
           </button>
         </form>
+
+        <p className="mt-6 text-center text-xs text-gray-400">
+          <Link href="/info" className="hover:text-[#0ea5e9] transition-colors">
+            Información del proyecto
+          </Link>
+        </p>
       </div>
     </div>
   );

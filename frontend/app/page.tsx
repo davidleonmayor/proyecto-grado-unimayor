@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from '@/modules/auth/hooks/useAuth';
 import { projectsService } from '@/modules/projects/services/projects.service';
 import { dashboardService } from '@/modules/dashboard/services/dashboard.service';
@@ -80,11 +81,17 @@ export default function Home() {
 
   if (loading || isDeterminingRoute) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
           <p className="text-gray-600 font-medium">Cargando...</p>
         </div>
+        <Link
+          href="/info"
+          className="mt-8 text-xs text-gray-400 hover:text-[#0ea5e9] transition-colors"
+        >
+          Información del proyecto
+        </Link>
       </div>
     );
   }
