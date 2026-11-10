@@ -82,18 +82,6 @@ const menuItems: MenuSection[] = [
         href: "/social-outreach/social-projects",
         visible: ["admin", "teacher"],
       },
-      {
-        icon: "/calendar.png",
-        label: "Extracción",
-        href: "/social-outreach/extraction",
-        visible: ["teacher", "admin"],
-      },
-      {
-        icon: "/search.png",
-        label: "Filtrar Proyecciones",
-        href: "/social-outreach/filter",
-        visible: ["teacher", "admin"],
-      },
     ],
   },
 

@@ -3,7 +3,7 @@ import { envs } from "./envs";
 
 export const corsConfig: CorsOptions = {
   origin: function (origin: string | undefined, callback) {
-    const allowedOrigins = [envs.FRONTEND_URL];
+    const allowedOrigins = [envs.FRONTEND_URL, envs.SWAGGER_URL];
 
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true); // Allow

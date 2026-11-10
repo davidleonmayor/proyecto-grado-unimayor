@@ -1,40 +1,42 @@
 import { prisma, logger } from "../config";
 
-export interface CreateProyeccionSocialInput {
-  nombre: string;
-  descripcion: string | null;
-  tipo_mime: string;
-  archivo: Buffer;
-  id_persona_registra: string;
-  personas_impactadas?: number;
-}
-
 export interface CreateManualProyeccionSocialInput {
-  nombre: string;
+  titulo: string;
   descripcion: string | null;
   id_persona_registra: string;
   estudiantes: string[];
   docentes: string[];
   personas_impactadas?: number;
   estado?: string;
+  fecha_de_presentacion?: string;
+  fecha_finalizacion?: string | null;
+  lineas_accion?: string[] | null;
+  semestre?: string | null;
+  id_programa?: string | null;
+  id_asesor?: string | null;
+  proponentes?: string[];
+  planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
+  presupuesto_equipo?: { nombre?: string; cargo?: string; funcion?: string; tipo_vinculacion?: string; salario?: number; total?: number }[];
+  presupuesto_recursos?: { tipo_recurso?: string; valor_unitario?: number; cantidad?: number; valor_total?: number }[];
+  resumen?: string | null;
+  palabras_clave?: string | null;
+  identificacion_problematica?: string | null;
+  propuesta_solucion?: string | null;
+  caracterizacion_poblacion?: string | null;
+  objetivos?: string | null;
+  resultados_esperados?: string | null;
+  metodologia?: string | null;
+  bibliografia?: string | null;
 }
 
 interface SearchResult {
   id_proyecto_social: string;
-  nombre: string;
+  titulo: string;
   descripcion: string | null;
-  tipo_mime: string | null;
-  fecha_registro: Date;
+  fecha_de_presentacion: Date;
   id_persona_registra: string | null;
   personas_impactadas: number;
   estado: string;
-}
-
-interface DownloadResult {
-  archivo: Uint8Array;
-  tipo_mime: string;
-  nombre: string;
-  fecha_registro: Date;
 }
 
 export class ProyeccionSocialService {
@@ -43,15 +45,14 @@ export class ProyeccionSocialService {
       return await prisma.proyecto_proyeccion_social.findMany({
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          tipo_mime: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
         },
-        orderBy: { fecha_registro: "desc" },
+        orderBy: { fecha_de_presentacion: "desc" },
       });
     } catch (error) {
       logger.error(
@@ -81,15 +82,14 @@ export class ProyeccionSocialService {
         },
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          tipo_mime: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
         },
-        orderBy: { fecha_registro: "desc" },
+        orderBy: { fecha_de_presentacion: "desc" },
       });
     } catch (error) {
       logger.error(
@@ -101,68 +101,26 @@ export class ProyeccionSocialService {
   }
 
   /**
-   * Crea un nuevo proyecto de proyección social.
-   */
-  async create(input: CreateProyeccionSocialInput): Promise<{
-    id_proyecto_social: string;
-    nombre: string;
-    fecha_registro: Date;
-  }> {
-    try {
-      const created = await prisma.proyecto_proyeccion_social.create({
-        data: {
-          nombre: input.nombre,
-          descripcion: input.descripcion,
-          tipo_mime: input.tipo_mime,
-          archivo: new Uint8Array(input.archivo),
-          id_persona_registra: input.id_persona_registra,
-          personas_impactadas: input.personas_impactadas ?? 0,
-        },
-        select: {
-          id_proyecto_social: true,
-          nombre: true,
-          fecha_registro: true,
-        },
-      });
-
-      logger.info(
-        `[ProyeccionSocialService] Created project: ${created.id_proyecto_social}`,
-      );
-
-      return created;
-    } catch (error: any) {
-      logger.error("[ProyeccionSocialService] Error creating project:", error);
-
-      if (error.code === "P2002") {
-        throw new Error("Ya existe un proyecto con ese nombre.");
-      }
-
-      throw new Error("Error al crear el proyecto de proyección social.");
-    }
-  }
-
-  /**
    * Busca proyectos por nombre.
    */
   async searchByName(nombre: string, limit: number): Promise<SearchResult[]> {
     try {
       return await prisma.proyecto_proyeccion_social.findMany({
         where: {
-          nombre: {
+          titulo: {
             contains: nombre,
           },
         },
         select: {
           id_proyecto_social: true,
-          nombre: true,
+          titulo: true,
           descripcion: true,
-          tipo_mime: true,
-          fecha_registro: true,
+          fecha_de_presentacion: true,
           id_persona_registra: true,
           personas_impactadas: true,
           estado: true,
         },
-        orderBy: { fecha_registro: "desc" },
+        orderBy: { fecha_de_presentacion: "desc" },
         take: limit,
       });
     } catch (error) {
@@ -175,67 +133,36 @@ export class ProyeccionSocialService {
   }
 
   /**
-   * Busca un proyecto por nombre (para descarga).
-   */
-  async findByName(nombre: string): Promise<DownloadResult | null> {
-    try {
-      return await prisma.proyecto_proyeccion_social.findFirst({
-        where: { nombre },
-        orderBy: { fecha_registro: "desc" },
-        select: {
-          archivo: true,
-          tipo_mime: true,
-          nombre: true,
-          fecha_registro: true,
-        },
-      });
-    } catch (error) {
-      logger.error(
-        "[ProyeccionSocialService] Error finding project by name:",
-        error,
-      );
-      throw new Error("Error al buscar el proyecto.");
-    }
-  }
-
-  /**
    * Busca un proyecto por ID para detalles de edición.
    */
-  async getById(id: string): Promise<SearchResult | null> {
+  async getById(id: string) {
     try {
       return await prisma.proyecto_proyeccion_social.findUnique({
         where: { id_proyecto_social: id },
-        select: {
-          id_proyecto_social: true,
-          nombre: true,
-          descripcion: true,
-          tipo_mime: true,
-          fecha_registro: true,
-          id_persona_registra: true,
-          personas_impactadas: true,
-          estado: true,
+        include: {
+          programa_academico: { select: { id_programa: true, nombre_programa: true } },
+          facultad: { select: { id_facultad: true, nombre_facultad: true } },
+          asesor: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true } },
+          lineas_accion: {
+            include: { linea_accion: { select: { id_linea_accion: true, nombre: true } } },
+          },
+          proponentes: {
+            include: { persona: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true } } },
+          },
           integrantes: {
-            select: {
-              id_persona: true,
-              rol: true,
-              persona: {
-                select: {
-                  nombres: true,
-                  apellidos: true,
-                  correo_electronico: true,
-                  num_doc_identidad: true,
-                }
-              }
-            }
-          }
+            include: { persona: { select: { id_persona: true, nombres: true, apellidos: true, correo_electronico: true, num_doc_identidad: true } } },
+          },
+          planes_accion: true,
+          presupuesto_equipo: true,
+          presupuesto_recursos: true,
         },
       });
     } catch (error) {
       logger.error(
-        "[ProyeccionSocialService] Error finding project by id:",
+        "[ProyeccionSocialService] Error getting project by id:",
         error,
       );
-      throw new Error("Error al buscar el proyecto.");
+      throw new Error("Error al obtener el proyecto.");
     }
   }
 
@@ -245,14 +172,32 @@ export class ProyeccionSocialService {
   async update(
     id: string,
     data: {
-      nombre: string;
+      titulo?: string;
       descripcion?: string | null;
       personas_impactadas?: number;
       estado?: string;
+      fecha_de_presentacion?: string;
+      fecha_finalizacion?: string | null;
       estudiantes?: string[];
       docentes?: string[];
-      archivo?: Buffer;
-      tipo_mime?: string;
+      lineas_accion?: string[];
+      semestre?: string | null;
+      id_programa?: string | null;
+      id_asesor?: string | null;
+      id_facultad?: string | null;
+      resumen?: string | null;
+      palabras_clave?: string | null;
+      identificacion_problematica?: string | null;
+      propuesta_solucion?: string | null;
+      caracterizacion_poblacion?: string | null;
+      objetivos?: string | null;
+      resultados_esperados?: string | null;
+      metodologia?: string | null;
+      bibliografia?: string | null;
+      proponentes?: string[];
+      planes_accion?: { objetivo_especifico?: string; actividades?: string; duracion?: string; responsables?: string; meta?: string; indicador?: string }[];
+      presupuesto_equipo?: { nombre?: string; cargo?: string; funcion?: string; tipo_vinculacion?: string; salario?: number; total?: number }[];
+      presupuesto_recursos?: { tipo_recurso?: string; valor_unitario?: number; cantidad?: number; valor_total?: number }[];
     },
   ) {
     try {
@@ -260,22 +205,34 @@ export class ProyeccionSocialService {
         const updated = await tx.proyecto_proyeccion_social.update({
           where: { id_proyecto_social: id },
           data: {
-            nombre: data.nombre,
-            descripcion: data.descripcion,
+            ...(data.titulo !== undefined && { titulo: data.titulo }),
+            ...(data.descripcion !== undefined && { descripcion: data.descripcion }),
             ...(data.personas_impactadas !== undefined && { personas_impactadas: data.personas_impactadas }),
             ...(data.estado !== undefined && { estado: data.estado }),
-            ...(data.archivo && { archivo: new Uint8Array(data.archivo) }),
-            ...(data.tipo_mime && { tipo_mime: data.tipo_mime }),
+            ...(data.fecha_de_presentacion && { fecha_de_presentacion: new Date(data.fecha_de_presentacion) }),
+            ...(data.fecha_finalizacion !== undefined && { fecha_finalizacion: data.fecha_finalizacion ? new Date(data.fecha_finalizacion) : null }),
+            ...(data.semestre !== undefined && { semestre: data.semestre }),
+            ...(data.id_programa !== undefined && { id_programa: data.id_programa }),
+            ...(data.id_asesor !== undefined && { id_asesor: data.id_asesor }),
+            ...(data.id_facultad !== undefined && { id_facultad: data.id_facultad }),
+            ...(data.resumen !== undefined && { resumen: data.resumen }),
+            ...(data.palabras_clave !== undefined && { palabras_clave: data.palabras_clave }),
+            ...(data.identificacion_problematica !== undefined && { identificacion_problematica: data.identificacion_problematica }),
+            ...(data.propuesta_solucion !== undefined && { propuesta_solucion: data.propuesta_solucion }),
+            ...(data.caracterizacion_poblacion !== undefined && { caracterizacion_poblacion: data.caracterizacion_poblacion }),
+            ...(data.objetivos !== undefined && { objetivos: data.objetivos }),
+            ...(data.resultados_esperados !== undefined && { resultados_esperados: data.resultados_esperados }),
+            ...(data.metodologia !== undefined && { metodologia: data.metodologia }),
+            ...(data.bibliografia !== undefined && { bibliografia: data.bibliografia }),
           },
         });
 
+        // Replace integrantes if both arrays provided
         if (data.estudiantes && data.docentes) {
-          // Delete existing integrantes
           await tx.integrante_proyecto_social.deleteMany({
             where: { id_proyecto_social: id },
           });
 
-          // Insert new students
           if (data.estudiantes.length > 0) {
             await tx.integrante_proyecto_social.createMany({
               data: data.estudiantes.map((estId) => ({
@@ -286,13 +243,105 @@ export class ProyeccionSocialService {
             });
           }
 
-          // Insert new advisors
           if (data.docentes.length > 0) {
             await tx.integrante_proyecto_social.createMany({
               data: data.docentes.map((docId) => ({
                 id_proyecto_social: id,
                 id_persona: docId,
                 rol: "Docente",
+              })),
+            });
+          }
+        }
+
+        // Replace líneas de acción if provided
+        if (data.lineas_accion !== undefined) {
+          await tx.linea_accion_proyeccion_social.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.lineas_accion.length > 0) {
+            await tx.linea_accion_proyeccion_social.createMany({
+              data: data.lineas_accion.map((idLinea) => ({
+                id_proyecto_social: id,
+                id_linea_accion: idLinea,
+              })),
+            });
+          }
+        }
+
+        // Replace proponentes if provided
+        if (data.proponentes !== undefined) {
+          await tx.proponente_proyeccion_social.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.proponentes.length > 0) {
+            await tx.proponente_proyeccion_social.createMany({
+              data: data.proponentes.map((personaId) => ({
+                id_proyecto_social: id,
+                id_persona: personaId,
+              })),
+            });
+          }
+        }
+
+        // Replace planes de acción if provided
+        if (data.planes_accion !== undefined) {
+          await tx.plan_accion_proyecto.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.planes_accion.length > 0) {
+            await tx.plan_accion_proyecto.createMany({
+              data: data.planes_accion.map((plan) => ({
+                id_proyecto_social: id,
+                objetivo_especifico: plan.objetivo_especifico || null,
+                actividades: plan.actividades || null,
+                duracion: plan.duracion || null,
+                responsables: plan.responsables || null,
+                meta: plan.meta || null,
+                indicador: plan.indicador || null,
+              })),
+            });
+          }
+        }
+
+        // Replace presupuesto equipo humano if provided
+        if (data.presupuesto_equipo !== undefined) {
+          await tx.presupuesto_equipo_humano.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.presupuesto_equipo.length > 0) {
+            await tx.presupuesto_equipo_humano.createMany({
+              data: data.presupuesto_equipo.map((item) => ({
+                id_proyecto_social: id,
+                nombre: item.nombre || null,
+                cargo: item.cargo || null,
+                funcion: item.funcion || null,
+                tipo_vinculacion: item.tipo_vinculacion || null,
+                salario: item.salario || null,
+                total: item.total || null,
+              })),
+            });
+          }
+        }
+
+        // Replace presupuesto recursos if provided
+        if (data.presupuesto_recursos !== undefined) {
+          await tx.presupuesto_recursos.deleteMany({
+            where: { id_proyecto_social: id },
+          });
+
+          if (data.presupuesto_recursos.length > 0) {
+            await tx.presupuesto_recursos.createMany({
+              data: data.presupuesto_recursos.map((item) => ({
+                id_proyecto_social: id,
+                tipo_recurso: item.tipo_recurso || null,
+                valor_unitario: item.valor_unitario || null,
+                cantidad: item.cantidad || null,
+                valor_total: item.valor_total || null,
               })),
             });
           }
@@ -307,36 +356,13 @@ export class ProyeccionSocialService {
   }
 
   /**
-   * Busca un proyecto por ID (para descarga).
-   */
-  async findById(id: string): Promise<DownloadResult | null> {
-    try {
-      return await prisma.proyecto_proyeccion_social.findUnique({
-        where: { id_proyecto_social: id },
-        select: {
-          archivo: true,
-          tipo_mime: true,
-          nombre: true,
-          fecha_registro: true,
-        },
-      });
-    } catch (error) {
-      logger.error(
-        "[ProyeccionSocialService] Error finding project by id:",
-        error,
-      );
-      throw new Error("Error al buscar el proyecto.");
-    }
-  }
-
-  /**
    * Crea un proyecto de proyección social de forma manual con estudiantes y docentes.
    */
   async createManual(input: CreateManualProyeccionSocialInput): Promise<{
     id_proyecto_social: string;
-    nombre: string;
+    titulo: string;
     descripcion: string | null;
-    fecha_registro: Date;
+    fecha_de_presentacion: Date;
     integrantes: {
       id_integrante: string;
       id_persona: string;
@@ -344,8 +370,8 @@ export class ProyeccionSocialService {
     }[];
   }> {
     try {
-      // Validar que los IDs de estudiantes y docentes existan en la base de datos
-      const allPersonIds = [...input.estudiantes, ...input.docentes];
+      // Validar que los IDs de estudiantes, docentes y proponentes existan en la base de datos
+      const allPersonIds = [...input.estudiantes, ...input.docentes, ...(input.proponentes ?? [])];
       
       const personasExistentes = await prisma.persona.findMany({
         where: { id_persona: { in: allPersonIds } },
@@ -366,11 +392,30 @@ export class ProyeccionSocialService {
         // Crear el proyecto
         const proyecto = await tx.proyecto_proyeccion_social.create({
           data: {
-            nombre: input.nombre,
+            titulo: input.titulo,
             descripcion: input.descripcion,
             id_persona_registra: input.id_persona_registra,
             personas_impactadas: input.personas_impactadas ?? 0,
             estado: input.estado ?? "En proceso",
+            ...(input.fecha_de_presentacion && { fecha_de_presentacion: new Date(input.fecha_de_presentacion) }),
+            ...(input.fecha_finalizacion !== undefined && { fecha_finalizacion: input.fecha_finalizacion ? new Date(input.fecha_finalizacion) : null }),
+            ...(input.semestre !== undefined && { semestre: input.semestre }),
+            ...(input.id_programa !== undefined && { id_programa: input.id_programa }),
+            ...(input.id_asesor !== undefined && { id_asesor: input.id_asesor }),
+            ...(input.resumen !== undefined && { resumen: input.resumen }),
+            ...(input.palabras_clave !== undefined && { palabras_clave: input.palabras_clave }),
+            ...(input.identificacion_problematica !== undefined && { identificacion_problematica: input.identificacion_problematica }),
+            ...(input.propuesta_solucion !== undefined && { propuesta_solucion: input.propuesta_solucion }),
+            ...(input.caracterizacion_poblacion !== undefined && { caracterizacion_poblacion: input.caracterizacion_poblacion }),
+            ...(input.objetivos !== undefined && { objetivos: input.objetivos }),
+            ...(input.resultados_esperados !== undefined && { resultados_esperados: input.resultados_esperados }),
+            ...(input.metodologia !== undefined && { metodologia: input.metodologia }),
+            ...(input.bibliografia !== undefined && { bibliografia: input.bibliografia }),
+            ...(input.lineas_accion && input.lineas_accion.length > 0 && {
+              lineas_accion: {
+                create: input.lineas_accion.map((id_linea_accion) => ({ id_linea_accion })),
+              },
+            }),
           },
         });
 
@@ -400,15 +445,85 @@ export class ProyeccionSocialService {
           )
         );
 
+        // Agregar proponentes
+        const proponentesCreados = input.proponentes && input.proponentes.length > 0
+          ? await Promise.all(
+              input.proponentes.map((personaId) =>
+                tx.proponente_proyeccion_social.create({
+                  data: {
+                    id_proyecto_social: proyecto.id_proyecto_social,
+                    id_persona: personaId,
+                  },
+                })
+              )
+            )
+          : [];
+
+        // Create planes de acción
+        if (input.planes_accion && input.planes_accion.length > 0) {
+          await Promise.all(
+            input.planes_accion.map((plan) =>
+              tx.plan_accion_proyecto.create({
+                data: {
+                  id_proyecto_social: proyecto.id_proyecto_social,
+                  objetivo_especifico: plan.objetivo_especifico || null,
+                  actividades: plan.actividades || null,
+                  duracion: plan.duracion || null,
+                  responsables: plan.responsables || null,
+                  meta: plan.meta || null,
+                  indicador: plan.indicador || null,
+                },
+              })
+            )
+          );
+        }
+
+        // Create presupuesto equipo humano
+        if (input.presupuesto_equipo && input.presupuesto_equipo.length > 0) {
+          await Promise.all(
+            input.presupuesto_equipo.map((item) =>
+              tx.presupuesto_equipo_humano.create({
+                data: {
+                  id_proyecto_social: proyecto.id_proyecto_social,
+                  nombre: item.nombre || null,
+                  cargo: item.cargo || null,
+                  funcion: item.funcion || null,
+                  tipo_vinculacion: item.tipo_vinculacion || null,
+                  salario: item.salario || null,
+                  total: item.total || null,
+                },
+              })
+            )
+          );
+        }
+
+        // Create presupuesto recursos
+        if (input.presupuesto_recursos && input.presupuesto_recursos.length > 0) {
+          await Promise.all(
+            input.presupuesto_recursos.map((item) =>
+              tx.presupuesto_recursos.create({
+                data: {
+                  id_proyecto_social: proyecto.id_proyecto_social,
+                  tipo_recurso: item.tipo_recurso || null,
+                  valor_unitario: item.valor_unitario || null,
+                  cantidad: item.cantidad || null,
+                  valor_total: item.valor_total || null,
+                },
+              })
+            )
+          );
+        }
+
         return {
           id_proyecto_social: proyecto.id_proyecto_social,
-          nombre: proyecto.nombre,
+          titulo: proyecto.titulo,
           descripcion: proyecto.descripcion,
-          fecha_registro: proyecto.fecha_registro,
+          fecha_de_presentacion: proyecto.fecha_de_presentacion,
           integrantes: [
             ...integranteEstudiantes.map(i => ({ id_integrante: i.id_integrante, id_persona: i.id_persona, rol: i.rol })),
             ...integranteDocentes.map(i => ({ id_integrante: i.id_integrante, id_persona: i.id_persona, rol: i.rol })),
           ],
+          proponentes: proponentesCreados.map(p => ({ id_proponente: p.id_proponente, id_persona: p.id_persona })),
         };
       });
 
@@ -519,14 +634,43 @@ export class ProyeccionSocialService {
    * - Totales generales
    * - Gráfica de personas impactadas por semana (últimas 4 semanas)
    */
-  async getSocialDashboardStats() {
+  async getSocialDashboardStats(filters?: {
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    id_facultad?: string;
+    id_programa?: string;
+  }) {
     const now = new Date();
 
+    // Build dynamic where clause from filters
+    const where: any = {};
+
+    if (filters?.fecha_inicio || filters?.fecha_fin) {
+      where.fecha_de_presentacion = {};
+      if (filters.fecha_inicio) {
+        where.fecha_de_presentacion.gte = new Date(filters.fecha_inicio);
+      }
+      if (filters.fecha_fin) {
+        const endDate = new Date(filters.fecha_fin);
+        endDate.setHours(23, 59, 59, 999);
+        where.fecha_de_presentacion.lte = endDate;
+      }
+    }
+
+    if (filters?.id_facultad) {
+      where.id_facultad = filters.id_facultad;
+    }
+
+    if (filters?.id_programa) {
+      where.id_programa = filters.id_programa;
+    }
+
     // Total projects
-    const totalProjects = await prisma.proyecto_proyeccion_social.count();
+    const totalProjects = await prisma.proyecto_proyeccion_social.count({ where });
 
     // Total impacto acumulado
     const impactoAgg = await prisma.proyecto_proyeccion_social.aggregate({
+      where,
       _sum: { personas_impactadas: true },
     });
     const totalImpactadas = impactoAgg._sum.personas_impactadas ?? 0;
@@ -536,9 +680,9 @@ export class ProyeccionSocialService {
     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
 
     const proyectosRecientes = await prisma.proyecto_proyeccion_social.findMany({
-      where: { fecha_registro: { gte: fourWeeksAgo } },
-      select: { fecha_registro: true, personas_impactadas: true },
-      orderBy: { fecha_registro: 'asc' },
+      where: { ...where, fecha_de_presentacion: { ...where.fecha_de_presentacion, gte: fourWeeksAgo } },
+      select: { fecha_de_presentacion: true, personas_impactadas: true },
+      orderBy: { fecha_de_presentacion: 'asc' },
     });
 
     // Group by week (Semana 1..4 from oldest to newest)
@@ -550,7 +694,7 @@ export class ProyeccionSocialService {
     ];
 
     proyectosRecientes.forEach(p => {
-      const diffDays = Math.floor((now.getTime() - new Date(p.fecha_registro).getTime()) / (1000 * 60 * 60 * 24));
+      const diffDays = Math.floor((now.getTime() - new Date(p.fecha_de_presentacion).getTime()) / (1000 * 60 * 60 * 24));
       // diffDays: 0-6 → semana 4 (más reciente), 7-13 → semana 3, 14-20 → semana 2, 21-27 → semana 1
       let weekIdx = 3 - Math.floor(diffDays / 7);
       if (weekIdx < 0) weekIdx = 0;
@@ -560,6 +704,7 @@ export class ProyeccionSocialService {
 
     const statusCounts = await prisma.proyecto_proyeccion_social.groupBy({
       by: ['estado'],
+      where,
       _count: {
         id_proyecto_social: true
       }
@@ -583,12 +728,13 @@ export class ProyeccionSocialService {
     // Obtener proyecciones sociales finalizadas agrupadas por mes (Ene - Dic)
     const proyectosFinalizados = await prisma.proyecto_proyeccion_social.findMany({
       where: {
+        ...where,
         estado: {
           in: ["Finalizado", "Finalizados"]
         }
       },
       select: {
-        fecha_registro: true
+        fecha_de_presentacion: true
       }
     });
 
@@ -596,11 +742,27 @@ export class ProyeccionSocialService {
     const monthlyFinalized = meses.map(m => ({ name: m, finalizados: 0 }));
 
     proyectosFinalizados.forEach(p => {
-      const fecha = new Date(p.fecha_registro);
+      const fecha = new Date(p.fecha_de_presentacion);
       const mesIdx = fecha.getMonth(); // 0 - 11
       if (mesIdx >= 0 && mesIdx <= 11) {
         monthlyFinalized[mesIdx].finalizados += 1;
       }
+    });
+
+    // Filtered project list for display below charts
+    const proyectosFiltrados = await prisma.proyecto_proyeccion_social.findMany({
+      where,
+      select: {
+        id_proyecto_social: true,
+        titulo: true,
+        descripcion: true,
+        estado: true,
+        fecha_de_presentacion: true,
+        fecha_finalizacion: true,
+        personas_impactadas: true,
+      },
+      orderBy: { fecha_de_presentacion: "desc" },
+      take: 50,
     });
 
     return {
@@ -614,7 +776,8 @@ export class ProyeccionSocialService {
         porcentajeFinalizado,
         porcentajeSinEntregar
       },
-      monthlyFinalized
+      monthlyFinalized,
+      proyectos: proyectosFiltrados,
     };
   }
 }

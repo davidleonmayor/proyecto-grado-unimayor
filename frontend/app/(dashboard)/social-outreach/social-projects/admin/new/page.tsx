@@ -1,563 +1,483 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
-
-import Swal from "sweetalert2";
 import RoleProtectedRoute from "@/shared/components/layout/RoleProtectedRoute";
-import { socialProjectsService } from "@/modules/social-outreach/services/social-projects.service";
-import { projectsService } from "@/modules/projects/services/projects.service";
-import { authService } from "@/modules/auth/services/auth.service";
+import { useNewProject } from "@/modules/social-outreach/hooks/useNewProject";
+import SectionHeader from "@/modules/social-outreach/components/SectionHeader";
+import PersonSelector from "@/modules/social-outreach/components/PersonSelector";
+import CheckboxGroup from "@/modules/social-outreach/components/CheckboxGroup";
+import TextAreaField from "@/modules/social-outreach/components/TextAreaField";
+import PlanAccionSection from "@/modules/social-outreach/components/PlanAccionSection";
+import PresupuestoEquipoSection from "@/modules/social-outreach/components/PresupuestoEquipoSection";
+import PresupuestoRecursosSection from "@/modules/social-outreach/components/PresupuestoRecursosSection";
 
-interface Person {
-  id: string;
-  name: string;
-  email: string;
-  document?: string;
-}
-
-function NewProjectPageContent() {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [currentUser, setCurrentUser] = useState<Person | null>(null);
-
-  // Two-column lists
-  const [assignedStudents, setAssignedStudents] = useState<Person[]>([]);
-  const [availableStudents, setAvailableStudents] = useState<Person[]>([]);
-  const [filteredAvailableStudents, setFilteredAvailableStudents] = useState<
-    Person[]
-  >([]);
-
-  const [assignedAdvisors, setAssignedAdvisors] = useState<Person[]>([]);
-  const [availableAdvisors, setAvailableAdvisors] = useState<Person[]>([]);
-  const [filteredAvailableAdvisors, setFilteredAvailableAdvisors] = useState<
-    Person[]
-  >([]);
-
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [personasImpactadas] = useState<number>(0);
-
-  const [studentSearch, setStudentSearch] = useState("");
-  const [advisorSearch, setAdvisorSearch] = useState("");
-
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  const loadInitialData = async () => {
-    try {
-      const [studentsData, advisorsData, userData] = await Promise.all([
-        projectsService.getAvailableStudents(),
-        projectsService.getAvailableAdvisors(),
-        authService.getCurrentUser(),
-      ]);
-
-      let initialAssignedAdvisors: Person[] = [];
-      let initialAvailableAdvisors = advisorsData as Person[];
-
-      if (userData) {
-        const mappedUser: Person = {
-          id: userData.id_persona,
-          name: `${userData.nombres} ${userData.apellidos}`,
-          email: userData.correo_electronico,
-          document: userData.num_doc_identidad,
-        };
-        setCurrentUser(mappedUser);
-
-        const fromList = advisorsData.find(
-          (a: Person) => a.id === mappedUser.id,
-        );
-        initialAssignedAdvisors = [fromList ?? mappedUser];
-        initialAvailableAdvisors = advisorsData.filter(
-          (a: Person) => a.id !== mappedUser.id,
-        );
-      }
-
-      setAvailableStudents(studentsData);
-      setFilteredAvailableStudents(studentsData);
-
-      setAssignedAdvisors(initialAssignedAdvisors);
-      setAvailableAdvisors(initialAvailableAdvisors);
-      setFilteredAvailableAdvisors(initialAvailableAdvisors);
-    } catch (error) {
-      Swal.fire("Error", "No se pudo cargar los datos iniciales", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const filterStudents = useCallback(
-    (searchTerm: string) => {
-      if (!searchTerm.trim()) {
-        setFilteredAvailableStudents(availableStudents);
-        return;
-      }
-      const search = searchTerm.toLowerCase().trim();
-      const filtered = availableStudents.filter((student) => {
-        const documentMatch = student.document?.toLowerCase().includes(search);
-        const idMatch = student.id.toLowerCase().includes(search);
-        const nameMatch = student.name.toLowerCase().includes(search);
-        const emailMatch = student.email.toLowerCase().includes(search);
-        return documentMatch || idMatch || nameMatch || emailMatch;
-      });
-      setFilteredAvailableStudents(filtered);
-    },
-    [availableStudents],
-  );
-
-  const filterAdvisors = useCallback(
-    (searchTerm: string) => {
-      if (!searchTerm.trim()) {
-        setFilteredAvailableAdvisors(availableAdvisors);
-        return;
-      }
-      const search = searchTerm.toLowerCase().trim();
-      const filtered = availableAdvisors.filter((advisor) => {
-        const documentMatch = advisor.document?.toLowerCase().includes(search);
-        const idMatch = advisor.id.toLowerCase().includes(search);
-        const nameMatch = advisor.name.toLowerCase().includes(search);
-        const emailMatch = advisor.email.toLowerCase().includes(search);
-        return documentMatch || idMatch || nameMatch || emailMatch;
-      });
-      setFilteredAvailableAdvisors(filtered);
-    },
-    [availableAdvisors],
-  );
-
-  useEffect(() => {
-    filterStudents(studentSearch);
-  }, [studentSearch, filterStudents]);
-
-  useEffect(() => {
-    filterAdvisors(advisorSearch);
-  }, [advisorSearch, filterAdvisors]);
-
-  const addStudent = (student: Person) => {
-    setAssignedStudents([...assignedStudents, student]);
-    const newAvailable = availableStudents.filter((s) => s.id !== student.id);
-    setAvailableStudents(newAvailable);
-    setFilteredAvailableStudents(
-      studentSearch.trim()
-        ? newAvailable.filter((s) => matchesSearch(s, studentSearch))
-        : newAvailable,
-    );
-  };
-
-  const removeStudent = (student: Person) => {
-    setAssignedStudents(assignedStudents.filter((s) => s.id !== student.id));
-    const newAvailable = [...availableStudents, student];
-    setAvailableStudents(newAvailable);
-    setFilteredAvailableStudents(
-      studentSearch.trim()
-        ? newAvailable.filter((s) => matchesSearch(s, studentSearch))
-        : newAvailable,
-    );
-  };
-
-  const addAdvisor = (advisor: Person) => {
-    setAssignedAdvisors([...assignedAdvisors, advisor]);
-    const newAvailable = availableAdvisors.filter((a) => a.id !== advisor.id);
-    setAvailableAdvisors(newAvailable);
-    setFilteredAvailableAdvisors(
-      advisorSearch.trim()
-        ? newAvailable.filter((a) => matchesSearch(a, advisorSearch))
-        : newAvailable,
-    );
-  };
-
-  const removeAdvisor = (advisor: Person) => {
-    // Creator (currentUser) cannot be removed
-    if (currentUser && advisor.id === currentUser.id) return;
-    setAssignedAdvisors(assignedAdvisors.filter((a) => a.id !== advisor.id));
-    const newAvailable = [...availableAdvisors, advisor];
-    setAvailableAdvisors(newAvailable);
-    setFilteredAvailableAdvisors(
-      advisorSearch.trim()
-        ? newAvailable.filter((a) => matchesSearch(a, advisorSearch))
-        : newAvailable,
-    );
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!nombre.trim()) {
-      Swal.fire("Error", "El título es obligatorio", "error");
-      return;
-    }
-
-    if (assignedStudents.length < 1) {
-      Swal.fire("Error", "Debe seleccionar al menos 1 estudiante", "error");
-      return;
-    }
-
-    if (assignedAdvisors.length < 1) {
-      Swal.fire("Error", "Debe seleccionar al menos 1 docente", "error");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await socialProjectsService.createProject({
-        nombre,
-        descripcion: descripcion || null,
-        personas_impactadas: personasImpactadas,
-        estudiantes: assignedStudents.map((s) => s.id),
-        docentes: assignedAdvisors.map((a) => a.id),
-      });
-
-      await Swal.fire(
-        "¡Éxito!",
-        "Proyecto de proyección social creado exitosamente",
-        "success",
-      );
-      router.push("/social-outreach/social-projects/admin");
-    } catch (error: any) {
-      Swal.fire(
-        "Error",
-        error.message || "No se pudo crear el proyecto de proyección social",
-        "error",
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  };
+const NewProjectPageContent = () => {
+  const {
+    isLoading,
+    isSaving,
+    openSections,
+    toggleSection,
+    titulo,
+    setTitulo,
+    descripcion,
+    setDescripcion,
+    lineasAccionIds,
+    setLineasAccionIds,
+    idFacultad,
+    setIdFacultad,
+    idPrograma,
+    setIdPrograma,
+    semestre,
+    setSemestre,
+    idAsesor,
+    setIdAsesor,
+    asesorSearch,
+    setAsesorSearch,
+    allDocentes,
+    filteredDocentes,
+    personasImpactadas,
+    fechaPresentacion,
+    setFechaPresentacion,
+    fechaFinalizacion,
+    setFechaFinalizacion,
+    facultades,
+    programas,
+    lineasAccion,
+    assignedProponentes,
+    filteredAvailableProponentes,
+    proponenteSearch,
+    setProponenteSearch,
+    addProponente,
+    removeProponente,
+    resumen,
+    setResumen,
+    palabrasClave,
+    setPalabrasClave,
+    identificacionProblematica,
+    setIdentificacionProblematica,
+    propuestaSolucion,
+    setPropuestaSolucion,
+    caracterizacionPoblacion,
+    setCaracterizacionPoblacion,
+    objetivos,
+    setObjetivos,
+    resultadosEsperados,
+    setResultadosEsperados,
+    metodologia,
+    setMetodologia,
+    bibliografia,
+    setBibliografia,
+    planesAccion,
+    setPlanesAccion,
+    presupuestoEquipo,
+    setPresupuestoEquipo,
+    presupuestoRecursos,
+    setPresupuestoRecursos,
+    handleSubmit,
+    router,
+  } = useNewProject();
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600" />
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="max-w-5xl mx-auto p-6">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">
-        Crear Nueva Proyección Social
+        Crear Proyecto de Proyección Social
       </h1>
+
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6"
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        {/* Título */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Título de la proyección *
-          </label>
-          <input
-            type="text"
-            required
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Ej: Sistema de gestión académica"
-          />
-        </div>
-
-        {/* Descripción */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Descripción
-          </label>
-          <textarea
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="Descripción breve del proyecto..."
-          />
-        </div>
-
-        {/* Personas Impactadas */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Cantidad de personas impactadas *
-          </label>
-          <p className="text-xs text-gray-500 mb-2">
-            Este valor inicia en 0 y se actualizará cuando el proyecto avance.
-          </p>
-          <input
-            type="number"
-            min={0}
-            value={personasImpactadas}
-            readOnly
-            disabled
-            aria-readonly="true"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
-          />
-        </div>
-
-        {/* Estudiantes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estudiantes * (Selecciona 1 o más)
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Assigned Students */}
+        {/* ============================================================ */}
+        {/* Sección 1: Información General                                */}
+        {/* ============================================================ */}
+        <SectionHeader
+          title="Información General"
+          isOpen={openSections.general}
+          onToggle={() => toggleSection("general")}
+        />
+        {openSections.general && (
+          <div className="p-6 space-y-6 border-t border-gray-200">
+            {/* Título */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Asignados ({assignedStudents.length})
-                </span>
-              </div>
-              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                {assignedStudents.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-4">
-                    No hay estudiantes asignados
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {assignedStudents.map((student) => (
-                      <div
-                        key={student.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
-                      >
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">
-                            {student.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {student.email}
-                            {student.document ? ` - ${student.document}` : ""}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeStudent(student)}
-                          className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                          aria-label="Quitar estudiante"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Título *
+              </label>
+              <input
+                type="text"
+                required
+                value={titulo}
+                onChange={(e) => setTitulo(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Ej: Brigada de salud rural"
+              />
             </div>
 
-            {/* Available Students */}
+            {/* Descripción */}
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Disponibles
-                </span>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Descripción
+              </label>
+              <textarea
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Descripción breve del proyecto..."
+              />
+            </div>
+
+            {/* Líneas de acción */}
+            <CheckboxGroup
+              label="Líneas de acción"
+              description="Selecciona una o más líneas que apliquen al proyecto."
+              items={lineasAccion.map((l) => ({
+                id: l.id_linea_accion,
+                label: l.nombre,
+              }))}
+              selectedIds={lineasAccionIds}
+              onChange={setLineasAccionIds}
+              emptyMessage="No hay líneas de acción configuradas."
+            />
+
+            {/* Facultad */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Facultad
+              </label>
+              <select
+                value={idFacultad}
+                onChange={(e) => setIdFacultad(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+              >
+                <option value="">Selecciona una facultad...</option>
+                {facultades.map((f) => (
+                  <option key={f.id_facultad} value={f.id_facultad}>
+                    {f.nombre_facultad}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Programa */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Programa académico
+              </label>
+              <select
+                value={idPrograma}
+                onChange={(e) => setIdPrograma(e.target.value)}
+                disabled={!idFacultad}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {idFacultad
+                    ? "Selecciona un programa..."
+                    : "Primero selecciona una facultad"}
+                </option>
+                {programas.map((p) => (
+                  <option key={p.id_programa} value={p.id_programa}>
+                    {p.nombre_programa}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Proponentes (estudiantes de la facultad y programa seleccionados) */}
+            {idFacultad && idPrograma ? (
+              <PersonSelector
+                label="Proponentes * (Selecciona 1 o más estudiantes)"
+                assigned={assignedProponentes}
+                available={filteredAvailableProponentes}
+                search={proponenteSearch}
+                onSearchChange={setProponenteSearch}
+                onAdd={addProponente}
+                onRemove={removeProponente}
+              />
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Proponentes *
+                </label>
+                <p className="text-xs text-gray-500">
+                  {!idFacultad
+                    ? "Selecciona una facultad y un programa académico para ver los estudiantes disponibles."
+                    : "Selecciona un programa académico para ver los estudiantes disponibles."}
+                </p>
               </div>
-              <div className="mb-2">
+            )}
+
+            {/* Semestre */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Semestre
+              </label>
+              <input
+                type="text"
+                value={semestre}
+                onChange={(e) => setSemestre(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Ej: 2026-1"
+              />
+            </div>
+
+            {/* Fechas del proyecto */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha de presentación
+                </label>
                 <input
-                  type="text"
-                  value={studentSearch}
-                  onChange={(e) => setStudentSearch(e.target.value)}
-                  placeholder="Buscar por cédula, código o nombre..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  type="date"
+                  value={fechaPresentacion}
+                  onChange={(e) => setFechaPresentacion(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                {filteredAvailableStudents.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-4">
-                    No se encontraron estudiantes
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredAvailableStudents.map((student) => (
-                      <div
-                        key={student.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
-                      >
-                        <div className="flex-1">
-                          <div className="text-sm font-medium text-gray-900">
-                            {student.name}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {student.id} • {student.email}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => addStudent(student)}
-                          className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
-                          aria-label="Agregar estudiante"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Docentes */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Docentes * (Selecciona 1 o más)
-          </label>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Assigned Advisors */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Asignados ({assignedAdvisors.length})
-                </span>
-              </div>
-              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                {assignedAdvisors.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-4">
-                    No hay docentes asignados
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {assignedAdvisors.map((advisor) => {
-                      const isCurrent =
-                        currentUser && advisor.id === currentUser.id;
-                      return (
-                        <div
-                          key={advisor.id}
-                          className={`flex items-center justify-between p-3 rounded-lg border ${
-                            isCurrent
-                              ? "bg-blue-50 border-blue-200"
-                              : "bg-white border-gray-200 hover:bg-gray-50"
-                          }`}
-                        >
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-900">
-                              {advisor.name}{" "}
-                              {isCurrent && (
-                                <span className="text-xs text-blue-700">
-                                  (Tú)
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {advisor.id} • {advisor.email}
-                            </div>
-                          </div>
-                          {!isCurrent && (
-                            <button
-                              type="button"
-                              onClick={() => removeAdvisor(advisor)}
-                              className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
-                              aria-label="Quitar docente"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Available Advisors */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
-                  Disponibles
-                </span>
-              </div>
-              <div className="mb-2">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha de finalización
+                </label>
                 <input
-                  type="text"
-                  value={advisorSearch}
-                  onChange={(e) => setAdvisorSearch(e.target.value)}
-                  placeholder="Buscar por cédula, código o nombre..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  type="date"
+                  value={fechaFinalizacion}
+                  onChange={(e) => setFechaFinalizacion(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              <div className="border border-gray-300 rounded-lg p-4 max-h-64 overflow-y-auto bg-gray-50">
-                {filteredAvailableAdvisors.length === 0 ? (
-                  <p className="text-gray-500 text-sm text-center py-4">
-                    No se encontraron docentes
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {filteredAvailableAdvisors.map((advisor) => (
-                      <div
-                        key={advisor.id}
-                        className="flex items-center justify-between p-3 rounded-lg bg-white border border-gray-200 hover:bg-gray-50"
+            </div>
+
+            {/* Docente Asesor */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Docente Asesor
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Busca y selecciona el docente que será asesor del proyecto.
+              </p>
+              {idAsesor && (
+                <div className="flex items-center justify-between p-3 mb-2 rounded-lg bg-blue-50 border border-blue-200">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-900">
+                      {allDocentes.find((d) => d.id === idAsesor)?.name ||
+                        "Asesor seleccionado"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {allDocentes.find((d) => d.id === idAsesor)?.email ||
+                        ""}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIdAsesor(null)}
+                    className="ml-2 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                    aria-label="Quitar asesor"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              )}
+              <input
+                type="text"
+                value={asesorSearch}
+                onChange={(e) => setAsesorSearch(e.target.value)}
+                placeholder="Buscar docente por nombre, email o documento..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+              />
+              {asesorSearch.trim() && !idAsesor && (
+                <div className="mt-2 border border-gray-300 rounded-lg max-h-48 overflow-y-auto bg-white">
+                  {filteredDocentes.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-3">
+                      No se encontraron docentes
+                    </p>
+                  ) : (
+                    filteredDocentes.slice(0, 10).map((docente) => (
+                      <button
+                        key={docente.id}
+                        type="button"
+                        onClick={() => {
+                          setIdAsesor(docente.id);
+                          setAsesorSearch("");
+                        }}
+                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left border-b border-gray-100 last:border-b-0"
                       >
-                        <div className="flex-1">
+                        <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {advisor.name}
+                            {docente.name}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {advisor.id} • {advisor.email}
+                            {docente.email}
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => addAdvisor(advisor)}
-                          className="ml-2 p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded transition-colors"
-                          aria-label="Agregar docente"
-                        >
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
+
+            <TextAreaField
+              label="Resumen"
+              value={resumen}
+              onChange={setResumen}
+              maxLength={200}
+              rows={3}
+              placeholder="Describa brevemente el propósito y alcance del proyecto..."
+              description="Síntesis del proyecto en máximo 200 caracteres."
+            />
+
+            <TextAreaField
+              label="Palabras clave"
+              value={palabrasClave}
+              onChange={setPalabrasClave}
+              maxLength={100}
+              rows={2}
+              placeholder="Ej: medio ambiente, reciclaje, educación ambiental"
+              description="Términos clave separados por comas."
+            />
+
+            <TextAreaField
+              label="Identificación de la problemática"
+              value={identificacionProblematica}
+              onChange={setIdentificacionProblematica}
+              maxLength={1000}
+              rows={5}
+              placeholder="Describa la problemática que aborda el proyecto..."
+              description="Contexto y justificación del problema identificado."
+            />
+
+            <TextAreaField
+              label="Propuesta de solución"
+              value={propuestaSolucion}
+              onChange={setPropuestaSolucion}
+              maxLength={700}
+              rows={4}
+              placeholder="Describa la propuesta para atender la problemática..."
+              description="Cómo el proyecto aborda el problema identificado."
+            />
+
+            <TextAreaField
+              label="Caracterización de la población beneficiaria"
+              value={caracterizacionPoblacion}
+              onChange={setCaracterizacionPoblacion}
+              maxLength={900}
+              rows={4}
+              placeholder="Describa la población a la que va dirigido el proyecto..."
+              description="Perfil demográfico y social de los beneficiarios."
+            />
+
+            <TextAreaField
+              label="Objetivos"
+              value={objetivos}
+              onChange={setObjetivos}
+              maxLength={900}
+              rows={5}
+              placeholder="Objetivo general y específicos del proyecto..."
+              description="Incluya el objetivo general y los objetivos específicos."
+            />
+
+            <TextAreaField
+              label="Resultados esperados"
+              value={resultadosEsperados}
+              onChange={setResultadosEsperados}
+              maxLength={700}
+              rows={4}
+              placeholder="Describa los resultados que se esperan alcanzar..."
+              description="Productos, cambios o beneficios esperados."
+            />
+
+            <TextAreaField
+              label="Metodología"
+              value={metodologia}
+              onChange={setMetodologia}
+              maxLength={1000}
+              rows={5}
+              placeholder="Describa el enfoque metodológico y las actividades..."
+              description="Enfoque, técnicas y estrategias de intervención."
+            />
+
+            <TextAreaField
+              label="Bibliografía"
+              value={bibliografia}
+              onChange={setBibliografia}
+              maxLength={600}
+              rows={3}
+              placeholder="Referencias bibliográficas de soporte..."
+              description="Fuentes consultadas en formato libre."
+            />
+
+            {/* Personas Impactadas */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cantidad de personas impactadas *
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Este valor inicia en 0 y se actualizará cuando el proyecto
+                avance.
+              </p>
+              <input
+                type="number"
+                min={0}
+                value={personasImpactadas}
+                readOnly
+                disabled
+                aria-readonly="true"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+              />
+            </div>
+
           </div>
-        </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* Sección 2: Plan de Acción — placeholder                       */}
+        {/* ============================================================ */}
+        <SectionHeader
+          title="Plan de Acción"
+          isOpen={openSections.plan}
+          onToggle={() => toggleSection("plan")}
+        />
+        {openSections.plan && (
+          <div className="p-6 border-t border-gray-200">
+            <PlanAccionSection items={planesAccion} onChange={setPlanesAccion} />
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* Sección 3: Presupuesto — placeholder                          */}
+        {/* ============================================================ */}
+        <SectionHeader
+          title="Presupuesto"
+          isOpen={openSections.presupuesto}
+          onToggle={() => toggleSection("presupuesto")}
+        />
+        {openSections.presupuesto && (
+          <div className="p-6 border-t border-gray-200 space-y-8">
+            <PresupuestoEquipoSection items={presupuestoEquipo} onChange={setPresupuestoEquipo} />
+            <PresupuestoRecursosSection items={presupuestoRecursos} onChange={setPresupuestoRecursos} />
+          </div>
+        )}
 
         {/* Botones */}
-        <div className="flex justify-end gap-4 pt-4 border-t">
+        <div className="flex justify-end gap-4 p-6 border-t border-gray-200 bg-gray-50">
           <button
             type="button"
             onClick={() => router.back()}
@@ -577,17 +497,7 @@ function NewProjectPageContent() {
       </form>
     </div>
   );
-}
-
-function matchesSearch(person: Person, search: string): boolean {
-  const s = search.toLowerCase().trim();
-  return (
-    Boolean(person.document?.toLowerCase().includes(s)) ||
-    person.id.toLowerCase().includes(s) ||
-    person.name.toLowerCase().includes(s) ||
-    person.email.toLowerCase().includes(s)
-  );
-}
+};
 
 export default function NewProjectPage() {
   return (

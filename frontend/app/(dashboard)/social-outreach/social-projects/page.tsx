@@ -71,10 +71,10 @@ type TProject = {
 
 function ProjectLink({
   id_persona_registra,
-  nombre,
+  titulo,
   descripcion,
   tipo_mime,
-  fecha_registro,
+  fecha_de_presentacion,
   id_proyecto_social,
   estado = "En proceso",
   personas_impactadas = 0,
@@ -109,7 +109,7 @@ function ProjectLink({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span>
-              {new Date(fecha_registro).toLocaleDateString("es-CO", {
+              {new Date(fecha_de_presentacion).toLocaleDateString("es-CO", {
                 day: "numeric",
                 month: "short",
                 year: "numeric",
@@ -119,7 +119,7 @@ function ProjectLink({
         </div>
 
         <h3 className="text-[17px] leading-snug font-bold text-gray-800 mb-3 group-hover:text-primary-600 transition-colors line-clamp-2">
-          {nombre}
+          {titulo}
         </h3>
 
         <p className="text-sm text-gray-500 font-light line-clamp-3 leading-relaxed mb-5 flex-grow">
@@ -149,10 +149,10 @@ function ProjectLink({
 
 interface ISolcialProjection {
   id_proyecto_social: string;
-  nombre: string;
+  titulo: string;
   descripcion: string;
   tipo_mime: string;
-  fecha_registro: string;
+  fecha_de_presentacion: string;
   id_persona_registra: string | null;
   estado?: string;
   personas_impactadas?: number;

@@ -8,12 +8,17 @@ const envSchema = z.object({
         .enum(["development", "test", "production"])
         .default("development"),
     PORT: z.string().regex(/^\d+$/).transform(Number).default(4000),
+
     // Database
     DATABASE_URL: z.string(),
+
     // Auth
     JWT_SECRET: z.string().min(10, "JWT_SECRET Must be at least 10 characters"),
+
     // Origin
     FRONTEND_URL: z.string(),
+    SWAGGER_URL: z.string().default("http://localhost:5050"),
+
     // Nodemiler
     NODEMAILER_HOST: z.string(),
     NODEMAILER_PORT: z.string().transform(Number),

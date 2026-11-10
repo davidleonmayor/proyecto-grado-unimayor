@@ -1,5 +1,4 @@
 import type { ParamSchema, Schema } from "express-validator";
-import type { Request } from "express";
 
 const authorizationHeaderRule: ParamSchema = {
   in: "headers",
@@ -59,103 +58,16 @@ export const SearchSocialProjectionSchema: Schema = {
   },
 };
 
-export const CreateSocialProjectionSchema: Schema = {
-  authorization: authorizationHeaderRule,
-  nombre: {
-    in: ["body"],
-    exists: {
-      errorMessage: "El campo 'nombre' es obligatorio",
-    },
-    isString: {
-      errorMessage: "El campo 'nombre' debe ser texto",
-    },
-    trim: true,
-    notEmpty: {
-      errorMessage: "El campo 'nombre' no puede estar vacío",
-    },
-    isLength: {
-      options: { min: 1, max: 200 },
-      errorMessage: "El campo 'nombre' debe tener entre 1 y 200 caracteres",
-    },
-    matches: {
-      options: socialProjectionNameRegex,
-      errorMessage:
-        "El campo 'nombre' solo puede contener letras, números, espacios, guiones y puntos",
-    },
-  },
-  descripcion: {
-    in: ["body"],
-    optional: {
-      options: { nullable: true },
-    },
-    isString: {
-      errorMessage: "El campo 'descripcion' debe ser texto",
-    },
-    isLength: {
-      options: { min: 1, max: 2000 },
-      errorMessage:
-        "El campo 'descripcion' debe tener entre 1 y 2000 caracteres",
-    },
-    trim: true,
-  },
-  personas_impactadas: {
-    in: ["body"],
-    optional: { options: { nullable: true } },
-    isInt: {
-      options: { min: 0 },
-      errorMessage: "El campo 'personas_impactadas' debe ser un entero no negativo",
-    },
-    toInt: true,
-  },
-  // archivo: {
-  //   in: ["body"],
-  //   custom: {
-  //     options: (_value, { req }) => {
-  //       if (!req.file) {
-  //         throw new Error("El archivo Excel es obligatorio");
-  //       }
-  //       return true;
-  //     },
-  //   },
-  // },
-};
-
-export const DownloadByNameSocialProjectionSchema: Schema = {
-  authorization: authorizationHeaderRule,
-  nombre: {
-    in: ["params"],
-    ...socialProjectionNameRule,
-  },
-};
-
-export const DownloadByIdSocialProjectionSchema: Schema = {
-  authorization: authorizationHeaderRule,
-  id: {
-    in: ["params"],
-    exists: {
-      errorMessage: "El parámetro 'id' es obligatorio",
-    },
-    isString: {
-      errorMessage: "El parámetro 'id' debe ser texto",
-    },
-    matches: {
-      options: /^c[a-z0-9]{24}$/,
-      errorMessage: "El parámetro 'id' debe ser un CUID válido",
-    },
-    trim: true,
-  },
-};
-
 export const CreateManualSocialProjectionSchema: Schema = {
   authorization: authorizationHeaderRule,
-  nombre: {
+  titulo: {
     in: ["body"],
-    exists: { errorMessage: "El campo 'nombre' es obligatorio" },
-    isString: { errorMessage: "El campo 'nombre' debe ser texto" },
+    exists: { errorMessage: "El campo 'titulo' es obligatorio" },
+    isString: { errorMessage: "El campo 'titulo' debe ser texto" },
     trim: true,
-    notEmpty: { errorMessage: "El campo 'nombre' no puede estar vacío" },
-    isLength: { options: { min: 1, max: 200 }, errorMessage: "El campo 'nombre' debe tener entre 1 y 200 caracteres" },
-    matches: { options: socialProjectionNameRegex, errorMessage: "El campo 'nombre' solo puede contener letras, números, espacios, guiones y puntos" },
+    notEmpty: { errorMessage: "El campo 'titulo' no puede estar vacío" },
+    isLength: { options: { min: 1, max: 200 }, errorMessage: "El campo 'titulo' debe tener entre 1 y 200 caracteres" },
+    matches: { options: socialProjectionNameRegex, errorMessage: "El campo 'titulo' solo puede contener letras, números, espacios, guiones y puntos" },
   },
   descripcion: {
     in: ["body"],
@@ -216,6 +128,223 @@ export const CreateManualSocialProjectionSchema: Schema = {
     optional: { options: { nullable: true } },
     isString: { errorMessage: "El campo 'estado' debe ser texto" },
     trim: true,
+  },
+  fecha_de_presentacion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isISO8601: { errorMessage: "El campo 'fecha_de_presentacion' debe ser una fecha válida (ISO 8601)" },
+  },
+  fecha_finalizacion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isISO8601: { errorMessage: "El campo 'fecha_finalizacion' debe ser una fecha válida (ISO 8601)" },
+    custom: {
+      options: (value: unknown, { req }: any) => {
+        if (!value || !req.body.fecha_de_presentacion) return true;
+        if (new Date(value as string) < new Date(req.body.fecha_de_presentacion)) {
+          throw new Error("La fecha de finalización no puede ser anterior a la fecha de presentación");
+        }
+        return true;
+      },
+    },
+  },
+  // Campos de la Ficha Técnica — sección "Información General"
+  lineas_accion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'lineas_accion' debe ser un arreglo de CUIDs" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true; // optional
+        if (!value.every((id) => typeof id === "string" && /^c[a-z0-9]{24}$/.test(id))) {
+          throw new Error("Uno o más IDs de líneas de acción no son CUIDs válidos");
+        }
+        if (new Set(value).size !== value.length) {
+          throw new Error("Los IDs de líneas de acción no pueden estar duplicados");
+        }
+        return true;
+      },
+    },
+  },
+  semestre: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'semestre' debe ser texto" },
+    isLength: { options: { max: 50 }, errorMessage: "El campo 'semestre' no puede exceder 50 caracteres" },
+    trim: true,
+  },
+  id_programa: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'id_programa' debe ser texto" },
+    matches: {
+      options: /^c[a-z0-9]{24}$/,
+      errorMessage: "El campo 'id_programa' debe ser un CUID válido",
+    },
+    trim: true,
+  },
+  id_asesor: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'id_asesor' debe ser texto" },
+    matches: {
+      options: /^c[a-z0-9]{24}$/,
+      errorMessage: "El campo 'id_asesor' debe ser un CUID válido",
+    },
+    trim: true,
+  },
+  resumen: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'resumen' debe ser texto" },
+    isLength: { options: { max: 200 }, errorMessage: "El campo 'resumen' no puede exceder 200 caracteres" },
+    trim: true,
+  },
+  identificacion_problematica: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'identificacion_problematica' debe ser texto" },
+    isLength: { options: { max: 1000 }, errorMessage: "El campo 'identificacion_problematica' no puede exceder 1000 caracteres" },
+    trim: true,
+  },
+  propuesta_solucion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'propuesta_solucion' debe ser texto" },
+    isLength: { options: { max: 700 }, errorMessage: "El campo 'propuesta_solucion' no puede exceder 700 caracteres" },
+    trim: true,
+  },
+  caracterizacion_poblacion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'caracterizacion_poblacion' debe ser texto" },
+    isLength: { options: { max: 900 }, errorMessage: "El campo 'caracterizacion_poblacion' no puede exceder 900 caracteres" },
+    trim: true,
+  },
+  objetivos: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'objetivos' debe ser texto" },
+    isLength: { options: { max: 900 }, errorMessage: "El campo 'objetivos' no puede exceder 900 caracteres" },
+    trim: true,
+  },
+  resultados_esperados: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'resultados_esperados' debe ser texto" },
+    isLength: { options: { max: 700 }, errorMessage: "El campo 'resultados_esperados' no puede exceder 700 caracteres" },
+    trim: true,
+  },
+  metodologia: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'metodologia' debe ser texto" },
+    isLength: { options: { max: 1000 }, errorMessage: "El campo 'metodologia' no puede exceder 1000 caracteres" },
+    trim: true,
+  },
+  bibliografia: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'bibliografia' debe ser texto" },
+    isLength: { options: { max: 600 }, errorMessage: "El campo 'bibliografia' no puede exceder 600 caracteres" },
+    trim: true,
+  },
+  palabras_clave: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isString: { errorMessage: "El campo 'palabras_clave' debe ser texto" },
+    isLength: { options: { max: 100 }, errorMessage: "El campo 'palabras_clave' no puede exceder 100 caracteres" },
+    trim: true,
+  },
+  proponentes: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'proponentes' debe ser un arreglo de CUIDs" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        if (!value.every((id) => typeof id === "string" && /^c[a-z0-9]{24}$/.test(id))) {
+          throw new Error("Uno o más IDs de proponentes no son CUIDs válidos");
+        }
+        if (new Set(value).size !== value.length) {
+          throw new Error("Los IDs de proponentes no pueden estar duplicados");
+        }
+        return true;
+      },
+    },
+  },
+  planes_accion: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'planes_accion' debe ser un arreglo" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        for (const item of value) {
+          if (typeof item !== "object" || item === null) {
+            throw new Error("Cada plan de acción debe ser un objeto");
+          }
+          const { objetivo_especifico, actividades, duracion, responsables, meta, indicador } = item as any;
+          if (objetivo_especifico && typeof objetivo_especifico !== "string") throw new Error("objetivo_especifico debe ser texto");
+          if (actividades && typeof actividades !== "string") throw new Error("actividades debe ser texto");
+          if (duracion && typeof duracion !== "string") throw new Error("duracion debe ser texto");
+          if (duracion && duracion.length > 100) throw new Error("duracion no puede exceder 100 caracteres");
+          if (responsables && typeof responsables !== "string") throw new Error("responsables debe ser texto");
+          if (responsables && responsables.length > 500) throw new Error("responsables no puede exceder 500 caracteres");
+          if (meta && typeof meta !== "string") throw new Error("meta debe ser texto");
+          if (indicador && typeof indicador !== "string") throw new Error("indicador debe ser texto");
+        }
+        return true;
+      },
+    },
+  },
+  presupuesto_equipo: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'presupuesto_equipo' debe ser un arreglo" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        for (const item of value) {
+          if (typeof item !== "object" || item === null) {
+            throw new Error("Cada item de presupuesto equipo debe ser un objeto");
+          }
+          const { nombre, cargo, funcion, tipo_vinculacion, salario, total } = item as any;
+          if (nombre && typeof nombre !== "string") throw new Error("nombre debe ser texto");
+          if (nombre && nombre.length > 200) throw new Error("nombre no puede exceder 200 caracteres");
+          if (cargo && typeof cargo !== "string") throw new Error("cargo debe ser texto");
+          if (cargo && cargo.length > 150) throw new Error("cargo no puede exceder 150 caracteres");
+          if (funcion && typeof funcion !== "string") throw new Error("funcion debe ser texto");
+          if (tipo_vinculacion && typeof tipo_vinculacion !== "string") throw new Error("tipo_vinculacion debe ser texto");
+          if (tipo_vinculacion && tipo_vinculacion.length > 100) throw new Error("tipo_vinculacion no puede exceder 100 caracteres");
+          if (salario !== undefined && salario !== null && isNaN(Number(salario))) throw new Error("salario debe ser un número");
+          if (total !== undefined && total !== null && isNaN(Number(total))) throw new Error("total debe ser un número");
+        }
+        return true;
+      },
+    },
+  },
+  presupuesto_recursos: {
+    in: ["body"],
+    optional: { options: { nullable: true } },
+    isArray: { errorMessage: "El campo 'presupuesto_recursos' debe ser un arreglo" },
+    custom: {
+      options: (value: unknown) => {
+        if (!Array.isArray(value)) return true;
+        for (const item of value) {
+          if (typeof item !== "object" || item === null) {
+            throw new Error("Cada item de presupuesto recursos debe ser un objeto");
+          }
+          const { tipo_recurso, valor_unitario, cantidad, valor_total } = item as any;
+          if (tipo_recurso && typeof tipo_recurso !== "string") throw new Error("tipo_recurso debe ser texto");
+          if (tipo_recurso && tipo_recurso.length > 100) throw new Error("tipo_recurso no puede exceder 100 caracteres");
+          if (valor_unitario !== undefined && valor_unitario !== null && isNaN(Number(valor_unitario))) throw new Error("valor_unitario debe ser un número");
+          if (cantidad !== undefined && cantidad !== null && !Number.isInteger(Number(cantidad))) throw new Error("cantidad debe ser un entero");
+          if (valor_total !== undefined && valor_total !== null && isNaN(Number(valor_total))) throw new Error("valor_total debe ser un número");
+        }
+        return true;
+      },
+    },
   },
 };
 

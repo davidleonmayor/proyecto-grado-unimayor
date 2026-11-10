@@ -3,11 +3,6 @@ import multer, { FileFilterCallback } from "multer";
 import { logger } from "../config";
 import { ProyeccionSocialService } from "./socialProjection.service";
 
-const allowedExcelMimeTypes = new Set([
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-excel",
-]);
-
 const allowedAnexoMimeTypes = new Set([
   "application/pdf",
   "application/msword",
@@ -17,23 +12,6 @@ const allowedAnexoMimeTypes = new Set([
 ]);
 
 const storage = multer.memoryStorage();
-
-const excelFileFilter = (
-  _req: Request,
-  file: Express.Multer.File,
-  cb: FileFilterCallback,
-) => {
-  const isExcel =
-    allowedExcelMimeTypes.has(file.mimetype) ||
-    file.originalname.toLowerCase().endsWith(".xlsx") ||
-    file.originalname.toLowerCase().endsWith(".xls");
-
-  if (!isExcel) {
-    return cb(new Error("Solo se permiten archivos Excel (.xlsx o .xls)."));
-  }
-
-  cb(null, true);
-};
 
 const anexoFileFilter = (
   _req: Request,
@@ -55,12 +33,6 @@ const anexoFileFilter = (
 
   cb(null, true);
 };
-
-export const proyeccionSocialUpload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: excelFileFilter,
-});
 
 export const anexoUpload = multer({
   storage,
@@ -109,59 +81,64 @@ export class ProyeccionSocialController {
     }
   };
 
-  create = async (req: Request, res: Response) => {
-    try {
-      // req.user is guaranteed to exist - middleware handled auth
-      // req.body.nombre is guaranteed to exist and valid - schema validated it
-      // req.body.descripcion is guaranteed to be valid if present - schema validated it
-      // req.file is guaranteed to exist - schema validated it (archivo custom validator)
-      // Role check: handled by ProyeccionSocialRoleMiddleware (router)
-
-      const userId = req.user!.id_persona;
-      const file = req.file;
-
-      // Fallback defensive check (tests call controller directly without middleware)
-      if (!file) {
-        return res
-          .status(400)
-          .json({ error: "El archivo Excel es obligatorio" });
-      }
-
-      const { nombre, descripcion } = req.body;
-
-      const created = await this.service.create({
-        nombre,
-        descripcion,
-        tipo_mime: file.mimetype,
-        archivo: file.buffer as any,
-        id_persona_registra: userId,
-      });
-
-      return res.status(201).json({
-        message: "Proyecto de proyección social registrado exitosamente",
-        data: created,
-      });
-    } catch (error: any) {
-      logger.error("Error creating social projection project:", error);
-      return res.status(500).json({
-        error: error.message || "Error interno del servidor",
-      });
-    }
-  };
-
   createManual = async (req: Request, res: Response) => {
     try {
       const userId = req.user!.id_persona;
-      const { nombre, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
-
-      const created = await this.service.createManual({
-        nombre,
+      const {
+        titulo,
         descripcion,
         personas_impactadas,
         estado,
+        fecha_de_presentacion,
+        fecha_finalizacion,
+        estudiantes,
+        docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+        id_asesor,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
+        proponentes,
+        planes_accion,
+        presupuesto_equipo,
+        presupuesto_recursos,
+      } = req.body;
+
+      const created = await this.service.createManual({
+        titulo,
+        descripcion,
+        personas_impactadas,
+        estado,
+        fecha_de_presentacion,
+        fecha_finalizacion,
         id_persona_registra: userId,
         estudiantes,
         docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+        id_asesor,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
+        proponentes,
+        planes_accion,
+        presupuesto_equipo,
+        presupuesto_recursos,
       });
 
       return res.status(201).json({
@@ -170,57 +147,6 @@ export class ProyeccionSocialController {
       });
     } catch (error: any) {
       logger.error("[ProyeccionSocialService] Error creating manual project:", error);
-      return res.status(500).json({
-        error: error.message || "Error interno del servidor",
-      });
-    }
-  };
-
-  downloadByName = async (req: Request, res: Response) => {
-    try {
-      // req.params.nombre is guaranteed to exist and valid - schema validated it
-      const rawName = req.params.nombre;
-      const nombre = typeof rawName === "string" ? rawName.trim() : "";
-
-      // Fallback defensive check (tests call controller directly without middleware)
-      if (!nombre) {
-        return res
-          .status(400)
-          .json({ error: "El parámetro nombre es obligatorio" });
-      }
-
-      const record = await this.service.findByName(nombre);
-
-      if (!record?.archivo) {
-        return res
-          .status(404)
-          .json({ error: "No se encontró archivo para el nombre indicado" });
-      }
-
-      const extension =
-        record.tipo_mime === "application/vnd.ms-excel" ? ".xls" : ".xlsx";
-
-      const safeBaseName = record.nombre
-        .trim()
-        .replace(/\s+/g, "_")
-        .replace(/[^a-zA-Z0-9_\-]/g, "");
-
-      const downloadName = `${safeBaseName || "proyeccion_social"}_${record.fecha_registro
-        .toISOString()
-        .slice(0, 10)}${extension}`;
-
-      res.setHeader(
-        "Content-Type",
-        record.tipo_mime ||
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${downloadName}"`,
-      );
-      return res.send(record.archivo);
-    } catch (error: any) {
-      logger.error("Error downloading social projection file by name:", error);
       return res.status(500).json({
         error: error.message || "Error interno del servidor",
       });
@@ -260,54 +186,6 @@ export class ProyeccionSocialController {
     }
   };
 
-  downloadById = async (req: Request, res: Response) => {
-    try {
-      // req.params.id is guaranteed to exist and valid - schema validated it
-      const { id } = req.params;
-
-      // Fallback defensive check (tests call controller directly without middleware)
-      if (!id || !id.trim()) {
-        return res
-          .status(400)
-          .json({ error: "El parámetro id es obligatorio" });
-      }
-
-      const record = await this.service.findById(id.trim());
-
-      if (!record?.archivo) {
-        return res.status(404).json({ error: "Archivo no encontrado" });
-      }
-
-      const extension =
-        record.tipo_mime === "application/vnd.ms-excel" ? ".xls" : ".xlsx";
-
-      const safeBaseName = record.nombre
-        .trim()
-        .replace(/\s+/g, "_")
-        .replace(/[^a-zA-Z0-9_\-]/g, "");
-
-      const downloadName = `${safeBaseName || "proyeccion_social"}_${record.fecha_registro
-        .toISOString()
-        .slice(0, 10)}${extension}`;
-
-      res.setHeader(
-        "Content-Type",
-        record.tipo_mime ||
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      );
-      res.setHeader(
-        "Content-Disposition",
-        `attachment; filename="${downloadName}"`,
-      );
-      return res.send(record.archivo);
-    } catch (error: any) {
-      logger.error("Error downloading social projection file by id:", error);
-      return res.status(500).json({
-        error: error.message || "Error interno del servidor",
-      });
-    }
-  };
-
   getById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
@@ -329,24 +207,62 @@ export class ProyeccionSocialController {
   update = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const { nombre, descripcion, personas_impactadas, estado, estudiantes, docentes } = req.body;
-      const file = req.file;
-
-      const parsedEstudiantes = typeof estudiantes === "string" ? JSON.parse(estudiantes) : estudiantes;
-      const parsedDocentes = typeof docentes === "string" ? JSON.parse(docentes) : docentes;
-      const parsedImpactadas = typeof personas_impactadas === "string"
-        ? Number(personas_impactadas)
-        : personas_impactadas;
+      const {
+        titulo,
+        descripcion,
+        personas_impactadas,
+        estado,
+        fecha_de_presentacion,
+        fecha_finalizacion,
+        estudiantes,
+        docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+        id_asesor,
+        id_facultad,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
+        proponentes,
+        planes_accion,
+        presupuesto_equipo,
+        presupuesto_recursos,
+      } = req.body;
 
       const updated = await this.service.update(id, {
-        nombre,
+        titulo,
         descripcion,
-        personas_impactadas: parsedImpactadas,
+        personas_impactadas,
         estado,
-        estudiantes: parsedEstudiantes,
-        docentes: parsedDocentes,
-        archivo: file?.buffer as any,
-        tipo_mime: file?.mimetype,
+        fecha_de_presentacion,
+        fecha_finalizacion,
+        estudiantes,
+        docentes,
+        lineas_accion,
+        semestre,
+        id_programa,
+        id_asesor,
+        id_facultad,
+        resumen,
+        palabras_clave,
+        identificacion_problematica,
+        propuesta_solucion,
+        caracterizacion_poblacion,
+        objetivos,
+        resultados_esperados,
+        metodologia,
+        bibliografia,
+        proponentes,
+        planes_accion,
+        presupuesto_equipo,
+        presupuesto_recursos,
       });
 
       return res.status(200).json({
@@ -437,9 +353,18 @@ export class ProyeccionSocialController {
     }
   };
 
-  getDashboardStats = async (_req: Request, res: Response) => {
+  getDashboardStats = async (req: Request, res: Response) => {
     try {
-      const data = await this.service.getSocialDashboardStats();
+      const { fecha_inicio, fecha_fin, id_facultad, id_programa } = req.query;
+
+      const filters = {
+        fecha_inicio: typeof fecha_inicio === "string" ? fecha_inicio : undefined,
+        fecha_fin: typeof fecha_fin === "string" ? fecha_fin : undefined,
+        id_facultad: typeof id_facultad === "string" ? id_facultad : undefined,
+        id_programa: typeof id_programa === "string" ? id_programa : undefined,
+      };
+
+      const data = await this.service.getSocialDashboardStats(filters);
       return res.json(data);
     } catch (error: any) {
       logger.error("Error getting social dashboard stats:", error);
